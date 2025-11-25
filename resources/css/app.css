@@ -1,0 +1,387 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.jsx';
+
+/* Tailwind v4 Theme Configuration */
+@theme {
+    --font-sans: 'Quicksand', ui-sans-serif, system-ui, sans-serif;
+    --font-body: 'Lato', ui-sans-serif, system-ui, sans-serif;
+
+    /* Brand Colors */
+    --color-brand: #3BB77E;
+    --color-brand-dark: #29A56C;
+    --color-brand-light: #DEF9EC;
+    --color-brand-2: #FDC040;
+
+    /* Text Colors */
+    --color-heading: #253D4E;
+    --color-body: #7E7E7E;
+    --color-muted: #B6B6B6;
+
+    /* Background Colors */
+    --color-bg-grey: #F4F6FA;
+    --color-bg-input: #F4F5F9;
+
+    /* Status Colors */
+    --color-success: #3BB77E;
+    --color-warning: #FDC040;
+    --color-danger: #FD6E6E;
+    --color-info: #50A5F1;
+
+    /* Admin Colors */
+    --color-admin-sidebar: #233446;
+    --color-admin-body: #f7f8f9;
+    --color-admin-card: #ffffff;
+
+    /* Dark Mode */
+    --color-dark-body: #222736;
+    --color-dark-card: #2a3042;
+    --color-dark-sidebar: #2f3446;
+
+    /* Shadows */
+    --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    --shadow-card-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+    --shadow-dropdown: 0 4px 20px rgba(0, 0, 0, 0.15);
+    --shadow-product: 5px 5px 15px rgba(0, 0, 0, 0.05);
+}
+
+/* Base Styles */
+body {
+    font-family: 'Lato', sans-serif;
+    color: var(--color-body);
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Quicksand', sans-serif;
+    color: var(--color-heading);
+    font-weight: 700;
+}
+
+/* Material Icons */
+.material-icons {
+    font-family: 'Material Icons Round', 'Material Icons', sans-serif;
+    font-weight: normal;
+    font-style: normal;
+    font-size: 24px;
+    display: inline-block;
+    line-height: 1;
+    text-transform: none;
+    letter-spacing: normal;
+    word-wrap: normal;
+    white-space: nowrap;
+    direction: ltr;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: 'liga';
+}
+
+/* Star Rating */
+.star-rating {
+    display: inline-flex;
+    gap: 2px;
+}
+
+.star-rating .star {
+    color: var(--color-brand-2);
+}
+
+.star-rating .star.empty {
+    color: #ECECEC;
+}
+
+/* Product Card Hover Effects */
+.product-card {
+    transition: all 0.3s ease;
+}
+
+.product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-product);
+}
+
+.product-card .product-actions {
+    opacity: 0;
+    transform: translateX(10px);
+    transition: all 0.3s ease;
+}
+
+.product-card:hover .product-actions {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+/* Badge Styles */
+.badge-hot {
+    background-color: #F74B81;
+    color: white;
+}
+
+.badge-new {
+    background-color: var(--color-brand);
+    color: white;
+}
+
+.badge-sale {
+    background-color: #67BCEE;
+    color: white;
+}
+
+.badge-best {
+    background-color: #F59758;
+    color: white;
+}
+
+/* Soft Badge Styles (Admin) */
+.badge-soft-success {
+    color: #34c38f;
+    background-color: rgba(52, 195, 143, 0.18);
+}
+
+.badge-soft-danger {
+    color: #f46a6a;
+    background-color: rgba(244, 106, 106, 0.18);
+}
+
+.badge-soft-warning {
+    color: #f1b44c;
+    background-color: rgba(241, 180, 76, 0.18);
+}
+
+.badge-soft-info {
+    color: #50a5f1;
+    background-color: rgba(80, 165, 241, 0.18);
+}
+
+.badge-soft-primary {
+    color: var(--color-brand);
+    background-color: rgba(59, 183, 126, 0.18);
+}
+
+/* Progress Bar */
+.progress {
+    height: 8px;
+    border-radius: 4px;
+    background-color: #e9ecef;
+    overflow: hidden;
+}
+
+.progress-bar {
+    background-color: var(--color-brand);
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 10px;
+    transition: width 0.3s ease;
+}
+
+/* Category Card Hover */
+.category-card {
+    transition: all 0.3s ease;
+}
+
+.category-card:hover {
+    transform: translateY(-10px);
+    box-shadow: var(--shadow-product);
+}
+
+/* Sticky Header Animation */
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.header-sticky {
+    animation: fadeInDown 0.5s ease;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* Admin Sidebar */
+.admin-sidebar {
+    transition: width 0.3s ease;
+}
+
+.admin-sidebar.minimized {
+    width: 80px;
+}
+
+.admin-sidebar.minimized .sidebar-text {
+    display: none;
+}
+
+/* Dropdown Menu Animation */
+.dropdown-menu {
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px);
+    transition: all 0.3s ease;
+}
+
+.dropdown-menu.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+/* Mobile Menu */
+.mobile-menu {
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+}
+
+.mobile-menu.show {
+    transform: translateX(0);
+}
+
+/* Screen Overlay */
+.screen-overlay {
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.screen-overlay.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Notification Animation */
+.notification-shake:hover {
+    animation: shake 0.5s ease;
+}
+
+@keyframes shake {
+    0%, 100% { transform: rotate(0); }
+    25% { transform: rotate(-10deg); }
+    50% { transform: rotate(10deg); }
+    75% { transform: rotate(-5deg); }
+}
+
+/* Swiper Custom Styles */
+.swiper-pagination-bullet {
+    width: 10px;
+    height: 10px;
+    background: var(--color-brand);
+    opacity: 0.3;
+}
+
+.swiper-pagination-bullet-active {
+    opacity: 1;
+}
+
+.swiper-button-next,
+.swiper-button-prev {
+    color: var(--color-brand);
+}
+
+/* Table Styles */
+.table-hover tbody tr:hover {
+    background-color: rgba(59, 183, 126, 0.05);
+}
+
+/* Input Focus */
+input:focus,
+select:focus,
+textarea:focus {
+    border-color: var(--color-brand);
+    box-shadow: 0 0 0 3px rgba(59, 183, 126, 0.1);
+}
+
+/* Button Hover Effects */
+.btn-brand {
+    background-color: var(--color-brand);
+    color: white;
+    transition: all 0.3s ease;
+}
+
+.btn-brand:hover {
+    background-color: var(--color-brand-dark);
+    transform: translateY(-2px);
+}
+
+/* Avatar */
+.avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.avatar-lg {
+    width: 50px;
+    height: 50px;
+}
+
+.avatar-sm {
+    width: 32px;
+    height: 32px;
+}
+
+/* Utility Classes for Custom Colors */
+.bg-brand { background-color: var(--color-brand); }
+.bg-brand-dark { background-color: var(--color-brand-dark); }
+.bg-brand-light { background-color: var(--color-brand-light); }
+.bg-brand-2 { background-color: var(--color-brand-2); }
+.bg-heading { background-color: var(--color-heading); }
+.bg-body-color { background-color: var(--color-body); }
+.bg-admin-sidebar { background-color: var(--color-admin-sidebar); }
+.bg-admin-body { background-color: var(--color-admin-body); }
+.bg-dark-body { background-color: var(--color-dark-body); }
+.bg-dark-card { background-color: var(--color-dark-card); }
+.bg-dark-sidebar { background-color: var(--color-dark-sidebar); }
+
+.text-brand { color: var(--color-brand); }
+.text-brand-dark { color: var(--color-brand-dark); }
+.text-brand-2 { color: var(--color-brand-2); }
+.text-heading { color: var(--color-heading); }
+.text-body { color: var(--color-body); }
+.text-muted { color: var(--color-muted); }
+.text-success { color: var(--color-success); }
+.text-warning { color: var(--color-warning); }
+.text-danger { color: var(--color-danger); }
+.text-info { color: var(--color-info); }
+
+.border-brand { border-color: var(--color-brand); }
+
+.shadow-card { box-shadow: var(--shadow-card); }
+.shadow-card-hover { box-shadow: var(--shadow-card-hover); }
+.shadow-dropdown { box-shadow: var(--shadow-dropdown); }
+
+/* Hover variants */
+.hover\:bg-brand:hover { background-color: var(--color-brand); }
+.hover\:bg-brand-dark:hover { background-color: var(--color-brand-dark); }
+.hover\:text-brand:hover { color: var(--color-brand); }
+.hover\:text-brand-dark:hover { color: var(--color-brand-dark); }
+
+/* Font Family Utilities */
+.font-quicksand { font-family: 'Quicksand', ui-sans-serif, system-ui, sans-serif; }
+.font-lato { font-family: 'Lato', ui-sans-serif, system-ui, sans-serif; }
