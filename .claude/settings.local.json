@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(php artisan:*)",
+      "Bash(findstr:*)",
+      "Bash(composer require:*)",
+      "Bash(php -r:*)",
+      "Bash(php composer.phar require:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

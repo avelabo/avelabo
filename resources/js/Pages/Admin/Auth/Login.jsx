@@ -9,7 +9,7 @@ export default function Login() {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        post(route('admin.login'));
+        post(route('login'));
     };
 
     return (

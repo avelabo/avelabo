@@ -12,6 +12,19 @@ export default function Sidebar({ isOpen, isMobileOpen, onClose }) {
             href: '/admin',
         },
         {
+            name: 'KYC Verifications',
+            icon: 'verified_user',
+            href: '/admin/kyc',
+        },
+        {
+            name: 'Sellers',
+            icon: 'store',
+            children: [
+                { name: 'All Sellers', href: '/admin/sellers' },
+                { name: 'Markup Templates', href: '/admin/markup-templates' },
+            ],
+        },
+        {
             name: 'Products',
             icon: 'inventory_2',
             children: [
@@ -25,21 +38,12 @@ export default function Sidebar({ isOpen, isMobileOpen, onClose }) {
             icon: 'shopping_cart',
             children: [
                 { name: 'Order List', href: '/admin/orders' },
-                { name: 'Order Detail', href: '/admin/orders/1' },
             ],
         },
         {
-            name: 'Sellers',
-            icon: 'store',
-            children: [
-                { name: 'Seller List', href: '/admin/sellers' },
-                { name: 'Seller Cards', href: '/admin/sellers/cards' },
-            ],
-        },
-        {
-            name: 'Add Product',
-            icon: 'add_box',
-            href: '/admin/products/create',
+            name: 'Users',
+            icon: 'people',
+            href: '/admin/users',
         },
         {
             name: 'Transaction',
@@ -57,14 +61,9 @@ export default function Sidebar({ isOpen, isMobileOpen, onClose }) {
             href: '/admin/reviews',
         },
         {
-            name: 'Pages',
-            icon: 'description',
-            children: [
-                { name: 'Settings', href: '/admin/settings' },
-                { name: 'Login', href: '/admin/login' },
-                { name: 'Register', href: '/admin/register' },
-                { name: '404 Page', href: '/admin/404' },
-            ],
+            name: 'Settings',
+            icon: 'settings',
+            href: '/admin/settings',
         },
     ];
 

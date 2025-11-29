@@ -1,11 +1,23 @@
 <?php
 
+use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\Auth\RegisteredUserController;
+use App\Http\Controllers\Auth\PasswordResetLinkController;
+use App\Http\Controllers\Auth\NewPasswordController;
+use App\Http\Controllers\Auth\EmailVerificationPromptController;
+use App\Http\Controllers\Seller\SellerRegistrationController;
+use App\Http\Controllers\Seller\DashboardController as SellerDashboardController;
+use App\Http\Controllers\Seller\ProductController as SellerProductController;
+use App\Http\Controllers\Seller\OrderController as SellerOrderController;
+use App\Http\Controllers\Admin\KycController;
+use App\Http\Controllers\Admin\SellerController as AdminSellerController;
+use App\Http\Controllers\Admin\MarkupTemplateController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 /*
 |--------------------------------------------------------------------------
-| Frontend Routes
+| Frontend Routes (Public)
 |--------------------------------------------------------------------------
 */
 
@@ -24,10 +36,6 @@ Route::get('/product/{slug}', function ($slug) {
 Route::get('/cart', function () {
     return Inertia::render('Frontend/Cart');
 })->name('cart');
-
-Route::get('/checkout', function () {
-    return Inertia::render('Frontend/Checkout');
-})->name('checkout');
 
 Route::get('/wishlist', function () {
     return Inertia::render('Frontend/Wishlist');
@@ -53,10 +61,6 @@ Route::get('/vendors', function () {
     return Inertia::render('Frontend/Vendors');
 })->name('vendors');
 
-Route::get('/account', function () {
-    return Inertia::render('Frontend/Account');
-})->name('account');
-
 Route::get('/vendor-guide', function () {
     return Inertia::render('Frontend/VendorGuide');
 })->name('vendor.guide');
@@ -64,18 +68,6 @@ Route::get('/vendor-guide', function () {
 Route::get('/vendor/{id}', function ($id) {
     return Inertia::render('Frontend/VendorDetails1', ['id' => $id]);
 })->name('vendor.details');
-
-Route::get('/vendor/{id}/alt', function ($id) {
-    return Inertia::render('Frontend/VendorDetails2', ['id' => $id]);
-})->name('vendor.details.alt');
-
-Route::get('/forgot-password', function () {
-    return Inertia::render('Frontend/ForgotPassword');
-})->name('password.forgot');
-
-Route::get('/reset-password', function () {
-    return Inertia::render('Frontend/ResetPassword');
-})->name('password.reset');
 
 Route::get('/privacy-policy', function () {
     return Inertia::render('Frontend/PrivacyPolicy');
@@ -85,9 +77,83 @@ Route::get('/purchase-guide', function () {
     return Inertia::render('Frontend/PurchaseGuide');
 })->name('purchase.guide');
 
-Route::get('/invoice/{id?}', function ($id = null) {
-    return Inertia::render('Frontend/Invoice', ['id' => $id]);
-})->name('invoice');
+/*
+|--------------------------------------------------------------------------
+| Authentication Routes (Guest)
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware('guest')->group(function () {
+    Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
+    Route::get('/register', [RegisteredUserController::class, 'create'])->name('register');
+    Route::get('/forgot-password', [PasswordResetLinkController::class, 'create'])->name('password.request');
+    Route::get('/reset-password/{token}', [NewPasswordController::class, 'create'])->name('password.reset');
+});
+
+Route::middleware('auth')->group(function () {
+    Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
+    Route::get('/verify-email', EmailVerificationPromptController::class)->name('verification.notice');
+});
+
+/*
+|--------------------------------------------------------------------------
+| Customer Routes (Authenticated)
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/checkout', function () {
+        return Inertia::render('Frontend/Checkout');
+    })->name('checkout');
+
+    Route::get('/account', function () {
+        return Inertia::render('Frontend/Account');
+    })->name('account');
+
+    Route::get('/invoice/{id?}', function ($id = null) {
+        return Inertia::render('Frontend/Invoice', ['id' => $id]);
+    })->name('invoice');
+});
+
+/*
+|--------------------------------------------------------------------------
+| Seller Routes
+|--------------------------------------------------------------------------
+*/
+
+Route::prefix('seller')->name('seller.')->group(function () {
+    // Seller Registration (authenticated users who aren't sellers yet)
+    Route::middleware('auth')->group(function () {
+        Route::get('/register', [SellerRegistrationController::class, 'create'])->name('register');
+        Route::post('/register', [SellerRegistrationController::class, 'store'])->name('register.store');
+        Route::get('/kyc', [SellerRegistrationController::class, 'showKycForm'])->name('kyc.create');
+        Route::post('/kyc', [SellerRegistrationController::class, 'storeKyc'])->name('kyc.store');
+        Route::get('/kyc/status', [SellerRegistrationController::class, 'kycStatus'])->name('kyc.status');
+    });
+
+    // Protected Seller Routes (approved sellers only)
+    Route::middleware(['auth', 'seller'])->group(function () {
+        // Dashboard
+        Route::get('/', [SellerDashboardController::class, 'index'])->name('dashboard');
+
+        // Products
+        Route::resource('products', SellerProductController::class);
+
+        // Orders
+        Route::get('/orders', [SellerOrderController::class, 'index'])->name('orders.index');
+        Route::get('/orders/{order}', [SellerOrderController::class, 'show'])->name('orders.show');
+        Route::patch('/orders/{order}/status', [SellerOrderController::class, 'updateStatus'])->name('orders.update-status');
+
+        // Profile & Settings
+        Route::get('/profile', function () {
+            return Inertia::render('Seller/Profile');
+        })->name('profile');
+
+        Route::get('/settings', function () {
+            return Inertia::render('Seller/Settings');
+        })->name('settings');
+    });
+});
 
 /*
 |--------------------------------------------------------------------------
@@ -96,46 +162,57 @@ Route::get('/invoice/{id?}', function ($id = null) {
 */
 
 Route::prefix('admin')->name('admin.')->group(function () {
-    // Auth routes (no auth required)
-    Route::get('/login', function () {
-        return Inertia::render('Admin/Auth/Login');
-    })->name('login');
+    Route::middleware('guest')->group(function () {
+        Route::get('/login', function () {
+            return Inertia::render('Admin/Auth/Login');
+        })->name('login');
 
-    Route::post('/login', function () {
-        // Handle login - to be implemented with controller
-        return redirect()->route('admin.dashboard');
-    })->name('login.post');
+        Route::get('/register', function () {
+            return Inertia::render('Admin/Auth/Register');
+        })->name('register');
 
-    Route::get('/register', function () {
-        return Inertia::render('Admin/Auth/Register');
-    })->name('register');
-
-    Route::post('/register', function () {
-        // Handle registration - to be implemented with controller
-        return redirect()->route('admin.dashboard');
-    })->name('register.post');
-
-    Route::get('/forgot-password', function () {
-        return Inertia::render('Admin/Auth/ForgotPassword');
-    })->name('password.request');
+        Route::get('/forgot-password', function () {
+            return Inertia::render('Admin/Auth/ForgotPassword');
+        })->name('password.request');
+    });
 
     Route::post('/logout', function () {
-        // Handle logout - to be implemented with controller
+        auth()->logout();
+        request()->session()->invalidate();
+        request()->session()->regenerateToken();
         return redirect()->route('admin.login');
     })->name('logout');
 });
 
 /*
 |--------------------------------------------------------------------------
-| Admin Routes (Authenticated)
+| Admin Routes (Authenticated & Admin Role)
 |--------------------------------------------------------------------------
 */
 
-Route::prefix('admin')->name('admin.')->group(function () {
+Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(function () {
     // Dashboard
     Route::get('/', function () {
         return Inertia::render('Admin/Dashboard');
     })->name('dashboard');
+
+    // KYC Management
+    Route::get('/kyc', [KycController::class, 'index'])->name('kyc.index');
+    Route::get('/kyc/{kyc}', [KycController::class, 'show'])->name('kyc.show');
+    Route::post('/kyc/{kyc}/approve', [KycController::class, 'approve'])->name('kyc.approve');
+    Route::post('/kyc/{kyc}/reject', [KycController::class, 'reject'])->name('kyc.reject');
+    Route::post('/kyc/{kyc}/request-documents', [KycController::class, 'requestDocuments'])->name('kyc.request-documents');
+
+    // Sellers
+    Route::get('/sellers', [AdminSellerController::class, 'index'])->name('sellers.index');
+    Route::get('/sellers/{seller}', [AdminSellerController::class, 'show'])->name('sellers.show');
+    Route::put('/sellers/{seller}', [AdminSellerController::class, 'update'])->name('sellers.update');
+    Route::patch('/sellers/{seller}/status', [AdminSellerController::class, 'updateStatus'])->name('sellers.update-status');
+    Route::post('/sellers/{seller}/apply-markup-template', [AdminSellerController::class, 'applyMarkupTemplate'])->name('sellers.apply-markup-template');
+    Route::post('/sellers/{seller}/custom-markup', [AdminSellerController::class, 'setCustomMarkup'])->name('sellers.custom-markup');
+
+    // Markup Templates
+    Route::resource('markup-templates', MarkupTemplateController::class);
 
     // Products
     Route::get('/products', function () {
@@ -158,21 +235,6 @@ Route::prefix('admin')->name('admin.')->group(function () {
         return Inertia::render('Admin/Products/Edit', ['id' => $id]);
     })->name('products.edit');
 
-    Route::post('/products', function () {
-        // Handle store - to be implemented with controller
-        return redirect()->route('admin.products.index');
-    })->name('products.store');
-
-    Route::put('/products/{id}', function ($id) {
-        // Handle update - to be implemented with controller
-        return redirect()->route('admin.products.index');
-    })->name('products.update');
-
-    Route::delete('/products/{id}', function ($id) {
-        // Handle delete - to be implemented with controller
-        return redirect()->route('admin.products.index');
-    })->name('products.destroy');
-
     // Categories
     Route::get('/categories', function () {
         return Inertia::render('Admin/Categories/Index');
@@ -186,43 +248,6 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('/orders/{id}', function ($id) {
         return Inertia::render('Admin/Orders/Show', ['id' => $id]);
     })->name('orders.show');
-
-    Route::put('/orders/{id}/status', function ($id) {
-        // Handle status update - to be implemented with controller
-        return redirect()->route('admin.orders.show', $id);
-    })->name('orders.update-status');
-
-    // Sellers
-    Route::get('/sellers', function () {
-        return Inertia::render('Admin/Sellers/Index');
-    })->name('sellers.index');
-
-    Route::get('/sellers/create', function () {
-        return Inertia::render('Admin/Sellers/Create');
-    })->name('sellers.create');
-
-    Route::get('/sellers/{id}', function ($id) {
-        return Inertia::render('Admin/Sellers/Show', ['id' => $id]);
-    })->name('sellers.show');
-
-    Route::get('/sellers/{id}/edit', function ($id) {
-        return Inertia::render('Admin/Sellers/Edit', ['id' => $id]);
-    })->name('sellers.edit');
-
-    Route::post('/sellers', function () {
-        // Handle store - to be implemented with controller
-        return redirect()->route('admin.sellers.index');
-    })->name('sellers.store');
-
-    Route::put('/sellers/{id}', function ($id) {
-        // Handle update - to be implemented with controller
-        return redirect()->route('admin.sellers.index');
-    })->name('sellers.update');
-
-    Route::delete('/sellers/{id}', function ($id) {
-        // Handle delete - to be implemented with controller
-        return redirect()->route('admin.sellers.index');
-    })->name('sellers.destroy');
 
     // Transactions
     Route::get('/transactions', function () {
@@ -247,18 +272,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
         return Inertia::render('Admin/Reviews/Show', ['id' => $id]);
     })->name('reviews.show');
 
-    Route::delete('/reviews/{id}', function ($id) {
-        // Handle delete - to be implemented with controller
-        return redirect()->route('admin.reviews.index');
-    })->name('reviews.destroy');
-
     // Settings
     Route::get('/settings', function () {
         return Inertia::render('Admin/Settings/Index');
     })->name('settings');
-
-    Route::put('/settings', function () {
-        // Handle settings update - to be implemented with controller
-        return redirect()->route('admin.settings');
-    })->name('settings.update');
 });
