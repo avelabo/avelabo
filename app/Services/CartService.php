@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Cart;
 use App\Models\CartItem;
+use App\Models\Currency;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use Illuminate\Support\Facades\Auth;
@@ -30,9 +31,26 @@ class CartService
             ->first();
 
         if (!$cart) {
+            // Get default currency (MWK) or first active currency
+            $defaultCurrency = Currency::getDefault() ?? Currency::active()->first();
+
+            if (!$defaultCurrency) {
+                // Create default MWK currency if none exists
+                $defaultCurrency = Currency::create([
+                    'name' => 'Malawian Kwacha',
+                    'code' => 'MWK',
+                    'symbol' => 'MK',
+                    'decimal_places' => 0,
+                    'symbol_before' => true,
+                    'is_default' => true,
+                    'is_active' => true,
+                ]);
+            }
+
             $cart = Cart::create([
                 'user_id' => $userId,
                 'session_id' => $sessionId,
+                'currency_id' => $defaultCurrency->id,
                 'expires_at' => $userId ? null : now()->addDays(7),
             ]);
         }
@@ -63,7 +81,7 @@ class CartService
         // Check if item already exists in cart
         $existingItem = $cart->items()
             ->where('product_id', $productId)
-            ->where('product_variant_id', $variantId)
+            ->where('variant_id', $variantId)
             ->first();
 
         if ($existingItem) {
@@ -80,7 +98,7 @@ class CartService
 
         return $cart->items()->create([
             'product_id' => $productId,
-            'product_variant_id' => $variantId,
+            'variant_id' => $variantId,
             'quantity' => $quantity,
             'unit_price' => $unitPrice,
         ]);
@@ -146,7 +164,7 @@ class CartService
             foreach ($guestCart->items as $guestItem) {
                 $existingItem = $userCart->items()
                     ->where('product_id', $guestItem->product_id)
-                    ->where('product_variant_id', $guestItem->product_variant_id)
+                    ->where('variant_id', $guestItem->variant_id)
                     ->first();
 
                 if ($existingItem) {

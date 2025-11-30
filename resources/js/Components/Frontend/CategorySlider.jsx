@@ -5,19 +5,21 @@ import { Link } from '@inertiajs/react';
 import 'swiper/css';
 import 'swiper/css/navigation';
 
-export default function CategorySlider() {
-    const categories = [
-        { name: 'Cake & Milk', image: '/images/frontend/shop/cat-1.png', count: 26, bg: '#F2FCE4' },
-        { name: 'Organic Kiwi', image: '/images/frontend/shop/cat-2.png', count: 28, bg: '#FFFCEB' },
-        { name: 'Peach', image: '/images/frontend/shop/cat-3.png', count: 14, bg: '#ECFFEC' },
-        { name: 'Red Apple', image: '/images/frontend/shop/cat-4.png', count: 54, bg: '#FEEFEA' },
-        { name: 'Snack', image: '/images/frontend/shop/cat-5.png', count: 56, bg: '#FFF3EB' },
-        { name: 'Vegetables', image: '/images/frontend/shop/cat-6.png', count: 72, bg: '#FFF3FF' },
-        { name: 'Strawberry', image: '/images/frontend/shop/cat-7.png', count: 36, bg: '#F2FCE4' },
-        { name: 'Black plum', image: '/images/frontend/shop/cat-8.png', count: 123, bg: '#FEEFEA' },
-        { name: 'Custard Apple', image: '/images/frontend/shop/cat-9.png', count: 34, bg: '#FFFCEB' },
-        { name: 'Coffe & Tea', image: '/images/frontend/shop/cat-10.png', count: 89, bg: '#FEEFEA' },
-    ];
+// Default background colors for categories
+const bgColors = ['#F2FCE4', '#FFFCEB', '#ECFFEC', '#FEEFEA', '#FFF3EB', '#FFF3FF', '#F2FCE4', '#FEEFEA', '#FFFCEB', '#FEEFEA'];
+
+// Default categories for fallback
+const defaultCategories = [
+    { name: 'Electronics', slug: 'electronics', image: '/images/frontend/shop/cat-1.png', products_count: 0 },
+    { name: 'Fashion', slug: 'fashion', image: '/images/frontend/shop/cat-2.png', products_count: 0 },
+    { name: 'Home & Garden', slug: 'home-garden', image: '/images/frontend/shop/cat-3.png', products_count: 0 },
+    { name: 'Sports', slug: 'sports', image: '/images/frontend/shop/cat-4.png', products_count: 0 },
+    { name: 'Beauty', slug: 'beauty', image: '/images/frontend/shop/cat-5.png', products_count: 0 },
+];
+
+export default function CategorySlider({ categories = [] }) {
+    // Use passed categories or fall back to defaults
+    const displayCategories = categories.length > 0 ? categories : defaultCategories;
 
     return (
         <div className="relative">
@@ -38,20 +40,21 @@ export default function CategorySlider() {
                 }}
                 className="categories-slider"
             >
-                {categories.map((category, index) => (
-                    <SwiperSlide key={index}>
+                {displayCategories.map((category, index) => (
+                    <SwiperSlide key={category.id || index}>
                         <Link
-                            href={`/shop?category=${category.name.toLowerCase().replace(/\s+/g, '-')}`}
-                            className="category-card block text-center p-4 rounded-xl"
-                            style={{ backgroundColor: category.bg }}
+                            href={`/shop?category=${category.slug || category.name?.toLowerCase().replace(/\s+/g, '-')}`}
+                            className="category-card block text-center p-4 rounded-xl hover:shadow-lg transition-shadow"
+                            style={{ backgroundColor: bgColors[index % bgColors.length] }}
                         >
                             <img
-                                src={category.image}
+                                src={category.image || `/images/frontend/shop/cat-${(index % 10) + 1}.png`}
                                 alt={category.name}
                                 className="w-16 h-16 mx-auto mb-3 object-contain"
+                                onError={(e) => { e.target.src = '/images/frontend/placeholder-category.png'; }}
                             />
                             <h6 className="text-heading font-semibold text-sm mb-1">{category.name}</h6>
-                            <p className="text-body text-xs">{category.count} items</p>
+                            <p className="text-body text-xs">{category.products_count || 0} items</p>
                         </Link>
                     </SwiperSlide>
                 ))}

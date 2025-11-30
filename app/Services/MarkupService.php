@@ -5,8 +5,6 @@ namespace App\Services;
 use App\Models\Product;
 use App\Models\Seller;
 use App\Models\SellerPriceMarkup;
-use App\Models\SellerMarkupTemplate;
-use App\Models\SellerMarkupTemplateRange;
 use Illuminate\Support\Facades\Cache;
 
 /**
@@ -17,14 +15,14 @@ use Illuminate\Support\Facades\Cache;
  *
  * Markup Flow:
  * 1. Product has base_price (source cost)
- * 2. Seller configures markup (percentage or fixed) per product or uses template
- * 3. Final price = base_price + markup
+ * 2. Seller configures markup ranges (e.g., $0-100 = $10 markup, $100-500 = $50 markup)
+ * 3. Final price = base_price + markup_amount (from matching range)
  * 4. Customer only sees the final price
  */
 class MarkupService
 {
     /**
-     * Calculate the markup amount for a product
+     * Calculate the markup amount for a product based on seller's price range configuration
      * Returns the markup value to add to base price
      */
     public function calculateMarkup(Product $product, ?Seller $seller = null): float
@@ -35,21 +33,20 @@ class MarkupService
             return 0;
         }
 
-        // Check for product-specific markup first
-        $productMarkup = $this->getProductMarkup($product, $seller);
+        $basePrice = $product->base_price ?? 0;
 
-        if ($productMarkup) {
-            return $this->applyMarkup($product->base_price, $productMarkup);
+        if ($basePrice <= 0) {
+            return 0;
         }
 
-        // Fall back to template-based markup
-        $templateMarkup = $this->getTemplateMarkup($product, $seller);
+        // Find the markup range that contains this price
+        $markupRange = $this->findMarkupRange($seller, $basePrice);
 
-        if ($templateMarkup) {
-            return $templateMarkup;
+        if (!$markupRange) {
+            return 0;
         }
 
-        return 0;
+        return (float) $markupRange->markup_amount;
     }
 
     /**
@@ -58,98 +55,34 @@ class MarkupService
      */
     public function getFinalPrice(Product $product, ?Seller $seller = null): float
     {
+        $basePrice = $product->base_price ?? 0;
         $markup = $this->calculateMarkup($product, $seller);
-        return round($product->base_price + $markup, 2);
+        return round($basePrice + $markup, 2);
     }
 
     /**
-     * Get product-specific markup configuration
+     * Find the markup range that contains the given price
      */
-    protected function getProductMarkup(Product $product, Seller $seller): ?SellerPriceMarkup
+    protected function findMarkupRange(Seller $seller, float $basePrice): ?SellerPriceMarkup
     {
-        $cacheKey = "product_markup.{$seller->id}.{$product->id}";
+        $cacheKey = "seller_markup_ranges.{$seller->id}";
 
-        return Cache::remember($cacheKey, 3600, function () use ($product, $seller) {
+        // Cache all markup ranges for this seller
+        $ranges = Cache::remember($cacheKey, 3600, function () use ($seller) {
             return SellerPriceMarkup::where('seller_id', $seller->id)
-                ->where('product_id', $product->id)
                 ->where('is_active', true)
-                ->first();
+                ->orderBy('min_price', 'asc')
+                ->get();
         });
-    }
 
-    /**
-     * Calculate markup based on seller's template (price-range based)
-     */
-    protected function getTemplateMarkup(Product $product, Seller $seller): float
-    {
-        $template = $this->getSellerTemplate($seller);
-
-        if (!$template) {
-            return 0;
+        // Find the range that contains this price
+        foreach ($ranges as $range) {
+            if ($basePrice >= $range->min_price && $basePrice <= $range->max_price) {
+                return $range;
+            }
         }
 
-        $range = $this->findPriceRange($template, $product->base_price);
-
-        if (!$range) {
-            return 0;
-        }
-
-        return $this->applyMarkupFromRange($product->base_price, $range);
-    }
-
-    /**
-     * Get seller's active markup template
-     */
-    protected function getSellerTemplate(Seller $seller): ?SellerMarkupTemplate
-    {
-        $cacheKey = "seller_template.{$seller->id}";
-
-        return Cache::remember($cacheKey, 3600, function () use ($seller) {
-            return SellerMarkupTemplate::where('seller_id', $seller->id)
-                ->where('is_active', true)
-                ->first();
-        });
-    }
-
-    /**
-     * Find the appropriate price range for the given base price
-     */
-    protected function findPriceRange(SellerMarkupTemplate $template, float $basePrice): ?SellerMarkupTemplateRange
-    {
-        return SellerMarkupTemplateRange::where('seller_markup_template_id', $template->id)
-            ->where('min_price', '<=', $basePrice)
-            ->where(function ($query) use ($basePrice) {
-                $query->whereNull('max_price')
-                    ->orWhere('max_price', '>=', $basePrice);
-            })
-            ->orderBy('min_price', 'desc')
-            ->first();
-    }
-
-    /**
-     * Apply markup from SellerPriceMarkup configuration
-     */
-    protected function applyMarkup(float $basePrice, SellerPriceMarkup $markup): float
-    {
-        if ($markup->markup_type === 'percentage') {
-            return round($basePrice * ($markup->markup_value / 100), 2);
-        }
-
-        // Fixed markup
-        return (float) $markup->markup_value;
-    }
-
-    /**
-     * Apply markup from template range configuration
-     */
-    protected function applyMarkupFromRange(float $basePrice, SellerMarkupTemplateRange $range): float
-    {
-        if ($range->markup_type === 'percentage') {
-            return round($basePrice * ($range->markup_value / 100), 2);
-        }
-
-        // Fixed markup
-        return (float) $range->markup_value;
+        return null;
     }
 
     /**
@@ -172,22 +105,67 @@ class MarkupService
      */
     public function clearSellerCache(Seller $seller): void
     {
-        Cache::forget("seller_template.{$seller->id}");
+        Cache::forget("seller_markup_ranges.{$seller->id}");
+    }
 
-        // Clear all product markups for this seller
-        $products = Product::where('seller_id', $seller->id)->pluck('id');
-        foreach ($products as $productId) {
-            Cache::forget("product_markup.{$seller->id}.{$productId}");
+    /**
+     * Get all markup ranges for a seller (for admin/seller panel)
+     */
+    public function getSellerMarkupRanges(Seller $seller): \Illuminate\Database\Eloquent\Collection
+    {
+        return SellerPriceMarkup::where('seller_id', $seller->id)
+            ->orderBy('min_price', 'asc')
+            ->get();
+    }
+
+    /**
+     * Create or update a markup range for a seller
+     */
+    public function setMarkupRange(
+        Seller $seller,
+        float $minPrice,
+        float $maxPrice,
+        float $markupAmount,
+        int $currencyId
+    ): SellerPriceMarkup {
+        $markup = SellerPriceMarkup::updateOrCreate(
+            [
+                'seller_id' => $seller->id,
+                'min_price' => $minPrice,
+                'max_price' => $maxPrice,
+            ],
+            [
+                'markup_amount' => $markupAmount,
+                'currency_id' => $currencyId,
+                'is_active' => true,
+            ]
+        );
+
+        $this->clearSellerCache($seller);
+
+        return $markup;
+    }
+
+    /**
+     * Delete a markup range
+     */
+    public function deleteMarkupRange(SellerPriceMarkup $markup): void
+    {
+        $sellerId = $markup->seller_id;
+        $markup->delete();
+
+        if ($sellerId) {
+            Cache::forget("seller_markup_ranges.{$sellerId}");
         }
     }
 
     /**
-     * Clear markup cache for a specific product
+     * Check if seller has any markup configuration
      */
-    public function clearProductCache(Product $product): void
+    public function sellerHasMarkupConfig(Seller $seller): bool
     {
-        if ($product->seller_id) {
-            Cache::forget("product_markup.{$product->seller_id}.{$product->id}");
-        }
+        return SellerPriceMarkup::where('seller_id', $seller->id)
+            ->where('is_active', true)
+            ->exists();
     }
 }

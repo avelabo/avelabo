@@ -5,32 +5,33 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Review extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
 
     protected $fillable = [
         'product_id',
         'user_id',
-        'order_id',
+        'order_item_id',
         'rating',
         'title',
         'comment',
-        'pros',
-        'cons',
-        'is_verified_purchase',
+        'images',
+        'is_verified',
         'is_approved',
-        'approved_at',
-        'approved_by',
+        'is_featured',
+        'admin_response',
+        'admin_responded_at',
     ];
 
     protected $casts = [
         'rating' => 'integer',
-        'is_verified_purchase' => 'boolean',
+        'images' => 'array',
+        'is_verified' => 'boolean',
         'is_approved' => 'boolean',
-        'approved_at' => 'datetime',
+        'is_featured' => 'boolean',
+        'admin_responded_at' => 'datetime',
     ];
 
     public function product(): BelongsTo
@@ -43,14 +44,9 @@ class Review extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function order(): BelongsTo
+    public function orderItem(): BelongsTo
     {
-        return $this->belongsTo(Order::class);
-    }
-
-    public function approvedBy(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'approved_by');
+        return $this->belongsTo(OrderItem::class);
     }
 
     public function scopeApproved($query)
@@ -63,9 +59,14 @@ class Review extends Model
         return $query->where('is_approved', false);
     }
 
-    public function scopeVerifiedPurchase($query)
+    public function scopeVerified($query)
     {
-        return $query->where('is_verified_purchase', true);
+        return $query->where('is_verified', true);
+    }
+
+    public function scopeFeatured($query)
+    {
+        return $query->where('is_featured', true);
     }
 
     public function scopeByRating($query, int $rating)
@@ -78,8 +79,13 @@ class Review extends Model
         return $this->is_approved;
     }
 
-    public function isVerifiedPurchase(): bool
+    public function isVerified(): bool
     {
-        return $this->is_verified_purchase;
+        return $this->is_verified;
+    }
+
+    public function isFeatured(): bool
+    {
+        return $this->is_featured;
     }
 }
