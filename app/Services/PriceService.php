@@ -186,8 +186,19 @@ class PriceService
             return $user->preferredCurrency->code;
         }
 
+        // Get from session - can be array or string
+        $sessionCurrency = session('currency');
+
+        if (is_array($sessionCurrency) && isset($sessionCurrency['code'])) {
+            return $sessionCurrency['code'];
+        }
+
+        if (is_string($sessionCurrency) && !empty($sessionCurrency)) {
+            return $sessionCurrency;
+        }
+
         // Default to MWK (Malawian Kwacha)
-        return session('currency', 'MWK');
+        return 'MWK';
     }
 
     /**

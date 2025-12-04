@@ -1,22 +1,19 @@
 import { useState } from 'react';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import FrontendLayout from '@/Layouts/FrontendLayout';
+import { formatCurrency, getDefaultCurrency } from '@/utils/currency';
 
 export default function Cart({ cart }) {
+    const { props } = usePage();
+    const currency = getDefaultCurrency(props);
+    const format = (amount) => formatCurrency(amount, currency);
+
     const [loading, setLoading] = useState(false);
     const [updatingItems, setUpdatingItems] = useState({});
 
     // Coupon state
     const [couponCode, setCouponCode] = useState('');
     const [appliedCoupon, setAppliedCoupon] = useState(null);
-
-    const formatCurrency = (amount) => {
-        return new Intl.NumberFormat('en-MW', {
-            style: 'currency',
-            currency: 'MWK',
-            minimumFractionDigits: 0,
-        }).format(amount || 0);
-    };
 
     // Update quantity handler
     const updateQuantity = (itemId, newQuantity) => {
@@ -52,7 +49,7 @@ export default function Cart({ cart }) {
     const clearCart = () => {
         if (loading) return;
 
-        if (!confirm('Are you sure you want to clear your cart?')) return;
+        if (!confirm('Are you sure you want to clear your basket?')) return;
 
         setLoading(true);
         router.delete(route('cart.clear'), {
@@ -78,11 +75,11 @@ export default function Cart({ cart }) {
 
     return (
         <FrontendLayout>
-            <Head title="Shopping Cart" />
+            <Head title="Shopping Basket" />
 
             {/* Page Header / Breadcrumb */}
             <div className="bg-grey-9 py-5">
-                <div className="max-w-container mx-auto px-4">
+                <div className="container mx-auto px-4">
                     <div className="flex items-center gap-2 text-sm">
                         <Link href="/" className="text-brand hover:text-brand-dark flex items-center gap-1">
                             <i className="fi-rs-home"></i> Home
@@ -90,20 +87,20 @@ export default function Cart({ cart }) {
                         <span className="text-muted">-</span>
                         <Link href={route('shop')} className="text-muted hover:text-brand">Shop</Link>
                         <span className="text-muted">-</span>
-                        <span className="text-body">Cart</span>
+                        <span className="text-body">Basket</span>
                     </div>
                 </div>
             </div>
 
             {/* Cart Content */}
-            <div className="max-w-container mx-auto px-4 py-12">
+            <div className="container mx-auto px-4 py-12">
                 {/* Cart Header */}
                 <div className="mb-8">
                     <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
                         <div>
-                            <h1 className="text-3xl font-quicksand font-bold text-heading mb-2">Your Cart</h1>
+                            <h1 className="text-3xl font-quicksand font-bold text-heading mb-2">Your Basket</h1>
                             <p className="text-body">
-                                There are <span className="text-brand font-semibold">{cart?.item_count || 0}</span> products in your cart
+                                There are <span className="text-brand font-semibold">{cart?.item_count || 0}</span> products in your basket
                             </p>
                         </div>
                         {cartItems.length > 0 && (
@@ -112,7 +109,7 @@ export default function Cart({ cart }) {
                                 disabled={loading}
                                 className="flex items-center gap-2 text-muted hover:text-red-500 transition-colors disabled:opacity-50"
                             >
-                                <i className="fi-rs-trash"></i> Clear Cart
+                                <i className="fi-rs-trash"></i> Clear Basket
                             </button>
                         )}
                     </div>
@@ -131,13 +128,13 @@ export default function Cart({ cart }) {
                                 <div className="col-span-1 text-center">Remove</div>
                             </div>
 
-                            {/* Cart Items */}
+                            {/* Basket Items */}
                             {cartItems.length === 0 ? (
                                 <div className="px-6 py-12 text-center">
                                     <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                                         <i className="fi-rs-shopping-cart text-4xl text-gray-400"></i>
                                     </div>
-                                    <p className="text-muted text-lg mb-4">Your cart is empty</p>
+                                    <p className="text-muted text-lg mb-4">Your basket is empty</p>
                                     <Link
                                         href={route('shop')}
                                         className="inline-flex items-center gap-2 px-6 py-3 bg-brand hover:bg-brand-dark text-white rounded-md font-semibold transition-colors"
@@ -188,7 +185,7 @@ export default function Cart({ cart }) {
                                         </div>
                                         <div className="col-span-1 md:col-span-2">
                                             <span className="md:hidden text-sm text-muted">Price: </span>
-                                            <span className="text-body font-semibold">{formatCurrency(item.unit_price)}</span>
+                                            <span className="text-body font-semibold">{format(item.unit_price)}</span>
                                         </div>
                                         <div className="col-span-1 md:col-span-2">
                                             <div className="flex items-center border border-border rounded-md w-fit">
@@ -214,7 +211,7 @@ export default function Cart({ cart }) {
                                         <div className="col-span-1 md:col-span-1">
                                             <span className="md:hidden text-sm text-muted">Subtotal: </span>
                                             <span className="text-brand font-bold">
-                                                {formatCurrency(item.line_total)}
+                                                {format(item.line_total)}
                                             </span>
                                         </div>
                                         <div className="col-span-1 md:col-span-1 text-center">
@@ -278,22 +275,22 @@ export default function Cart({ cart }) {
                     {cartItems.length > 0 && (
                         <div className="w-full lg:w-[380px] flex-shrink-0">
                             <div className="bg-white border border-border rounded-xl p-6 lg:p-8 sticky top-24">
-                                <h4 className="font-quicksand font-bold text-heading text-xl mb-6 pb-4 border-b border-border">Cart Totals</h4>
+                                <h4 className="font-quicksand font-bold text-heading text-xl mb-6 pb-4 border-b border-border">Basket Totals</h4>
 
                                 <div className="space-y-4 mb-6">
                                     <div className="flex justify-between items-center">
                                         <span className="text-muted">Subtotal</span>
-                                        <span className="text-brand font-bold text-lg">{formatCurrency(subtotal)}</span>
+                                        <span className="text-brand font-bold text-lg">{format(subtotal)}</span>
                                     </div>
                                     <div className="border-t border-border"></div>
                                     <div className="flex justify-between items-center">
                                         <span className="text-muted">Shipping</span>
-                                        <span className="text-heading font-semibold">{shipping === 0 ? 'Free' : formatCurrency(shipping)}</span>
+                                        <span className="text-heading font-semibold">{shipping === 0 ? 'Free' : format(shipping)}</span>
                                     </div>
                                     <div className="border-t border-border"></div>
                                     <div className="flex justify-between items-center">
                                         <span className="text-heading font-semibold">Total</span>
-                                        <span className="text-brand font-bold text-2xl">{formatCurrency(total)}</span>
+                                        <span className="text-brand font-bold text-2xl">{format(total)}</span>
                                     </div>
                                 </div>
 

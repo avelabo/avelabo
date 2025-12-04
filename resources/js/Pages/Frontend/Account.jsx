@@ -182,7 +182,7 @@ export default function Account({
 
             {/* Breadcrumb */}
             <section className="bg-grey-9 py-4">
-                <div className="max-w-container mx-auto px-4">
+                <div className="container mx-auto px-4">
                     <nav className="flex items-center gap-2 text-sm">
                         <Link href="/" className="text-muted hover:text-brand transition-colors flex items-center gap-1">
                             <i className="fi-rs-home text-xs"></i> Home
@@ -195,7 +195,7 @@ export default function Account({
 
             {/* Flash Messages */}
             {flash?.success && (
-                <div className="max-w-container mx-auto px-4 pt-4">
+                <div className="container mx-auto px-4 pt-4">
                     <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative">
                         {flash.success}
                     </div>
@@ -204,7 +204,7 @@ export default function Account({
 
             {/* Account Content */}
             <section className="py-12 lg:py-20">
-                <div className="max-w-container mx-auto px-4">
+                <div className="container mx-auto px-4">
                     <div className="max-w-5xl mx-auto">
                         <div className="flex flex-col lg:flex-row gap-8">
                             {/* Sidebar Menu */}

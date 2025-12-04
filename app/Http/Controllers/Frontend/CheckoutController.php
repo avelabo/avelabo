@@ -10,6 +10,7 @@ use App\Services\CheckoutService;
 use App\Services\OrderService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 
 class CheckoutController extends Controller
@@ -76,38 +77,51 @@ class CheckoutController extends Controller
      */
     public function process(Request $request)
     {
-        $validated = $request->validate([
-            // Billing info
-            'billing.first_name' => 'required|string|max:100',
-            'billing.last_name' => 'required|string|max:100',
-            'billing.email' => 'required|email|max:255',
-            'billing.phone' => 'required|string|max:20',
-            'billing.address_line_1' => 'required|string|max:255',
-            'billing.address_line_2' => 'nullable|string|max:255',
-            'billing.city' => 'required|string|max:100',
-            'billing.state' => 'nullable|string|max:100',
-            'billing.postal_code' => 'nullable|string|max:20',
-            'billing.country_id' => 'required|exists:countries,id',
+        Log::info('Checkout process started', ['request_data' => $request->all()]);
 
-            // Shipping info
-            'shipping.same_as_billing' => 'boolean',
-            'shipping.first_name' => 'required_if:shipping.same_as_billing,false|nullable|string|max:100',
-            'shipping.last_name' => 'required_if:shipping.same_as_billing,false|nullable|string|max:100',
-            'shipping.phone' => 'required_if:shipping.same_as_billing,false|nullable|string|max:20',
-            'shipping.address_line_1' => 'required_if:shipping.same_as_billing,false|nullable|string|max:255',
-            'shipping.address_line_2' => 'nullable|string|max:255',
-            'shipping.city' => 'required_if:shipping.same_as_billing,false|nullable|string|max:100',
-            'shipping.state' => 'nullable|string|max:100',
-            'shipping.postal_code' => 'nullable|string|max:20',
-            'shipping.country_id' => 'required_if:shipping.same_as_billing,false|nullable|exists:countries,id',
+        try {
+            $validated = $request->validate([
+                // Billing info
+                'billing.first_name' => 'required|string|max:100',
+                'billing.last_name' => 'required|string|max:100',
+                'billing.email' => 'required|email|max:255',
+                'billing.phone' => 'required|string|max:20',
+                'billing.address_line_1' => 'required|string|max:255',
+                'billing.address_line_2' => 'nullable|string|max:255',
+                'billing.city' => 'required|string|max:100',
+                'billing.state' => 'nullable|string|max:100',
+                'billing.postal_code' => 'nullable|string|max:20',
+                'billing.country_id' => 'required|exists:countries,id',
 
-            // Payment
-            'payment_gateway_id' => 'required|exists:payment_gateways,id',
+                // Shipping info
+                'shipping.same_as_billing' => 'boolean',
+                'shipping.first_name' => 'required_if:shipping.same_as_billing,false|nullable|string|max:100',
+                'shipping.last_name' => 'required_if:shipping.same_as_billing,false|nullable|string|max:100',
+                'shipping.phone' => 'required_if:shipping.same_as_billing,false|nullable|string|max:20',
+                'shipping.address_line_1' => 'required_if:shipping.same_as_billing,false|nullable|string|max:255',
+                'shipping.address_line_2' => 'nullable|string|max:255',
+                'shipping.city' => 'required_if:shipping.same_as_billing,false|nullable|string|max:100',
+                'shipping.state' => 'nullable|string|max:100',
+                'shipping.postal_code' => 'nullable|string|max:20',
+                'shipping.country_id' => 'required_if:shipping.same_as_billing,false|nullable|exists:countries,id',
 
-            // Optional
-            'notes' => 'nullable|string|max:1000',
-            'create_account' => 'boolean',
-        ]);
+                // Payment
+                'payment_gateway_id' => 'required|exists:payment_gateways,id',
+
+                // Optional
+                'notes' => 'nullable|string|max:1000',
+                'create_account' => 'boolean',
+            ]);
+
+            Log::info('Checkout validation passed', ['validated' => $validated]);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            Log::error('Checkout validation failed', [
+                'errors' => $e->errors(),
+                'request_data' => $request->all()
+            ]);
+            throw $e;
+        }
 
         $cart = $this->cartService->getOrCreateCart();
 
@@ -119,7 +133,8 @@ class CheckoutController extends Controller
         );
 
         if (!empty($errors)) {
-            return back()->withErrors($errors);
+            Log::error('Checkout service validation failed', ['errors' => $errors]);
+            return back()->withErrors($errors)->withInput();
         }
 
         try {
@@ -132,6 +147,8 @@ class CheckoutController extends Controller
                 $validated['notes'] ?? null
             );
 
+            Log::info('Order created successfully', ['order_id' => $order->id, 'order_number' => $order->order_number]);
+
             // Store payment gateway selection in session for payment initiation
             session(['checkout_payment_gateway' => $validated['payment_gateway_id']]);
 
@@ -139,7 +156,11 @@ class CheckoutController extends Controller
             return redirect()->route('payment.initiate', $order);
 
         } catch (\Exception $e) {
-            return back()->withErrors(['error' => $e->getMessage()]);
+            Log::error('Checkout process failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return back()->withErrors(['error' => $e->getMessage()])->withInput();
         }
     }
 

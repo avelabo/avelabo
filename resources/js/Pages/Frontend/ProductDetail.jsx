@@ -1,25 +1,24 @@
 import { useState } from 'react';
-import { Link, Head, router } from '@inertiajs/react';
+import { Link, Head, router, usePage } from '@inertiajs/react';
 import FrontendLayout from '@/Layouts/FrontendLayout';
+import { formatCurrency, getDefaultCurrency } from '@/utils/currency';
 
 export default function ProductDetail({ product, relatedProducts }) {
+    const { props } = usePage();
+    const currency = getDefaultCurrency(props);
+    const format = (amount) => {
+        if (typeof amount === 'object' && amount?.formatted) {
+            return amount.formatted;
+        }
+        return formatCurrency(amount, currency);
+    };
+
     const [selectedImage, setSelectedImage] = useState(0);
     const [quantity, setQuantity] = useState(1);
     const [selectedVariant, setSelectedVariant] = useState(null);
     const [activeTab, setActiveTab] = useState('description');
-    const [addingToCart, setAddingToCart] = useState(false);
-    const [cartMessage, setCartMessage] = useState(null);
-
-    const formatCurrency = (amount) => {
-        if (typeof amount === 'object' && amount?.formatted) {
-            return amount.formatted;
-        }
-        return new Intl.NumberFormat('en-MW', {
-            style: 'currency',
-            currency: 'MWK',
-            minimumFractionDigits: 0,
-        }).format(amount || 0);
-    };
+    const [addingToBasket, setAddingToBasket] = useState(false);
+    const [basketMessage, setBasketMessage] = useState(null);
 
     const getCurrentPrice = () => {
         if (selectedVariant) {
@@ -50,17 +49,17 @@ export default function ProductDetail({ product, relatedProducts }) {
         setSelectedVariant(variant);
     };
 
-    const addToCart = () => {
-        if (addingToCart) return;
+    const addToBasket = () => {
+        if (addingToBasket) return;
 
         // Check if variant is required but not selected
         if (product.variants?.length > 0 && !selectedVariant) {
-            setCartMessage({ type: 'error', text: 'Please select an option' });
+            setBasketMessage({ type: 'error', text: 'Please select an option' });
             return;
         }
 
-        setAddingToCart(true);
-        setCartMessage(null);
+        setAddingToBasket(true);
+        setBasketMessage(null);
 
         router.post(route('cart.add'), {
             product_id: product.id,
@@ -69,14 +68,14 @@ export default function ProductDetail({ product, relatedProducts }) {
         }, {
             preserveScroll: true,
             onSuccess: () => {
-                setCartMessage({ type: 'success', text: 'Added to cart!' });
-                setTimeout(() => setCartMessage(null), 3000);
+                setBasketMessage({ type: 'success', text: 'Added to basket!' });
+                setTimeout(() => setBasketMessage(null), 3000);
             },
             onError: (errors) => {
-                setCartMessage({ type: 'error', text: errors.error || 'Failed to add to cart' });
+                setBasketMessage({ type: 'error', text: errors.error || 'Failed to add to basket' });
             },
             onFinish: () => {
-                setAddingToCart(false);
+                setAddingToBasket(false);
             },
         });
     };
@@ -91,7 +90,7 @@ export default function ProductDetail({ product, relatedProducts }) {
 
             {/* Breadcrumb */}
             <div className="py-6">
-                <div className="max-w-container mx-auto px-4">
+                <div className="container mx-auto px-4">
                     <div className="flex items-center gap-2 text-sm">
                         <Link href="/" className="text-brand hover:text-brand-dark flex items-center gap-1">
                             <i className="fi-rs-home"></i> Home
@@ -113,7 +112,7 @@ export default function ProductDetail({ product, relatedProducts }) {
             </div>
 
             {/* Product Main Section */}
-            <div className="max-w-container mx-auto px-4 mb-16">
+            <div className="container mx-auto px-4 mb-16">
                 <div className="flex flex-col lg:flex-row gap-10">
                     {/* Product Gallery */}
                     <div className="lg:w-1/2">
@@ -186,9 +185,9 @@ export default function ProductDetail({ product, relatedProducts }) {
 
                         {/* Price */}
                         <div className="flex items-baseline gap-3 mb-6">
-                            <span className="text-4xl font-bold text-brand">{formatCurrency(getCurrentPrice())}</span>
+                            <span className="text-4xl font-bold text-brand">{format(getCurrentPrice())}</span>
                             {getComparePrice() && (
-                                <span className="text-xl text-muted line-through">{formatCurrency(getComparePrice())}</span>
+                                <span className="text-xl text-muted line-through">{format(getComparePrice())}</span>
                             )}
                         </div>
 
@@ -244,18 +243,18 @@ export default function ProductDetail({ product, relatedProducts }) {
                             </div>
                         )}
 
-                        {/* Cart Message */}
-                        {cartMessage && (
+                        {/* Basket Message */}
+                        {basketMessage && (
                             <div className={`mb-4 p-3 rounded-lg text-sm ${
-                                cartMessage.type === 'success'
+                                basketMessage.type === 'success'
                                     ? 'bg-green-100 text-green-700'
                                     : 'bg-red-100 text-red-700'
                             }`}>
-                                {cartMessage.text}
+                                {basketMessage.text}
                             </div>
                         )}
 
-                        {/* Quantity & Add to Cart */}
+                        {/* Quantity & Add to Basket */}
                         <div className="flex flex-col sm:flex-row gap-4 mb-8">
                             <div className="flex items-center border border-border rounded-lg">
                                 <button
@@ -278,11 +277,11 @@ export default function ProductDetail({ product, relatedProducts }) {
                                 </button>
                             </div>
                             <button
-                                onClick={addToCart}
-                                disabled={!isInStock() || addingToCart}
+                                onClick={addToBasket}
+                                disabled={!isInStock() || addingToBasket}
                                 className="flex-1 flex items-center justify-center gap-2 bg-brand hover:bg-brand-dark text-white px-8 py-3 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                {addingToCart ? (
+                                {addingToBasket ? (
                                     <>
                                         <i className="fi-rs-spinner animate-spin"></i>
                                         Adding...
@@ -290,7 +289,7 @@ export default function ProductDetail({ product, relatedProducts }) {
                                 ) : (
                                     <>
                                         <i className="fi-rs-shopping-cart"></i>
-                                        Add to Cart
+                                        Add to Basket
                                     </>
                                 )}
                             </button>
@@ -335,7 +334,7 @@ export default function ProductDetail({ product, relatedProducts }) {
             </div>
 
             {/* Product Tabs */}
-            <div className="max-w-container mx-auto px-4 mb-16">
+            <div className="container mx-auto px-4 mb-16">
                 <div className="bg-white border border-border rounded-xl overflow-hidden">
                     {/* Tab Headers */}
                     <div className="flex border-b border-border overflow-x-auto">
@@ -401,7 +400,7 @@ export default function ProductDetail({ product, relatedProducts }) {
 
             {/* Related Products */}
             {relatedProducts?.length > 0 && (
-                <div className="max-w-container mx-auto px-4 mb-16">
+                <div className="container mx-auto px-4 mb-16">
                     <h2 className="text-2xl font-quicksand font-bold text-heading mb-6">Related Products</h2>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
                         {relatedProducts.map((item) => (
@@ -423,9 +422,9 @@ export default function ProductDetail({ product, relatedProducts }) {
                                     </h6>
                                     <div className="flex items-center justify-between">
                                         <div>
-                                            <span className="text-brand font-bold">{formatCurrency(item.price)}</span>
+                                            <span className="text-brand font-bold">{format(item.price)}</span>
                                             {item.compare_price && item.compare_price > item.price && (
-                                                <span className="text-muted line-through text-sm ml-2">{formatCurrency(item.compare_price)}</span>
+                                                <span className="text-muted line-through text-sm ml-2">{format(item.compare_price)}</span>
                                             )}
                                         </div>
                                     </div>

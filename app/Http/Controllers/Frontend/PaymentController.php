@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
+use App\Models\Cart;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\PaymentGateway;
+use App\Services\CartService;
 use App\Services\OrderService;
 use App\Services\PaymentGateway\PaymentGatewayFactory;
 use Illuminate\Http\Request;
@@ -14,7 +16,8 @@ use Illuminate\Support\Facades\Log;
 class PaymentController extends Controller
 {
     public function __construct(
-        protected OrderService $orderService
+        protected OrderService $orderService,
+        protected CartService $cartService
     ) {}
 
     /**
@@ -49,6 +52,28 @@ class PaymentController extends Controller
         }
 
         try {
+            // Handle Cash on Delivery - no payment gateway needed
+            if ($paymentGateway->slug === 'cash-on-delivery') {
+                // Create payment record for COD
+                Payment::create([
+                    'order_id' => $order->id,
+                    'payment_gateway_id' => $paymentGateway->id,
+                    'amount' => $order->total,
+                    'currency_id' => $order->currency_id,
+                    'status' => 'pending',
+                    'payment_method' => 'cod',
+                ]);
+
+                // Update order status
+                $this->orderService->updateOrderStatus($order, 'processing', 'Cash on Delivery order placed');
+
+                // Clear cart and session
+                $this->clearPendingCart();
+                session()->forget('checkout_payment_gateway');
+
+                return redirect()->route('checkout.success', ['order' => $order->order_number]);
+            }
+
             // Create payment record
             $payment = Payment::create([
                 'order_id' => $order->id,
@@ -81,7 +106,8 @@ class PaymentController extends Controller
                     return redirect()->away($response->redirectUrl);
                 }
 
-                // If no redirect, payment might be direct - verify
+                // If no redirect (direct payment success), clear cart
+                $this->clearPendingCart();
                 return redirect()->route('checkout.success', ['order' => $order->order_number]);
             }
 
@@ -147,6 +173,9 @@ class PaymentController extends Controller
                 // Update order
                 $this->orderService->updateOrderStatus($order, 'processing', 'Payment confirmed');
 
+                // Clear the cart after successful payment
+                $this->clearPendingCart();
+
                 return redirect()->route('checkout.success', ['order' => $order->order_number]);
             }
 
@@ -190,6 +219,12 @@ class PaymentController extends Controller
                         ]);
 
                         $this->orderService->updateOrderStatus($order, 'processing', 'Payment confirmed via webhook');
+
+                        // Clear cart associated with this order's user
+                        $userCart = Cart::where('user_id', $order->user_id)->first();
+                        if ($userCart) {
+                            $this->cartService->clearCart($userCart);
+                        }
                     }
                 }
 
@@ -244,5 +279,21 @@ class PaymentController extends Controller
         $reference = $request->input('order') ?? $request->input('reference');
 
         return redirect()->route('checkout.cancel', ['order' => $reference]);
+    }
+
+    /**
+     * Clear the pending cart after successful payment
+     */
+    protected function clearPendingCart(): void
+    {
+        $cartId = session('pending_order_cart_id');
+
+        if ($cartId) {
+            $cart = Cart::find($cartId);
+            if ($cart) {
+                $this->cartService->clearCart($cart);
+            }
+            session()->forget('pending_order_cart_id');
+        }
     }
 }

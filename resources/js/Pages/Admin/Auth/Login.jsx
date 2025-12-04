@@ -22,7 +22,7 @@ export default function Login() {
                     <header className="h-18 px-4 lg:px-8 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
                         {/* Brand */}
                         <Link href="/" className="flex items-center">
-                            <img src="/assets/imgs/theme/logo.svg" className="h-10" alt="Nest Dashboard" />
+                            <img src="/images/logo/logo-web-small.png" className="h-10" alt="Avelabo Dashboard" />
                         </Link>
 
                         {/* Right navigation */}

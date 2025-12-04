@@ -1,11 +1,13 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import FrontendLayout from '@/Layouts/FrontendLayout';
 import HeroSlider from '@/Components/Frontend/HeroSlider';
 import CategorySlider from '@/Components/Frontend/CategorySlider';
 import ProductCard from '@/Components/Frontend/ProductCard';
+import { formatCurrency } from '@/utils/currency';
 import { useState, useEffect } from 'react';
 
 export default function Home({
+    sliders = [],
     featuredProducts = [],
     popularProducts = [],
     newProducts = [],
@@ -14,6 +16,8 @@ export default function Home({
     bestSellers = [],
     dailyDeals = [],
 }) {
+    const { currencies } = usePage().props;
+    const currentCurrency = currencies?.selected || currencies?.default;
     const [activeTab, setActiveTab] = useState('all');
     const [countdown, setCountdown] = useState({ days: 0, hours: 0, mins: 0, secs: 0 });
 
@@ -36,13 +40,7 @@ export default function Home({
         return () => clearInterval(timer);
     }, []);
 
-    const formatCurrency = (amount) => {
-        return new Intl.NumberFormat('en-MW', {
-            style: 'currency',
-            currency: 'MWK',
-            minimumFractionDigits: 0,
-        }).format(amount || 0);
-    };
+    const formatPrice = (amount) => formatCurrency(amount, currentCurrency);
 
     // Determine which products to show based on active tab
     const getDisplayProducts = () => {
@@ -62,7 +60,7 @@ export default function Home({
     const displayProducts = getDisplayProducts();
     const dealProduct = dailyDeals[0] || featuredProducts[0];
 
-    const handleAddToCart = (product) => {
+    const handleAddToBasket = (product) => {
         router.post(route('cart.add'), {
             product_id: product.id,
             quantity: 1,
@@ -92,7 +90,7 @@ export default function Home({
             <div className="container mx-auto px-4 py-8">
                 {/* Hero Section */}
                 <section className="mb-12">
-                    <HeroSlider />
+                    <HeroSlider sliders={sliders} />
                 </section>
 
                 {/* Featured Categories */}
@@ -186,9 +184,9 @@ export default function Home({
                                         </h6>
                                     </Link>
                                     <div className="flex items-center gap-2 mb-3">
-                                        <span className="text-brand font-bold text-xl">{formatCurrency(dealProduct.price)}</span>
+                                        <span className="text-brand font-bold text-xl">{formatPrice(dealProduct.price)}</span>
                                         {dealProduct.compare_price && (
-                                            <span className="text-body line-through text-sm">{formatCurrency(dealProduct.compare_price)}</span>
+                                            <span className="text-body line-through text-sm">{formatPrice(dealProduct.compare_price)}</span>
                                         )}
                                     </div>
                                     {/* Countdown Timer */}
@@ -206,10 +204,10 @@ export default function Home({
                                         ))}
                                     </div>
                                     <button
-                                        onClick={() => handleAddToCart(dealProduct)}
+                                        onClick={() => handleAddToBasket(dealProduct)}
                                         className="w-full bg-brand hover:bg-brand-dark text-white py-3 rounded-md font-semibold transition-colors"
                                     >
-                                        Add To Cart
+                                        Add To Basket
                                     </button>
                                 </div>
                             ) : (
@@ -254,7 +252,7 @@ export default function Home({
                                                             </svg>
                                                         ))}
                                                     </div>
-                                                    <span className="text-brand font-bold">{formatCurrency(product.price)}</span>
+                                                    <span className="text-brand font-bold">{formatPrice(product.price)}</span>
                                                 </div>
                                             </Link>
                                         ))

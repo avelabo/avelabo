@@ -56,7 +56,7 @@ export default function Shop({ products, categories, brands, priceRange, feature
 
             {/* Page Header / Breadcrumb */}
             <div className="py-8 mb-8">
-                <div className="max-w-container mx-auto px-4">
+                <div className="container mx-auto px-4">
                     <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
                         <div>
                             <h1 className="text-3xl font-quicksand font-bold text-heading mb-3">
@@ -105,7 +105,7 @@ export default function Shop({ products, categories, brands, priceRange, feature
             </div>
 
             {/* Shop Content */}
-            <div className="max-w-container mx-auto px-4 mb-12">
+            <div className="container mx-auto px-4 mb-12">
                 <div className="flex flex-col lg:flex-row gap-8">
                     {/* Sidebar (Left) */}
                     <aside className="w-full lg:w-[280px] flex-shrink-0 order-2 lg:order-1">

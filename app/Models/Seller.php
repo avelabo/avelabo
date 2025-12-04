@@ -36,6 +36,8 @@ class Seller extends Model
         'source_id',
         'commission_rate',
         'approved_at',
+        'show_seller_name',
+        'has_storefront',
     ];
 
     protected $casts = [
@@ -47,6 +49,8 @@ class Seller extends Model
         'is_featured' => 'boolean',
         'commission_rate' => 'decimal:2',
         'approved_at' => 'datetime',
+        'show_seller_name' => 'boolean',
+        'has_storefront' => 'boolean',
     ];
 
     public function user(): BelongsTo
@@ -114,6 +118,16 @@ class Seller extends Model
         return $query->where('is_featured', true);
     }
 
+    public function scopeWithStorefront($query)
+    {
+        return $query->where('has_storefront', true);
+    }
+
+    public function scopeVisible($query)
+    {
+        return $query->where('show_seller_name', true);
+    }
+
     public function isActive(): bool
     {
         return $this->status === 'active';
@@ -132,5 +146,21 @@ class Seller extends Model
     public function getDefaultBankAccount(): ?SellerBankAccount
     {
         return $this->bankAccounts()->where('is_default', true)->first();
+    }
+
+    /**
+     * Get the display name for frontend (seller name or Avelabo)
+     */
+    public function getDisplayNameAttribute(): string
+    {
+        return $this->show_seller_name ? $this->shop_name : 'Avelabo';
+    }
+
+    /**
+     * Check if seller should be shown on frontend
+     */
+    public function shouldShowOnFrontend(): bool
+    {
+        return $this->show_seller_name && $this->has_storefront;
     }
 }

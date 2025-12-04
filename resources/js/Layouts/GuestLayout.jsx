@@ -7,7 +7,7 @@ export default function GuestLayout({ children }) {
             <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
                 <div className="container mx-auto px-4 h-16 flex items-center justify-between">
                     <Link href="/" className="flex items-center">
-                        <img src="/assets/imgs/theme/logo.svg" className="h-10" alt="Avelabo" />
+                        <img src="/images/logo/logo-web-small.png" className="h-10" alt="Avelabo" />
                     </Link>
                     <nav className="flex items-center gap-4">
                         <Link

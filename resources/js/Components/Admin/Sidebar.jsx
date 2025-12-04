@@ -34,11 +34,40 @@ export default function Sidebar({ isOpen, isMobileOpen, onClose }) {
             ],
         },
         {
+            name: 'Sliders',
+            icon: 'view_carousel',
+            children: [
+                { name: 'All Sliders', href: '/admin/sliders' },
+                { name: 'Add Slider', href: '/admin/sliders/create' },
+            ],
+        },
+        {
             name: 'Orders',
             icon: 'shopping_cart',
             children: [
                 { name: 'Order List', href: '/admin/orders' },
             ],
+        },
+        {
+            name: 'Scraping',
+            icon: 'cloud_download',
+            children: [
+                { name: 'Sources', href: '/admin/scraping' },
+                { name: 'Add Source', href: '/admin/scraping/create' },
+            ],
+        },
+        {
+            name: 'Pages',
+            icon: 'article',
+            children: [
+                { name: 'All Pages', href: '/admin/pages' },
+                { name: 'Add Page', href: '/admin/pages/create' },
+            ],
+        },
+        {
+            name: 'Contact Messages',
+            icon: 'mail',
+            href: '/admin/contact-messages',
         },
         {
             name: 'Users',
@@ -87,8 +116,8 @@ export default function Sidebar({ isOpen, isMobileOpen, onClose }) {
             {/* Logo */}
             <div className="flex items-center justify-between h-16 px-4 border-b border-white/10">
                 <Link href="/admin" className="flex items-center gap-3">
-                    <img src="/images/admin/theme/logo.svg" alt="Nest" className="h-8" />
-                    {isOpen && <span className="text-xl font-bold sidebar-text">Nest</span>}
+                    
+                    {isOpen && <img src="/images/logo/logo-light-web-small.png" alt="Avelabo" className="h-8" />}
                 </Link>
                 <button onClick={onClose} className="lg:hidden text-white">
                     <span className="material-icons">close</span>

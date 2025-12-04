@@ -46,7 +46,7 @@ export default function OrdersIndex({ orders, filters, statuses }) {
         <FrontendLayout>
             <Head title="My Orders" />
 
-            <div className="max-w-container mx-auto px-4 py-8">
+            <div className="container mx-auto px-4 py-8">
                 {/* Page Header */}
                 <div className="mb-8">
                     <h1 className="text-2xl font-bold text-heading font-quicksand">My Orders</h1>

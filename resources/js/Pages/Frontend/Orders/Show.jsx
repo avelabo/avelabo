@@ -1,14 +1,11 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import FrontendLayout from '@/Layouts/FrontendLayout';
+import { formatCurrency, getDefaultCurrency } from '@/utils/currency';
 
 export default function OrderShow({ order }) {
-    const formatCurrency = (amount) => {
-        return new Intl.NumberFormat('en-MW', {
-            style: 'currency',
-            currency: 'MWK',
-            minimumFractionDigits: 0,
-        }).format(amount || 0);
-    };
+    const { props } = usePage();
+    const currency = getDefaultCurrency(props);
+    const format = (amount) => formatCurrency(amount, currency);
 
     const formatDate = (dateString) => {
         if (!dateString) return '';
@@ -94,7 +91,7 @@ export default function OrderShow({ order }) {
         <FrontendLayout>
             <Head title={`Order ${order?.order_number}`} />
 
-            <div className="max-w-container mx-auto px-4 py-8">
+            <div className="container mx-auto px-4 py-8">
                 {/* Breadcrumb */}
                 <nav className="flex items-center gap-2 text-sm text-muted mb-6">
                     <Link href={route('home')} className="hover:text-brand">Home</Link>
@@ -188,9 +185,9 @@ export default function OrderShow({ order }) {
                                                             )}
                                                         </div>
                                                         <div className="text-right">
-                                                            <p className="font-bold text-brand">{formatCurrency(item.line_total)}</p>
+                                                            <p className="font-bold text-brand">{format(item.line_total)}</p>
                                                             <p className="text-sm text-muted">
-                                                                {formatCurrency(item.display_price)} x {item.quantity}
+                                                                {format(item.display_price)} x {item.quantity}
                                                             </p>
                                                         </div>
                                                     </div>
@@ -250,28 +247,28 @@ export default function OrderShow({ order }) {
                             <div className="space-y-3">
                                 <div className="flex justify-between text-sm">
                                     <span className="text-muted">Subtotal</span>
-                                    <span>{formatCurrency(order?.subtotal)}</span>
+                                    <span>{format(order?.subtotal)}</span>
                                 </div>
                                 <div className="flex justify-between text-sm">
                                     <span className="text-muted">Shipping</span>
-                                    <span>{order?.shipping_amount === 0 ? 'Free' : formatCurrency(order?.shipping_amount)}</span>
+                                    <span>{order?.shipping_amount === 0 ? 'Free' : format(order?.shipping_amount)}</span>
                                 </div>
                                 {order?.tax_amount > 0 && (
                                     <div className="flex justify-between text-sm">
                                         <span className="text-muted">Tax</span>
-                                        <span>{formatCurrency(order?.tax_amount)}</span>
+                                        <span>{format(order?.tax_amount)}</span>
                                     </div>
                                 )}
                                 {order?.discount_amount > 0 && (
                                     <div className="flex justify-between text-sm text-green-600">
                                         <span>Discount</span>
-                                        <span>-{formatCurrency(order?.discount_amount)}</span>
+                                        <span>-{format(order?.discount_amount)}</span>
                                     </div>
                                 )}
                                 <div className="border-t border-border pt-3">
                                     <div className="flex justify-between font-bold text-lg">
                                         <span>Total</span>
-                                        <span className="text-brand">{formatCurrency(order?.total)}</span>
+                                        <span className="text-brand">{format(order?.total)}</span>
                                     </div>
                                 </div>
                             </div>

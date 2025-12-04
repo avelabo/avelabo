@@ -65,7 +65,7 @@ export default function Invoice() {
                                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
                                     <div>
                                         <Link href="/">
-                                            <img src="/images/frontend/logo.svg" alt="Nest Logo" className="h-12" />
+                                            <img src="/images/logo/logo-web-small.png" alt="Avelabo" className="h-12" />
                                         </Link>
                                     </div>
                                     <h1 className="text-3xl lg:text-4xl font-quicksand font-bold text-heading">INVOICE</h1>

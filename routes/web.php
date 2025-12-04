@@ -14,6 +14,7 @@ use App\Http\Controllers\Admin\SellerController as AdminSellerController;
 use App\Http\Controllers\Admin\MarkupTemplateController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Admin\CategoryController as AdminCategoryController;
+use App\Http\Controllers\CurrencyController;
 use App\Http\Controllers\Frontend\HomeController;
 use App\Http\Controllers\Frontend\ShopController;
 use App\Http\Controllers\Frontend\CartController;
@@ -28,6 +29,8 @@ use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\PageContentController;
 use App\Http\Controllers\Admin\ContactMessageController;
 use App\Http\Controllers\Admin\ScrapingController;
+use App\Http\Controllers\Admin\SettingsController as AdminSettingsController;
+use App\Http\Controllers\Admin\SliderController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -38,6 +41,7 @@ use Inertia\Inertia;
 */
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::post('/currency/set', [CurrencyController::class, 'set'])->name('currency.set');
 
 Route::get('/shop', [ShopController::class, 'index'])->name('shop');
 Route::get('/product/{slug}', [ShopController::class, 'show'])->name('product.detail');
@@ -123,7 +127,7 @@ Route::get('/checkout/cancel', [CheckoutController::class, 'cancel'])->name('che
 |--------------------------------------------------------------------------
 */
 Route::prefix('payment')->group(function () {
-    Route::post('/initiate/{order}', [PaymentController::class, 'initiate'])->name('payment.initiate');
+    Route::match(['get', 'post'], '/initiate/{order}', [PaymentController::class, 'initiate'])->name('payment.initiate');
     Route::get('/callback', [PaymentController::class, 'callback'])->name('payment.callback');
     Route::post('/webhook/{gateway}', [PaymentController::class, 'webhook'])->name('payment.webhook')->withoutMiddleware(['web', 'csrf']);
     Route::get('/verify/{reference}', [PaymentController::class, 'verify'])->name('payment.verify');
@@ -310,9 +314,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     })->name('reviews.show');
 
     // Settings
-    Route::get('/settings', function () {
-        return Inertia::render('Admin/Settings/Index');
-    })->name('settings');
+    Route::get('/settings', [AdminSettingsController::class, 'index'])->name('settings');
+    Route::post('/settings', [AdminSettingsController::class, 'update'])->name('settings.update');
 
     // Page Content Management
     Route::resource('pages', PageContentController::class)->parameters(['pages' => 'page']);
@@ -339,4 +342,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
         Route::get('/jobs/{job}', [ScrapingController::class, 'showJob'])->name('job');
         Route::post('/jobs/{job}/cancel', [ScrapingController::class, 'cancelJob'])->name('cancel-job');
     });
+
+    // Sliders Management
+    Route::resource('sliders', SliderController::class);
 });

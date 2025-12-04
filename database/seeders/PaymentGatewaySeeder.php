@@ -9,26 +9,36 @@ class PaymentGatewaySeeder extends Seeder
 {
     public function run(): void
     {
+        // Remove old individual payment method entries
+        PaymentGateway::whereIn('slug', [
+            'airtel-money',
+            'tnm-mpamba',
+            'nbm-bank',
+            'paypal',
+        ])->delete();
+
         $gateways = [
-            [
-                'name' => 'paychangu',
-                'slug' => 'paychangu',
-                'display_name' => 'PayChangu',
-                'description' => 'Pay using Airtel Money, TNM Mpamba, or Card via PayChangu',
-                'is_active' => true,
-                'supported_currencies' => ['MWK', 'ZAR', 'USD'],
-                'supported_countries' => ['MW', 'ZA', 'US'],
-                'is_test_mode' => true,
-                'sort_order' => 1,
-            ],
             [
                 'name' => 'onekhusa',
                 'slug' => 'onekhusa',
                 'display_name' => 'OneKhusa',
-                'description' => 'Pay using Airtel Money or TNM Mpamba via OneKhusa',
+                'description' => 'Mobile Money & Card Payments',
                 'is_active' => true,
                 'supported_currencies' => ['MWK'],
                 'supported_countries' => ['MW'],
+                'transaction_fee_percentage' => 1.00,
+                'is_test_mode' => true,
+                'sort_order' => 1,
+            ],
+            [
+                'name' => 'paychangu',
+                'slug' => 'paychangu',
+                'display_name' => 'PayChangu',
+                'description' => 'Mobile Money & Card Payments',
+                'is_active' => true,
+                'supported_currencies' => ['MWK', 'ZAR', 'USD'],
+                'supported_countries' => ['MW', 'ZA', 'US'],
+                'transaction_fee_percentage' => 4.00,
                 'is_test_mode' => true,
                 'sort_order' => 2,
             ],
@@ -40,6 +50,7 @@ class PaymentGatewaySeeder extends Seeder
                 'is_active' => true,
                 'supported_currencies' => ['MWK'],
                 'supported_countries' => ['MW'],
+                'transaction_fee_percentage' => 0,
                 'is_test_mode' => false,
                 'sort_order' => 3,
             ],

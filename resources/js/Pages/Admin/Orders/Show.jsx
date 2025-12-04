@@ -1,8 +1,13 @@
-import { Head, Link, useForm, router } from '@inertiajs/react';
+import { Head, Link, useForm, router, usePage } from '@inertiajs/react';
 import AdminLayout from '@/Layouts/AdminLayout';
 import { useState } from 'react';
+import { formatCurrency, getDefaultCurrency } from '@/utils/currency';
 
 export default function Show({ order, statuses, itemStatuses }) {
+    const { props } = usePage();
+    const currency = getDefaultCurrency(props);
+    const format = (amount) => formatCurrency(amount, currency);
+
     const [showRefundModal, setShowRefundModal] = useState(false);
     const [showItemModal, setShowItemModal] = useState(false);
     const [currentItem, setCurrentItem] = useState(null);
@@ -23,14 +28,6 @@ export default function Show({ order, statuses, itemStatuses }) {
         refund_type: 'full',
         items: [],
     });
-
-    const formatCurrency = (amount) => {
-        return new Intl.NumberFormat('en-MW', {
-            style: 'currency',
-            currency: 'MWK',
-            minimumFractionDigits: 0,
-        }).format(amount || 0);
-    };
 
     const formatDate = (dateString) => {
         if (!dateString) return '';
@@ -219,13 +216,13 @@ export default function Show({ order, statuses, itemStatuses }) {
                                                     )}
                                                     <div className="flex flex-wrap items-center gap-4 mt-2 text-sm">
                                                         <span className="text-body">Qty: {item.quantity}</span>
-                                                        <span className="text-body">Base: {formatCurrency(item.base_price)}</span>
-                                                        <span className="text-green-600">Markup: {formatCurrency(item.markup_amount)}</span>
-                                                        <span className="font-medium">Display: {formatCurrency(item.display_price)}</span>
+                                                        <span className="text-body">Base: {format(item.base_price)}</span>
+                                                        <span className="text-green-600">Markup: {format(item.markup_amount)}</span>
+                                                        <span className="font-medium">Display: {format(item.display_price)}</span>
                                                     </div>
                                                 </div>
                                                 <div className="text-right">
-                                                    <p className="font-bold text-heading dark:text-white">{formatCurrency(item.line_total)}</p>
+                                                    <p className="font-bold text-heading dark:text-white">{format(item.line_total)}</p>
                                                     <span className={`inline-block mt-2 px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(item.status)}`}>
                                                         {item.status}
                                                     </span>
@@ -262,30 +259,30 @@ export default function Show({ order, statuses, itemStatuses }) {
                             <div className="space-y-3">
                                 <div className="flex justify-between text-sm">
                                     <span className="text-body">Subtotal</span>
-                                    <span className="text-heading dark:text-white">{formatCurrency(order?.subtotal)}</span>
+                                    <span className="text-heading dark:text-white">{format(order?.subtotal)}</span>
                                 </div>
                                 <div className="flex justify-between text-sm">
                                     <span className="text-body">Shipping</span>
                                     <span className="text-heading dark:text-white">
-                                        {order?.shipping_amount === 0 ? 'Free' : formatCurrency(order?.shipping_amount)}
+                                        {order?.shipping_amount === 0 ? 'Free' : format(order?.shipping_amount)}
                                     </span>
                                 </div>
                                 {order?.tax_amount > 0 && (
                                     <div className="flex justify-between text-sm">
                                         <span className="text-body">Tax</span>
-                                        <span className="text-heading dark:text-white">{formatCurrency(order?.tax_amount)}</span>
+                                        <span className="text-heading dark:text-white">{format(order?.tax_amount)}</span>
                                     </div>
                                 )}
                                 {order?.discount_amount > 0 && (
                                     <div className="flex justify-between text-sm text-green-600">
                                         <span>Discount</span>
-                                        <span>-{formatCurrency(order?.discount_amount)}</span>
+                                        <span>-{format(order?.discount_amount)}</span>
                                     </div>
                                 )}
                                 <div className="border-t dark:border-white/10 pt-3">
                                     <div className="flex justify-between">
                                         <span className="font-semibold text-heading dark:text-white">Total</span>
-                                        <span className="text-xl font-bold text-brand">{formatCurrency(order?.total)}</span>
+                                        <span className="text-xl font-bold text-brand">{format(order?.total)}</span>
                                     </div>
                                 </div>
                             </div>
@@ -297,15 +294,15 @@ export default function Show({ order, statuses, itemStatuses }) {
                                     <div className="grid grid-cols-3 gap-4">
                                         <div className="text-center p-3 bg-gray-50 dark:bg-dark-body rounded-lg">
                                             <p className="text-xs text-body mb-1">Seller Payout</p>
-                                            <p className="font-semibold text-heading dark:text-white">{formatCurrency(order.revenue.seller_payout)}</p>
+                                            <p className="font-semibold text-heading dark:text-white">{format(order.revenue.seller_payout)}</p>
                                         </div>
                                         <div className="text-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
                                             <p className="text-xs text-green-700 mb-1">Platform Revenue</p>
-                                            <p className="font-semibold text-green-700">{formatCurrency(order.revenue.platform_revenue)}</p>
+                                            <p className="font-semibold text-green-700">{format(order.revenue.platform_revenue)}</p>
                                         </div>
                                         <div className="text-center p-3 bg-brand/10 rounded-lg">
                                             <p className="text-xs text-brand mb-1">Total</p>
-                                            <p className="font-semibold text-brand">{formatCurrency(order.revenue.total)}</p>
+                                            <p className="font-semibold text-brand">{format(order.revenue.total)}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -521,7 +518,7 @@ export default function Show({ order, statuses, itemStatuses }) {
                                     }}
                                     className="w-full px-4 py-2.5 bg-gray-100 dark:bg-dark-body border-0 rounded-lg text-sm focus:ring-2 focus:ring-brand"
                                 >
-                                    <option value="full">Full Refund ({formatCurrency(order?.total)})</option>
+                                    <option value="full">Full Refund ({format(order?.total)})</option>
                                     <option value="partial">Partial Refund</option>
                                 </select>
                             </div>

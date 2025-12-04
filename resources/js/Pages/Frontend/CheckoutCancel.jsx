@@ -6,7 +6,7 @@ export default function CheckoutCancel({ order_number, message }) {
         <FrontendLayout>
             <Head title="Payment Cancelled" />
 
-            <div className="max-w-container mx-auto px-4 py-12">
+            <div className="container mx-auto px-4 py-12">
                 <div className="max-w-2xl mx-auto text-center">
                     {/* Cancel Icon */}
                     <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -34,7 +34,7 @@ export default function CheckoutCancel({ order_number, message }) {
                             className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-brand hover:bg-brand-dark text-white rounded-lg font-semibold transition-colors"
                         >
                             <i className="fi-rs-shopping-cart"></i>
-                            Return to Cart
+                            Return to Basket
                         </Link>
                         <Link
                             href={route('shop')}

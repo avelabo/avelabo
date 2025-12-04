@@ -1,18 +1,16 @@
 import { useState } from 'react';
-import { Head, Link, useForm, router } from '@inertiajs/react';
+import { Head, Link, useForm, router, usePage } from '@inertiajs/react';
 import FrontendLayout from '@/Layouts/FrontendLayout';
+import { formatCurrency, getDefaultCurrency } from '@/utils/currency';
 
 export default function Checkout({ cart, paymentGateways = [], countries = [], savedAddresses = [], user }) {
+    const { props, flash } = usePage().props;
+    const pageProps = usePage().props;
+    const currency = getDefaultCurrency(pageProps);
+    const format = (amount) => formatCurrency(amount, currency);
+
     const [showLoginForm, setShowLoginForm] = useState(false);
     const [showShippingAddress, setShowShippingAddress] = useState(false);
-
-    const formatCurrency = (amount) => {
-        return new Intl.NumberFormat('en-MW', {
-            style: 'currency',
-            currency: 'MWK',
-            minimumFractionDigits: 0,
-        }).format(amount || 0);
-    };
 
     const { data, setData, post, processing, errors } = useForm({
         billing: {
@@ -60,7 +58,17 @@ export default function Checkout({ cart, paymentGateways = [], countries = [], s
 
     const handleCheckoutSubmit = (e) => {
         e.preventDefault();
-        post(route('checkout.process'));
+        post(route('checkout.process'), {
+            preserveScroll: true,
+            onError: (errors) => {
+                console.error('Checkout validation errors:', errors);
+                // Scroll to top to show errors
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            },
+            onSuccess: () => {
+                console.log('Checkout submitted successfully');
+            },
+        });
     };
 
     const handleBillingChange = (field, value) => {
@@ -85,13 +93,13 @@ export default function Checkout({ cart, paymentGateways = [], countries = [], s
 
             {/* Breadcrumb */}
             <div className="bg-grey-9 py-4">
-                <div className="max-w-container mx-auto px-4">
+                <div className="container mx-auto px-4">
                     <div className="flex items-center gap-2 text-sm">
                         <Link href="/" className="text-brand hover:text-brand-dark flex items-center gap-1">
                             <i className="fi-rs-home"></i> Home
                         </Link>
                         <span className="text-muted">-</span>
-                        <Link href={route('cart')} className="text-muted hover:text-brand">Cart</Link>
+                        <Link href={route('cart')} className="text-muted hover:text-brand">Basket</Link>
                         <span className="text-muted">-</span>
                         <span className="text-body">Checkout</span>
                     </div>
@@ -100,22 +108,50 @@ export default function Checkout({ cart, paymentGateways = [], countries = [], s
 
             {/* Checkout Section */}
             <section className="py-12">
-                <div className="max-w-container mx-auto px-4">
+                <div className="container mx-auto px-4">
                     {/* Page Header */}
                     <div className="mb-10">
                         <h1 className="text-3xl font-bold text-heading font-quicksand mb-2">Checkout</h1>
                         <p className="text-body">
-                            There are <span className="text-brand font-semibold">{itemCount}</span> products in your cart
+                            There are <span className="text-brand font-semibold">{itemCount}</span> products in your basket
                         </p>
                     </div>
 
-                    {/* Error Display */}
+                    {/* Flash Messages */}
+                    {pageProps.flash?.error && (
+                        <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+                            <div className="flex items-center gap-2">
+                                <svg className="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                                </svg>
+                                <span className="text-red-700 font-medium">{pageProps.flash.error}</span>
+                            </div>
+                        </div>
+                    )}
+
+                    {pageProps.flash?.success && (
+                        <div className="mb-6 bg-green-50 border border-green-200 rounded-lg p-4">
+                            <div className="flex items-center gap-2">
+                                <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                </svg>
+                                <span className="text-green-700 font-medium">{pageProps.flash.success}</span>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Validation Error Display */}
                     {Object.keys(errors).length > 0 && (
                         <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
-                            <h4 className="text-red-700 font-semibold mb-2">Please fix the following errors:</h4>
-                            <ul className="list-disc list-inside text-red-600 text-sm">
+                            <h4 className="text-red-700 font-semibold mb-2 flex items-center gap-2">
+                                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                </svg>
+                                Please fix the following errors:
+                            </h4>
+                            <ul className="list-disc list-inside text-red-600 text-sm space-y-1">
                                 {Object.entries(errors).map(([key, value]) => (
-                                    <li key={key}>{value}</li>
+                                    <li key={key}>{typeof value === 'string' ? value : JSON.stringify(value)}</li>
                                 ))}
                             </ul>
                         </div>
@@ -446,7 +482,7 @@ export default function Checkout({ cart, paymentGateways = [], countries = [], s
                                                     )}
                                                     <p className="text-xs text-muted">Qty: {item.quantity}</p>
                                                 </div>
-                                                <span className="text-brand font-bold">{formatCurrency(item.line_total)}</span>
+                                                <span className="text-brand font-bold">{format(item.line_total)}</span>
                                             </div>
                                         ))}
                                     </div>
@@ -455,15 +491,15 @@ export default function Checkout({ cart, paymentGateways = [], countries = [], s
                                     <div className="space-y-3 border-t border-border pt-4">
                                         <div className="flex justify-between">
                                             <span className="text-body">Subtotal</span>
-                                            <span className="font-semibold">{formatCurrency(cart?.subtotal)}</span>
+                                            <span className="font-semibold">{format(cart?.subtotal)}</span>
                                         </div>
                                         <div className="flex justify-between">
                                             <span className="text-body">Shipping</span>
-                                            <span className="font-semibold">{cart?.shipping === 0 ? 'Free' : formatCurrency(cart?.shipping)}</span>
+                                            <span className="font-semibold">{cart?.shipping === 0 ? 'Free' : format(cart?.shipping)}</span>
                                         </div>
                                         <div className="flex justify-between text-lg border-t border-border pt-3">
                                             <span className="font-bold text-heading">Total</span>
-                                            <span className="font-bold text-brand">{formatCurrency(cart?.total)}</span>
+                                            <span className="font-bold text-brand">{format(cart?.total)}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -473,35 +509,154 @@ export default function Checkout({ cart, paymentGateways = [], countries = [], s
                                     <h4 className="text-xl font-bold text-heading font-quicksand mb-6">Payment Method</h4>
 
                                     {/* Payment Options */}
-                                    <div className="space-y-3 mb-6">
-                                        {paymentGateways.map((gateway) => (
-                                            <label
-                                                key={gateway.id}
-                                                className={`flex items-center gap-3 p-4 rounded-lg border cursor-pointer transition-colors ${
-                                                    data.payment_gateway_id === gateway.id
-                                                        ? 'border-brand bg-brand/5'
-                                                        : 'border-border hover:border-brand/50'
-                                                }`}
-                                            >
-                                                <input
-                                                    type="radio"
-                                                    name="payment_gateway_id"
-                                                    value={gateway.id}
-                                                    checked={data.payment_gateway_id === gateway.id}
-                                                    onChange={(e) => setData('payment_gateway_id', parseInt(e.target.value))}
-                                                    className="w-4 h-4 accent-brand"
-                                                />
-                                                <div className="flex-1">
-                                                    <span className="font-semibold text-heading">{gateway.display_name}</span>
-                                                    {gateway.description && (
-                                                        <p className="text-xs text-muted mt-1">{gateway.description}</p>
-                                                    )}
-                                                </div>
-                                                {gateway.logo && (
-                                                    <img src={gateway.logo} alt={gateway.name} className="h-8" />
-                                                )}
-                                            </label>
-                                        ))}
+                                    <div className="space-y-4 mb-6">
+                                        {paymentGateways.map((gateway) => {
+                                            // Define payment method details based on gateway
+                                            const getPaymentDetails = () => {
+                                                switch (gateway.slug || gateway.name) {
+                                                    case 'onekhusa':
+                                                        return {
+                                                            title: 'Pay with OneKhusa',
+                                                            subtitle: 'Mobile Money & Card Payments',
+                                                            fee: '1% transaction fee',
+                                                            bgColor: 'bg-[#0078d4]',
+                                                            borderColor: 'border-[#0078d4]',
+                                                            methods: [
+                                                                { name: 'Airtel Money' },
+                                                                { name: 'TNM Mpamba' },
+                                                                { name: 'Visa' },
+                                                                { name: 'Mastercard' },
+                                                            ]
+                                                        };
+                                                    case 'paychangu':
+                                                        return {
+                                                            title: 'Pay using PayChangu',
+                                                            subtitle: 'Mobile Money & Card Payments',
+                                                            fee: '4% transaction fee',
+                                                            bgColor: 'bg-[#00aab3]',
+                                                            borderColor: 'border-[#00aab3]',
+                                                            methods: [
+                                                                { name: 'Airtel Money' },
+                                                                { name: 'TNM Mpamba' },
+                                                                { name: 'Visa' },
+                                                                { name: 'Mastercard' },
+                                                            ]
+                                                        };
+                                                    case 'cash-on-delivery':
+                                                    case 'cod':
+                                                        return {
+                                                            title: 'Cash on Delivery',
+                                                            subtitle: 'Pay when your order arrives',
+                                                            fee: null,
+                                                            bgColor: 'bg-gray-100',
+                                                            borderColor: 'border-gray-300',
+                                                            textColor: 'text-heading',
+                                                            methods: [
+                                                                { name: 'Cash' },
+                                                            ]
+                                                        };
+                                                    default:
+                                                        return {
+                                                            title: gateway.display_name,
+                                                            subtitle: gateway.description,
+                                                            fee: null,
+                                                            bgColor: 'bg-gray-100',
+                                                            borderColor: 'border-gray-300',
+                                                            methods: []
+                                                        };
+                                                }
+                                            };
+
+                                            const details = getPaymentDetails();
+                                            const isSelected = data.payment_gateway_id === gateway.id;
+                                            const isCOD = gateway.slug === 'cash-on-delivery' || gateway.name === 'cod';
+
+                                            return (
+                                                <label
+                                                    key={gateway.id}
+                                                    className={`block p-5 rounded-xl cursor-pointer transition-all ${
+                                                        isCOD
+                                                            ? `${details.bgColor} ${isSelected ? 'ring-2 ring-gray-400 shadow-md' : 'hover:shadow-md'}`
+                                                            : `${details.bgColor} ${isSelected ? 'ring-2 ring-white/50 shadow-lg' : 'hover:shadow-lg'}`
+                                                    }`}
+                                                >
+                                                    <div className="flex items-start gap-3">
+                                                        <input
+                                                            type="radio"
+                                                            name="payment_gateway_id"
+                                                            value={gateway.id}
+                                                            checked={isSelected}
+                                                            onChange={(e) => setData('payment_gateway_id', parseInt(e.target.value))}
+                                                            className={`w-4 h-4 mt-1 ${isCOD ? 'accent-gray-600' : 'accent-white'}`}
+                                                        />
+                                                        <div className="flex-1">
+                                                            <div className="flex items-center justify-between mb-1">
+                                                                <span className={`font-bold text-lg ${isCOD ? 'text-heading' : 'text-white'}`}>
+                                                                    {details.title}
+                                                                </span>
+                                                                {gateway.logo && (
+                                                                    <img src={gateway.logo} alt={gateway.name} className="h-6" />
+                                                                )}
+                                                            </div>
+                                                            <div className="flex items-center gap-2 mb-3">
+                                                                <p className={`text-sm ${isCOD ? 'text-body' : 'text-white/80'}`}>
+                                                                    {details.subtitle}
+                                                                </p>
+                                                                {details.fee && (
+                                                                    <span className={`text-xs font-semibold px-2 py-0.5 rounded ${
+                                                                        isCOD ? 'bg-gray-200 text-gray-700' : 'bg-white/20 text-white'
+                                                                    }`}>
+                                                                        {details.fee}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+
+                                                            {/* Payment Method Badges */}
+                                                            {details.methods.length > 0 && (
+                                                                <div className="flex flex-wrap gap-2">
+                                                                    {details.methods.map((method, idx) => (
+                                                                        <span
+                                                                            key={idx}
+                                                                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium ${
+                                                                                isCOD ? 'bg-white text-gray-700 shadow-sm' : 'bg-white/20 text-white'
+                                                                            }`}
+                                                                        >
+                                                                            {method.name === 'Visa' && (
+                                                                                <svg className="w-4 h-3" viewBox="0 0 50 16" fill="currentColor">
+                                                                                    <path d="M19.5 1.5L17 14.5H14L16.5 1.5H19.5ZM32.5 9.5L34 4.5L35 9.5H32.5ZM36.5 14.5H39.5L37 1.5H34.5C33.5 1.5 33 2 32.5 3L27.5 14.5H31L31.5 13H35.5L36 14.5H36.5ZM28 10C28 6 22.5 5.5 22.5 4C22.5 3.5 23 3 24 3C25 3 26.5 3.5 27 3.5L27.5 1C27 1 25.5 0.5 24 0.5C21 0.5 19 2 19 4.5C19 8 24.5 8.5 24.5 10.5C24.5 11 24 11.5 23 11.5C21.5 11.5 20 11 19.5 10.5L19 13.5C19.5 13.5 21.5 14.5 23.5 14.5C26.5 14.5 28 13 28 10ZM13 1.5L9 14.5H5.5L3.5 4C3.5 3.5 3 3 2.5 2.5C1.5 2 0 1.5 0 1.5L0 1H5.5C6.5 1 7 1.5 7.5 2.5L8.5 9.5L12 1.5H13Z"/>
+                                                                                </svg>
+                                                                            )}
+                                                                            {method.name === 'Mastercard' && (
+                                                                                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                                                                                    <circle cx="8" cy="12" r="6" fillOpacity="0.8"/>
+                                                                                    <circle cx="16" cy="12" r="6" fillOpacity="0.8"/>
+                                                                                </svg>
+                                                                            )}
+                                                                            {method.name === 'Airtel Money' && (
+                                                                                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                                                                                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/>
+                                                                                </svg>
+                                                                            )}
+                                                                            {method.name === 'TNM Mpamba' && (
+                                                                                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                                                                                    <path d="M17 1.01L7 1c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-1.99-2-1.99zM17 19H7V5h10v14z"/>
+                                                                                </svg>
+                                                                            )}
+                                                                            {method.name === 'Cash' && (
+                                                                                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                                                                                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.41 16.09V20h-2.67v-1.93c-1.71-.36-3.16-1.46-3.27-3.4h1.96c.1 1.05.82 1.87 2.65 1.87 1.96 0 2.4-.98 2.4-1.59 0-.83-.44-1.61-2.67-2.14-2.48-.6-4.18-1.62-4.18-3.67 0-1.72 1.39-2.84 3.11-3.21V4h2.67v1.95c1.86.45 2.79 1.86 2.85 3.39H14.3c-.05-1.11-.64-1.87-2.22-1.87-1.5 0-2.4.68-2.4 1.64 0 .84.65 1.39 2.67 1.91s4.18 1.39 4.18 3.91c-.01 1.83-1.38 2.83-3.12 3.16z"/>
+                                                                                </svg>
+                                                                            )}
+                                                                            {method.name}
+                                                                        </span>
+                                                                    ))}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </label>
+                                            );
+                                        })}
 
                                         {paymentGateways.length === 0 && (
                                             <p className="text-muted text-sm">No payment methods available.</p>

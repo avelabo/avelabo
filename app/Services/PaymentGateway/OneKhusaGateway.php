@@ -18,6 +18,8 @@ class OneKhusaGateway implements PaymentGatewayInterface
     {
         $this->apiKey = config('services.onekhusa.api_key');
         $this->apiSecret = config('services.onekhusa.api_secret');
+        $this->organizationId = config('services.onekhusa.organization_id');
+        $this->merchantAccountNumber = config('services.onekhusa.merchant_account_no');
         $this->baseUrl = config('services.onekhusa.base_url', 'https://api.onekhusa.com');
     }
 
@@ -262,9 +264,19 @@ class OneKhusaGateway implements PaymentGatewayInterface
         }
 
         try {
+
+            Log::debug('OneKhusa authentication attempt', [
+                'apiKey' => $this->apiKey,
+                'apiSecret' => $this->apiSecret,
+                'organisationId' => $this->organizationId,
+                'merchantAccountNumber' => $this->merchantAccountNumber,
+            ]);
+
             $response = Http::post($this->baseUrl . '/account/getAccessToken', [
-                'api_key' => $this->apiKey,
-                'api_secret' => $this->apiSecret,
+                'apiKey' => $this->apiKey,
+                'apiSecret' => $this->apiSecret,
+                'organisationId' => $this->organizationId,
+                'merchantAccountNumber' => $this->merchantAccountNumber,
             ]);
 
             if ($response->successful()) {
@@ -276,6 +288,11 @@ class OneKhusaGateway implements PaymentGatewayInterface
                     Cache::put($cacheKey, $this->accessToken, now()->addMinutes(50));
                 }
             } else {
+                Log::error('OneKhusa authentication failed', [
+                    'status' => $response->status(),
+                    'body' => $response->json() ?? $response->body(),
+                ]);
+
                 throw new \Exception('Failed to authenticate with OneKhusa');
             }
         } catch (\Exception $e) {

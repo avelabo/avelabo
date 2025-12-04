@@ -50,6 +50,8 @@ return [
     'onekhusa' => [
         'api_key' => env('ONEKHUSA_API_KEY'),
         'api_secret' => env('ONEKHUSA_API_SECRET'),
+        'organization_id' => env('ONEKHUSA_ORGANIZATION_ID'),
+        'merchant_account_no' => env('ONEKHUSA_MERCHANT_ACCOUNT_NO'),
         'base_url' => env('ONEKHUSA_BASE_URL', 'https://api.onekhusa.com'),
     ],
 

@@ -1,5 +1,7 @@
 @import 'tailwindcss';
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 @source '../**/*.blade.php';
@@ -11,10 +13,10 @@
     --font-body: 'Lato', ui-sans-serif, system-ui, sans-serif;
 
     /* Brand Colors */
-    --color-brand: #3BB77E;
-    --color-brand-dark: #29A56C;
-    --color-brand-light: #DEF9EC;
-    --color-brand-2: #FDC040;
+    --color-brand: #222222;
+    --color-brand-dark: #111111;
+    --color-brand-light: #F5F5F5;
+    --color-brand-2: #FBB61A;
 
     /* Text Colors */
     --color-heading: #253D4E;
@@ -27,7 +29,7 @@
 
     /* Status Colors */
     --color-success: #3BB77E;
-    --color-warning: #FDC040;
+    --color-warning: #FBB61A;
     --color-danger: #FD6E6E;
     --color-info: #50A5F1;
 
@@ -54,10 +56,18 @@ body {
     color: var(--color-body);
 }
 
+body.dark {
+    color: #a6b0cf;
+}
+
 h1, h2, h3, h4, h5, h6 {
     font-family: 'Quicksand', sans-serif;
     color: var(--color-heading);
     font-weight: 700;
+}
+
+.dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6 {
+    color: #ffffff;
 }
 
 /* Material Icons */
@@ -158,7 +168,7 @@ h1, h2, h3, h4, h5, h6 {
 
 .badge-soft-primary {
     color: var(--color-brand);
-    background-color: rgba(59, 183, 126, 0.18);
+    background-color: rgba(34, 34, 34, 0.18);
 }
 
 /* Progress Bar */
@@ -167,6 +177,10 @@ h1, h2, h3, h4, h5, h6 {
     border-radius: 4px;
     background-color: #e9ecef;
     overflow: hidden;
+}
+
+.dark .progress {
+    background-color: #32394e;
 }
 
 .progress-bar {
@@ -223,6 +237,18 @@ h1, h2, h3, h4, h5, h6 {
 
 ::-webkit-scrollbar-thumb:hover {
     background: #a8a8a8;
+}
+
+.dark ::-webkit-scrollbar-track {
+    background: #2a3042;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+    background: #495057;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+    background: #6c757d;
 }
 
 /* Admin Sidebar */
@@ -305,7 +331,11 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Table Styles */
 .table-hover tbody tr:hover {
-    background-color: rgba(59, 183, 126, 0.05);
+    background-color: rgba(34, 34, 34, 0.05);
+}
+
+.dark .table-hover tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.05);
 }
 
 /* Input Focus */
@@ -313,7 +343,14 @@ input:focus,
 select:focus,
 textarea:focus {
     border-color: var(--color-brand);
-    box-shadow: 0 0 0 3px rgba(59, 183, 126, 0.1);
+    box-shadow: 0 0 0 3px rgba(34, 34, 34, 0.1);
+}
+
+.dark input:focus,
+.dark select:focus,
+.dark textarea:focus {
+    border-color: #FBB61A;
+    box-shadow: 0 0 0 3px rgba(251, 182, 26, 0.15);
 }
 
 /* Button Hover Effects */
@@ -355,6 +392,7 @@ textarea:focus {
 .bg-body-color { background-color: var(--color-body); }
 .bg-admin-sidebar { background-color: var(--color-admin-sidebar); }
 .bg-admin-body { background-color: var(--color-admin-body); }
+.bg-admin-card { background-color: var(--color-admin-card); }
 .bg-dark-body { background-color: var(--color-dark-body); }
 .bg-dark-card { background-color: var(--color-dark-card); }
 .bg-dark-sidebar { background-color: var(--color-dark-sidebar); }
@@ -369,6 +407,12 @@ textarea:focus {
 .text-warning { color: var(--color-warning); }
 .text-danger { color: var(--color-danger); }
 .text-info { color: var(--color-info); }
+
+/* Dark mode text variants */
+.dark .text-heading { color: #ffffff; }
+.dark .text-body { color: #a6b0cf; }
+.dark .text-muted { color: #8795ab; }
+.dark .text-brand { color: #FBB61A; }
 
 .border-brand { border-color: var(--color-brand); }
 

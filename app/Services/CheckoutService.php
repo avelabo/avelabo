@@ -153,8 +153,11 @@ class CheckoutService
             // Create order items
             $this->createOrderItems($order, $cart);
 
-            // Clear cart after order
-            $this->cartService->clearCart($cart);
+            // Store cart ID in session for clearing after successful payment
+            session(['pending_order_cart_id' => $cart->id]);
+
+            // NOTE: Cart is NOT cleared here - it will be cleared after successful payment
+            // This allows customers to retry payment or go back to cart if payment fails
 
             return $order->fresh(['items', 'user', 'shippingAddress', 'billingAddress']);
         });

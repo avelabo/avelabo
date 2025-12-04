@@ -41,7 +41,7 @@ export default function AdminHeader({ onMenuToggle, onDarkModeToggle, darkMode }
                         <img src="/images/admin/theme/flag-us.png" alt="EN" className="w-5 h-5 rounded-full" />
                         <select className="bg-transparent border-none text-sm cursor-pointer focus:ring-0">
                             <option>English</option>
-                            <option>French</option>
+                            <option>Chichewa</option>
                         </select>
                     </div>
 

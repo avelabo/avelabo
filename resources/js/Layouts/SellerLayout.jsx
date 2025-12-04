@@ -29,7 +29,7 @@ export default function SellerLayout({ children, title }) {
                     {/* Logo */}
                     <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200 dark:border-gray-700">
                         <Link href={route('seller.dashboard')} className="flex items-center">
-                            <img src="/assets/imgs/theme/logo.svg" className="h-8" alt="Avelabo Seller" />
+                            <img src="/images/logo/logo-web-small.png" className="h-8" alt="Avelabo Seller" />
                         </Link>
                         <button
                             className="lg:hidden p-2 rounded-md text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"

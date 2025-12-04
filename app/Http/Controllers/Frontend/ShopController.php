@@ -127,37 +127,44 @@ class ShopController extends Controller
                 ] : null,
                 'seller' => $product->seller ? [
                     'id' => $product->seller->id,
-                    'name' => $product->seller->shop_name,
+                    'name' => $product->seller->display_name,
+                    'has_storefront' => $product->seller->has_storefront,
                 ] : null,
             ];
         });
 
-        // Get categories for sidebar
-        $categories = Category::withCount(['products' => function ($query) {
-                $query->active()->inStock();
-            }])
-            ->with(['children' => function ($query) {
-                $query->withCount(['products' => function ($q) {
-                    $q->active()->inStock();
-                }])->active()->ordered();
+        // Get categories for sidebar with active product counts
+        $categories = Category::with(['children' => function ($query) {
+                $query->active()->ordered();
             }])
             ->whereNull('parent_id')
             ->active()
             ->ordered()
             ->get()
             ->map(function ($category) {
+                // Count active, in-stock products for this category
+                $productCount = Product::where('category_id', $category->id)
+                    ->active()
+                    ->inStock()
+                    ->count();
+
                 return [
                     'id' => $category->id,
                     'name' => $category->name,
                     'slug' => $category->slug,
                     'icon' => $category->icon,
-                    'products_count' => $category->products_count,
+                    'products_count' => $productCount,
                     'children' => $category->children->map(function ($child) {
+                        $childProductCount = Product::where('category_id', $child->id)
+                            ->active()
+                            ->inStock()
+                            ->count();
+
                         return [
                             'id' => $child->id,
                             'name' => $child->name,
                             'slug' => $child->slug,
-                            'products_count' => $child->products_count,
+                            'products_count' => $childProductCount,
                         ];
                     }),
                 ];
@@ -168,9 +175,10 @@ class ShopController extends Controller
             ->withCount(['products' => function ($query) {
                 $query->active()->inStock();
             }])
-            ->having('products_count', '>', 0)
             ->orderBy('name')
-            ->get(['id', 'name', 'slug']);
+            ->get(['id', 'name', 'slug'])
+            ->filter(fn ($brand) => $brand->products_count > 0)
+            ->values();
 
         // Get price range
         $priceRange = [
@@ -302,9 +310,12 @@ class ShopController extends Controller
             ] : null,
             'seller' => $product->seller ? [
                 'id' => $product->seller->id,
-                'name' => $product->seller->shop_name,
-                'description' => $product->seller->description,
-                'logo' => $product->seller->logo,
+                'name' => $product->seller->display_name,
+                'slug' => $product->seller->slug,
+                'description' => $product->seller->show_seller_name ? $product->seller->description : null,
+                'logo' => $product->seller->show_seller_name ? $product->seller->logo : null,
+                'has_storefront' => $product->seller->has_storefront,
+                'show_seller_name' => $product->seller->show_seller_name,
             ] : null,
             'variants' => $product->variants->map(function ($variant) {
                 return [

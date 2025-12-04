@@ -47,7 +47,7 @@ export default function MobileMenu({ isOpen, onClose }) {
                 {/* Header */}
                 <div className="flex items-center justify-between p-4 border-b">
                     <Link href="/">
-                        <img src="/images/frontend/theme/logo.svg" alt="Nest" className="h-8" />
+                        <img src="/images/logo/logo-web-small.png" alt="Avelabo" className="h-8" />
                     </Link>
                     <button onClick={onClose} className="p-2 hover:text-brand">
                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

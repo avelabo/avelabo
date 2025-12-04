@@ -2,6 +2,11 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Cart;
+use App\Models\Category;
+use App\Models\Currency;
+use App\Models\Setting;
+use App\Models\Wishlist;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 use Tighten\Ziggy\Ziggy;
@@ -50,6 +55,53 @@ class HandleInertiaRequests extends Middleware
                 ...(new Ziggy)->toArray(),
                 'location' => $request->url(),
             ],
+            'currencies' => fn () => [
+                'default' => Currency::where('is_default', true)->first()?->only(['code', 'symbol', 'symbol_before', 'decimal_places']) ?? [
+                    'code' => 'MWK',
+                    'symbol' => 'MK',
+                    'symbol_before' => true,
+                    'decimal_places' => 2,
+                ],
+                'active' => Currency::where('is_active', true)->get(['code', 'symbol', 'name', 'symbol_before', 'decimal_places']),
+                'selected' => $request->session()->get('currency'),
+            ],
+            'counts' => fn () => [
+                'cart' => $this->getCartCount($request),
+                'wishlist' => $this->getWishlistCount($request),
+                'compare' => count($request->session()->get('compare', [])),
+            ],
+            'headerCategories' => fn () => Category::active()
+                ->root()
+                ->ordered()
+                ->with(['children' => function ($query) {
+                    $query->active()->ordered()->limit(10);
+                }])
+                ->limit(12)
+                ->get(['id', 'name', 'slug', 'icon']),
+            'siteSettings' => fn () => Setting::public()->pluck('value', 'key'),
         ];
+    }
+
+    private function getCartCount(Request $request): int
+    {
+        $userId = $request->user()?->id;
+        $sessionId = $request->session()->getId();
+
+        $cart = Cart::active()
+            ->when($userId, fn ($q) => $q->forUser($userId))
+            ->when(!$userId, fn ($q) => $q->forSession($sessionId))
+            ->with('items')
+            ->first();
+
+        return $cart ? $cart->items->sum('quantity') : 0;
+    }
+
+    private function getWishlistCount(Request $request): int
+    {
+        if (!$request->user()) {
+            return count($request->session()->get('wishlist', []));
+        }
+
+        return Wishlist::where('user_id', $request->user()->id)->count();
     }
 }

@@ -31,7 +31,7 @@ class SellerMarkupTemplate extends Model
 
     public function ranges(): HasMany
     {
-        return $this->hasMany(SellerMarkupTemplateRange::class);
+        return $this->hasMany(SellerMarkupTemplateRange::class, 'template_id');
     }
 
     public function sellers(): HasMany

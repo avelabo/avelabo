@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Frontend;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\Slider;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -15,6 +16,11 @@ class HomeController extends Controller
      */
     public function index()
     {
+        // Get active sliders
+        $sliders = Slider::active()
+            ->ordered()
+            ->get(['id', 'title', 'subtitle', 'description', 'image', 'button_text', 'button_link']);
+
         // Featured products (hot deals, featured items)
         $featuredProducts = Product::with(['category:id,name,slug', 'images'])
             ->active()
@@ -101,6 +107,7 @@ class HomeController extends Controller
             ->map(fn($product) => $this->transformProduct($product, true));
 
         return Inertia::render('Frontend/Home', [
+            'sliders' => $sliders,
             'featuredProducts' => $featuredProducts,
             'popularProducts' => $popularProducts,
             'newProducts' => $newProducts,

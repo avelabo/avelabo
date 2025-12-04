@@ -82,6 +82,8 @@ class SellerController extends Controller
             'description' => ['nullable', 'string', 'max:1000'],
             'commission_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'is_featured' => ['boolean'],
+            'show_seller_name' => ['boolean'],
+            'has_storefront' => ['boolean'],
         ]);
 
         $seller->update($validated);

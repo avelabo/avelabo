@@ -1,8 +1,21 @@
-import { Link } from '@inertiajs/react';
+import { Link, usePage, router } from '@inertiajs/react';
 import { useState } from 'react';
 
 export default function Header({ isSticky, onMobileMenuToggle }) {
+    const { currencies, counts, headerCategories, siteSettings } = usePage().props;
     const [categoriesOpen, setCategoriesOpen] = useState(false);
+
+    const selectedCurrency = currencies?.selected || currencies?.default;
+    const activeCurrencies = currencies?.active || [];
+
+    const handleCurrencyChange = (code) => {
+        router.post(route('currency.set'), { code }, {
+            preserveScroll: true,
+            preserveState: true,
+        });
+    };
+
+    const categories = headerCategories || [];
 
     return (
         <>
@@ -11,24 +24,30 @@ export default function Header({ isSticky, onMobileMenuToggle }) {
                 <div className="container mx-auto px-4">
                     <div className="flex items-center justify-between py-2 text-sm">
                         <div className="flex items-center gap-6 text-body">
-                            <span>About Us</span>
+                            <Link href="/about" className="hover:text-brand transition-colors">About Us</Link>
                             <span>|</span>
-                            <span>My Account</span>
+                            <Link href="/account" className="hover:text-brand transition-colors">My Account</Link>
                             <span>|</span>
-                            <span>Wishlist</span>
+                            <Link href="/wishlist" className="hover:text-brand transition-colors">Wishlist</Link>
                             <span>|</span>
-                            <span>Order Tracking</span>
+                            <Link href="/account" className="hover:text-brand transition-colors">Order Tracking</Link>
                         </div>
                         <div className="flex items-center gap-4 text-body">
-                            <span>Need help? Call Us: <strong className="text-brand">1900 - 888</strong></span>
+                            <span>Need help? Call Us: <strong className="text-brand">{siteSettings?.site_phone || '+265 999 123 456'}</strong></span>
                             <span>|</span>
                             <select className="bg-transparent border-none text-sm cursor-pointer">
                                 <option>English</option>
-                                <option>French</option>
                             </select>
-                            <select className="bg-transparent border-none text-sm cursor-pointer">
-                                <option>USD</option>
-                                <option>EUR</option>
+                            <select
+                                className="bg-transparent border-none text-sm cursor-pointer"
+                                value={selectedCurrency?.code || 'MWK'}
+                                onChange={(e) => handleCurrencyChange(e.target.value)}
+                            >
+                                {activeCurrencies.map((currency) => (
+                                    <option key={currency.code} value={currency.code}>
+                                        {currency.code}
+                                    </option>
+                                ))}
                             </select>
                         </div>
                     </div>
@@ -42,8 +61,8 @@ export default function Header({ isSticky, onMobileMenuToggle }) {
                         {/* Logo */}
                         <Link href="/" className="flex-shrink-0">
                             <img
-                                src="/images/frontend/theme/logo.svg"
-                                alt="Nest"
+                                src="/images/logo/logo-web-small.png"
+                                alt={siteSettings?.site_name || 'Avelabo'}
                                 className="h-10 lg:h-12"
                             />
                         </Link>
@@ -52,10 +71,12 @@ export default function Header({ isSticky, onMobileMenuToggle }) {
                         <div className="hidden lg:flex flex-1 max-w-2xl">
                             <div className="flex w-full">
                                 <select className="border border-r-0 border-gray-200 rounded-l-md px-4 py-3 bg-gray-50 text-sm">
-                                    <option>All Categories</option>
-                                    <option>Milks & Dairies</option>
-                                    <option>Wines & Alcohol</option>
-                                    <option>Fresh Seafood</option>
+                                    <option value="">All Categories</option>
+                                    {categories.map((category) => (
+                                        <option key={category.id} value={category.slug}>
+                                            {category.name}
+                                        </option>
+                                    ))}
                                 </select>
                                 <div className="relative flex-1">
                                     <input
@@ -76,7 +97,9 @@ export default function Header({ isSticky, onMobileMenuToggle }) {
                             <Link href="/compare" className="hidden lg:flex items-center gap-2 text-heading hover:text-brand transition-colors">
                                 <div className="relative">
                                     <img src="/images/frontend/theme/icons/icon-compare.svg" alt="Compare" className="w-6 h-6" />
-                                    <span className="absolute -top-2 -right-2 bg-brand text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">3</span>
+                                    <span className="absolute -top-2 -right-2 bg-brand text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                                        {counts?.compare || 0}
+                                    </span>
                                 </div>
                                 <span className="text-sm">Compare</span>
                             </Link>
@@ -85,18 +108,22 @@ export default function Header({ isSticky, onMobileMenuToggle }) {
                             <Link href="/wishlist" className="hidden lg:flex items-center gap-2 text-heading hover:text-brand transition-colors">
                                 <div className="relative">
                                     <img src="/images/frontend/theme/icons/icon-heart.svg" alt="Wishlist" className="w-6 h-6" />
-                                    <span className="absolute -top-2 -right-2 bg-brand text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">6</span>
+                                    <span className="absolute -top-2 -right-2 bg-brand text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                                        {counts?.wishlist || 0}
+                                    </span>
                                 </div>
                                 <span className="text-sm">Wishlist</span>
                             </Link>
 
-                            {/* Cart */}
+                            {/* Basket */}
                             <Link href="/cart" className="flex items-center gap-2 text-heading hover:text-brand transition-colors">
                                 <div className="relative">
-                                    <img src="/images/frontend/theme/icons/icon-cart.svg" alt="Cart" className="w-6 h-6" />
-                                    <span className="absolute -top-2 -right-2 bg-brand text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">2</span>
+                                    <img src="/images/frontend/theme/icons/icon-cart.svg" alt="Basket" className="w-6 h-6" />
+                                    <span className="absolute -top-2 -right-2 bg-brand text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                                        {counts?.cart || 0}
+                                    </span>
                                 </div>
-                                <span className="hidden lg:block text-sm">Cart</span>
+                                <span className="hidden lg:block text-sm">Basket</span>
                             </Link>
 
                             {/* Account */}
@@ -139,17 +166,28 @@ export default function Header({ isSticky, onMobileMenuToggle }) {
                             </button>
 
                             {categoriesOpen && (
-                                <div className="absolute top-full left-0 mt-1 w-64 bg-white rounded-lg shadow-dropdown z-50 py-4">
-                                    {['Milks and Dairies', 'Wines & Alcohol', 'Clothing & Beauty', 'Pet Foods & Toy', 'Fast food', 'Baking material', 'Vegetables', 'Fresh Seafood', 'Noodles & Rice', 'Ice cream'].map((category, index) => (
-                                        <Link
-                                            key={index}
-                                            href={`/shop?category=${category.toLowerCase().replace(/\s+/g, '-')}`}
-                                            className="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 transition-colors"
-                                        >
-                                            <img src={`/images/frontend/shop/cat-${index + 1}.png`} alt={category} className="w-8 h-8 object-contain" />
-                                            <span className="text-heading hover:text-brand">{category}</span>
-                                        </Link>
-                                    ))}
+                                <div className="absolute top-full left-0 mt-1 w-72 bg-white rounded-lg shadow-lg border border-gray-100 z-50 py-2 max-h-[400px] overflow-y-auto">
+                                    {categories.length > 0 ? (
+                                        categories.map((category) => (
+                                            <Link
+                                                key={category.id}
+                                                href={`/shop?category=${category.slug}`}
+                                                className="flex items-center gap-3 px-5 py-2.5 hover:bg-gray-50 transition-colors group"
+                                                onClick={() => setCategoriesOpen(false)}
+                                            >
+                                                <span className="w-8 h-8 flex items-center justify-center bg-gray-100 group-hover:bg-brand/10 rounded-lg flex-shrink-0">
+                                                    {category.icon ? (
+                                                        <span className="material-icons text-brand text-lg">{category.icon}</span>
+                                                    ) : (
+                                                        <span className="material-icons text-gray-400 text-lg">category</span>
+                                                    )}
+                                                </span>
+                                                <span className="text-heading group-hover:text-brand text-sm font-medium">{category.name}</span>
+                                            </Link>
+                                        ))
+                                    ) : (
+                                        <p className="px-5 py-3 text-body text-sm">No categories available</p>
+                                    )}
                                 </div>
                             )}
                         </div>
@@ -175,7 +213,7 @@ export default function Header({ isSticky, onMobileMenuToggle }) {
                         <div className="flex items-center gap-3 font-quicksand">
                             <img src="/images/frontend/theme/icons/icon-headphone.svg" alt="Support" className="w-10 h-10" />
                             <div>
-                                <span className="text-brand font-bold text-xl">1900 - 888</span>
+                                <span className="text-brand font-bold text-xl">{siteSettings?.site_phone || '+265 999 123 456'}</span>
                                 <p className="text-xs text-body font-lato">24/7 Support Center</p>
                             </div>
                         </div>

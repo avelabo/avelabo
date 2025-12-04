@@ -47,6 +47,9 @@ class DatabaseSeeder extends Seeder
 
             // Test products
             ProductSeeder::class,
+
+            // Homepage sliders
+            SliderSeeder::class,
         ]);
     }
 }
