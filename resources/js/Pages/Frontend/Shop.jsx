@@ -1,11 +1,14 @@
 import { useState } from 'react';
 import { Link, Head, router } from '@inertiajs/react';
 import FrontendLayout from '@/Layouts/FrontendLayout';
+import Toast from '@/Components/Frontend/Toast';
 
 export default function Shop({ products, categories, brands, priceRange, featuredProducts, currentCategory, filters }) {
     // Filter states
     const [localPriceRange, setLocalPriceRange] = useState(filters?.max_price || priceRange?.max || 500);
     const [showDropdown, setShowDropdown] = useState(null);
+    const [loadingProductId, setLoadingProductId] = useState(null);
+    const [showToast, setShowToast] = useState(false);
 
     const sortOptions = [
         { value: 'featured', label: 'Featured' },
@@ -50,8 +53,40 @@ export default function Shop({ products, categories, brands, priceRange, feature
 
     const hasActiveFilters = filters?.category || filters?.brand || filters?.min_price || filters?.max_price || filters?.search;
 
+    // Truncate price text to 8 characters
+    const truncatePrice = (text) => {
+        if (!text) return text;
+        const str = String(text);
+        return str.length > 8 ? str.substring(0, 8) + '...' : str;
+    };
+
+    const handleAddToBasket = (product) => {
+        setLoadingProductId(product.id);
+
+        router.post(route('cart.add'), {
+            product_id: product.id,
+            quantity: 1,
+        }, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setLoadingProductId(null);
+                setShowToast(true);
+            },
+            onError: () => {
+                setLoadingProductId(null);
+            },
+        });
+    };
+
     return (
         <FrontendLayout>
+            {showToast && (
+                <Toast
+                    message="Product added to cart!"
+                    type="success"
+                    onClose={() => setShowToast(false)}
+                />
+            )}
             <Head title={currentCategory ? currentCategory.name : 'Shop'} />
 
             {/* Page Header / Breadcrumb */}
@@ -301,7 +336,7 @@ export default function Shop({ products, categories, brands, priceRange, feature
                                             </Link>
                                             {(product.is_on_sale || product.is_featured) && (
                                                 <div className="absolute top-3 left-3">
-                                                    <span className={`${getBadgeClass(product)} text-white text-xs font-semibold px-2 py-1 rounded`}>
+                                                    <span className={`${getBadgeClass(product)} text-white text-xs font-semibold px-2 py-1 rounded max-w-[50px] truncate block`}>
                                                         {getBadgeText(product)}
                                                     </span>
                                                 </div>
@@ -326,7 +361,7 @@ export default function Shop({ products, categories, brands, priceRange, feature
                                                     {product.category.name}
                                                 </Link>
                                             )}
-                                            <h6 className="font-quicksand font-semibold text-heading text-sm mt-1 mb-2 line-clamp-2">
+                                            <h6 className="font-quicksand font-semibold text-heading text-sm mt-1 mb-2 line-clamp-2 h-10">
                                                 <Link href={route('product.detail', product.slug)} className="hover:text-brand">{product.name}</Link>
                                             </h6>
                                             {product.rating > 0 && (
@@ -342,18 +377,31 @@ export default function Shop({ products, categories, brands, priceRange, feature
                                             {product.seller && (
                                                 <p className="text-xs text-muted mb-3">By <span className="text-brand">{product.seller.name}</span></p>
                                             )}
-                                            <div className="flex items-center justify-between">
-                                                <div>
+                                            <div className="space-y-3">
+                                                <div className="flex items-center flex-wrap gap-x-2">
                                                     <span className="text-brand font-bold text-lg">{formatCurrency(product.price)}</span>
                                                     {product.compare_price && product.compare_price > product.price && (
-                                                        <span className="text-muted line-through text-sm ml-2">{formatCurrency(product.compare_price)}</span>
+                                                        <span className="text-muted line-through text-sm" title={formatCurrency(product.compare_price)}>{truncatePrice(formatCurrency(product.compare_price))}</span>
                                                     )}
                                                 </div>
                                                 <button
-                                                    disabled={!product.is_in_stock}
-                                                    className="w-9 h-9 bg-brand/10 hover:bg-brand text-brand hover:text-white rounded-md flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                                    onClick={() => handleAddToBasket(product)}
+                                                    disabled={!product.is_in_stock || loadingProductId === product.id}
+                                                    className="w-full bg-brand-light text-brand py-2 rounded text-sm font-semibold hover:bg-brand hover:text-white transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                                                 >
-                                                    <i className="fi-rs-shopping-cart"></i>
+                                                    {loadingProductId === product.id ? (
+                                                        <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                        </svg>
+                                                    ) : (
+                                                        <>
+                                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                                                            </svg>
+                                                            Add to Basket
+                                                        </>
+                                                    )}
                                                 </button>
                                             </div>
                                         </div>

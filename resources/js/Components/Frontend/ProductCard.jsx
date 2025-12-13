@@ -1,9 +1,32 @@
-import { Link, usePage } from '@inertiajs/react';
+import { useState } from 'react';
+import { Link, router, usePage } from '@inertiajs/react';
 import { formatCurrency, getDefaultCurrency } from '@/utils/currency';
+import Toast from './Toast';
 
 export default function ProductCard({ product }) {
     const { props } = usePage();
     const currency = getDefaultCurrency(props);
+    const [isLoading, setIsLoading] = useState(false);
+    const [showToast, setShowToast] = useState(false);
+
+    const handleAddToBasket = (e) => {
+        e.preventDefault();
+        setIsLoading(true);
+
+        router.post(route('cart.add'), {
+            product_id: product.id,
+            quantity: 1,
+        }, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setIsLoading(false);
+                setShowToast(true);
+            },
+            onError: () => {
+                setIsLoading(false);
+            },
+        });
+    };
 
     const {
         id = 1,
@@ -47,6 +70,13 @@ export default function ProductCard({ product }) {
     // Determine badge
     const displayBadge = badge || (is_featured ? 'hot' : is_new ? 'new' : is_on_sale ? 'sale' : null);
 
+    // Truncate price text to 8 characters
+    const truncatePrice = (text) => {
+        if (!text) return text;
+        const str = String(text);
+        return str.length > 8 ? str.substring(0, 8) + '...' : str;
+    };
+
     const renderStars = () => {
         const stars = [];
         for (let i = 1; i <= 5; i++) {
@@ -65,7 +95,15 @@ export default function ProductCard({ product }) {
     };
 
     return (
-        <div className="product-card bg-white border border-gray-100 rounded-xl p-4 relative group">
+        <>
+            {showToast && (
+                <Toast
+                    message="Product added to cart!"
+                    type="success"
+                    onClose={() => setShowToast(false)}
+                />
+            )}
+            <div className="product-card bg-white border border-gray-100 rounded-xl p-4 relative group">
             {/* Badge */}
             {displayBadge && (
                 <span className={`absolute top-4 left-4 px-3 py-1 text-xs font-semibold rounded badge-${displayBadge}`}>
@@ -116,7 +154,7 @@ export default function ProductCard({ product }) {
             <p className="text-xs text-body mb-2">{categoryName}</p>
 
             {/* Product Name */}
-            <h6 className="mb-2">
+            <h6 className="mb-2 h-12">
                 <Link href={`/product/${slug}`} className="text-heading hover:text-brand transition-colors font-semibold line-clamp-2">
                     {name}
                 </Link>
@@ -140,18 +178,32 @@ export default function ProductCard({ product }) {
                         {formatCurrency(displayPrice, currency)}
                     </span>
                     {displayOldPrice && displayOldPrice > displayPrice && (
-                        <span className="text-body line-through text-sm">
-                            {formatCurrency(displayOldPrice, currency)}
+                        <span className="text-body line-through text-sm" title={formatCurrency(displayOldPrice, currency)}>
+                            {truncatePrice(formatCurrency(displayOldPrice, currency))}
                         </span>
                     )}
                 </div>
-                <button className="w-full bg-brand-light text-brand py-2 rounded text-sm font-semibold hover:bg-brand hover:text-white transition-colors flex items-center justify-center gap-2">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>
-                    Add to Basket
+                <button
+                    onClick={handleAddToBasket}
+                    disabled={isLoading}
+                    className="w-full bg-brand-light text-brand py-2 rounded text-sm font-semibold hover:bg-brand hover:text-white transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                    {isLoading ? (
+                        <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                    ) : (
+                        <>
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                            </svg>
+                            Add to Basket
+                        </>
+                    )}
                 </button>
             </div>
         </div>
+        </>
     );
 }
