@@ -107,9 +107,12 @@ export default function Cart({ cart }) {
                             <button
                                 onClick={clearCart}
                                 disabled={loading}
-                                className="flex items-center gap-2 text-muted hover:text-red-500 transition-colors disabled:opacity-50"
+                                className="flex items-center gap-2 text-gray-600 hover:text-red-500 transition-colors disabled:opacity-50 px-4 py-2 border border-gray-300 rounded-md hover:border-red-500"
                             >
-                                <i className="fi-rs-trash"></i> Clear Basket
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                                Clear Basket
                             </button>
                         )}
                     </div>
@@ -188,23 +191,27 @@ export default function Cart({ cart }) {
                                             <span className="text-body font-semibold">{format(item.unit_price)}</span>
                                         </div>
                                         <div className="col-span-1 md:col-span-2">
-                                            <div className="flex items-center border border-border rounded-md w-fit">
+                                            <div className="flex items-center border border-gray-300 rounded-md w-fit bg-white">
                                                 <button
                                                     onClick={() => updateQuantity(item.id, item.quantity - 1)}
                                                     disabled={updatingItems[item.id] || item.quantity <= 1}
-                                                    className="w-10 h-10 flex items-center justify-center text-heading hover:text-brand transition-colors disabled:opacity-50"
+                                                    className="w-10 h-10 flex items-center justify-center text-gray-700 hover:text-brand transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                                                 >
-                                                    <i className="fi-rs-minus-small"></i>
+                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                                                    </svg>
                                                 </button>
-                                                <span className="w-12 h-10 flex items-center justify-center border-x border-border text-heading font-semibold">
+                                                <span className="w-12 h-10 flex items-center justify-center border-x border-gray-300 text-gray-900 font-semibold">
                                                     {item.quantity}
                                                 </span>
                                                 <button
                                                     onClick={() => updateQuantity(item.id, item.quantity + 1)}
                                                     disabled={updatingItems[item.id]}
-                                                    className="w-10 h-10 flex items-center justify-center text-heading hover:text-brand transition-colors disabled:opacity-50"
+                                                    className="w-10 h-10 flex items-center justify-center text-gray-700 hover:text-brand transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                                                 >
-                                                    <i className="fi-rs-plus-small"></i>
+                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                                    </svg>
                                                 </button>
                                             </div>
                                         </div>
@@ -218,9 +225,12 @@ export default function Cart({ cart }) {
                                             <button
                                                 onClick={() => removeItem(item.id)}
                                                 disabled={updatingItems[item.id]}
-                                                className="text-muted hover:text-red-500 transition-colors disabled:opacity-50"
+                                                className="text-gray-600 hover:text-red-500 transition-colors disabled:opacity-50 p-2"
+                                                title="Remove item"
                                             >
-                                                <i className="fi-rs-trash"></i>
+                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                </svg>
                                             </button>
                                         </div>
                                     </div>

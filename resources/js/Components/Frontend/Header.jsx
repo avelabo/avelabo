@@ -70,14 +70,14 @@ export default function Header({ isSticky, onMobileMenuToggle }) {
                         {/* Search Bar */}
                         <div className="hidden lg:flex flex-1 max-w-2xl">
                             <div className="flex w-full">
-                                <select className="border border-r-0 border-gray-200 rounded-l-md px-4 py-3 bg-gray-50 text-sm">
+                                {/* <select className="border border-r-0 border-gray-200 rounded-l-md px-4 py-3 bg-gray-50 text-sm">
                                     <option value="">All Categories</option>
                                     {categories.map((category) => (
                                         <option key={category.id} value={category.slug}>
                                             {category.name}
                                         </option>
                                     ))}
-                                </select>
+                                </select> */}
                                 <div className="relative flex-1">
                                     <input
                                         type="text"
@@ -151,72 +151,108 @@ export default function Header({ isSticky, onMobileMenuToggle }) {
                 <div className="container mx-auto px-4">
                     <div className="hidden lg:flex items-center justify-between py-3">
                         {/* Categories Dropdown */}
-                        <div className="relative">
-                            <button
-                                onClick={() => setCategoriesOpen(!categoriesOpen)}
-                                className="flex items-center gap-2 bg-brand text-white px-6 py-3 rounded-md hover:bg-brand-dark transition-colors font-quicksand"
-                            >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                                </svg>
-                                <span className="font-semibold">Browse All Categories</span>
-                                <svg className={`w-4 h-4 transition-transform ${categoriesOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                </svg>
-                            </button>
-
-                            {categoriesOpen && (
-                                <div className="absolute top-full left-0 mt-1 w-72 bg-white rounded-lg shadow-lg border border-gray-100 z-50 py-2 max-h-[400px] overflow-y-auto">
-                                    {categories.length > 0 ? (
-                                        categories.map((category) => (
-                                            <Link
-                                                key={category.id}
-                                                href={`/shop?category=${category.slug}`}
-                                                className="flex items-center gap-3 px-5 py-2.5 hover:bg-gray-50 transition-colors group"
-                                                onClick={() => setCategoriesOpen(false)}
-                                            >
-                                                <span className="w-8 h-8 flex items-center justify-center bg-gray-100 group-hover:bg-brand/10 rounded-lg flex-shrink-0">
-                                                    {category.icon ? (
-                                                        <span className="material-icons text-brand text-lg">{category.icon}</span>
-                                                    ) : (
-                                                        <span className="material-icons text-gray-400 text-lg">category</span>
-                                                    )}
-                                                </span>
-                                                <span className="text-heading group-hover:text-brand text-sm font-medium">{category.name}</span>
-                                            </Link>
-                                        ))
-                                    ) : (
-                                        <p className="px-5 py-3 text-body text-sm">No categories available</p>
-                                    )}
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Main Navigation */}
-                        <nav className="flex items-center gap-8 font-quicksand">
-                            <Link href="/" className="text-heading hover:text-brand font-semibold transition-colors">Home</Link>
-                            <Link href="/about" className="text-heading hover:text-brand font-semibold transition-colors">About</Link>
-                            <Link href="/shop" className="text-heading hover:text-brand font-semibold transition-colors">Shop</Link>
-                            <Link href="/vendors" className="text-heading hover:text-brand font-semibold transition-colors">Vendors</Link>
-                            <div className="relative group">
-                                <Link href="/blog" className="text-heading hover:text-brand font-semibold transition-colors flex items-center gap-1">
-                                    Blog
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        {!isSticky && (
+                            <div className="relative">
+                                <button
+                                    onClick={() => setCategoriesOpen(!categoriesOpen)}
+                                    className="flex items-center gap-2 bg-brand text-white px-6 py-3 rounded-md hover:bg-brand-dark transition-colors font-quicksand"
+                                >
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                                    </svg>
+                                    <span className="font-semibold">Browse All Categories</span>
+                                    <svg className={`w-4 h-4 transition-transform ${categoriesOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                                     </svg>
-                                </Link>
+                                </button>
+
+                                {categoriesOpen && (
+                                    <div className="absolute top-full left-0 mt-1 w-72 bg-white rounded-lg shadow-lg border border-gray-100 z-50 py-2 max-h-[400px] overflow-y-auto">
+                                        {categories.length > 0 ? (
+                                            categories.map((category) => (
+                                                <Link
+                                                    key={category.id}
+                                                    href={`/shop?category=${category.slug}`}
+                                                    className="flex items-center gap-3 px-5 py-2.5 hover:bg-gray-50 transition-colors group"
+                                                    onClick={() => setCategoriesOpen(false)}
+                                                >
+                                                    <span className="w-8 h-8 flex items-center justify-center bg-gray-100 group-hover:bg-brand/10 rounded-lg flex-shrink-0">
+                                                        {category.icon ? (
+                                                            <span className="material-icons text-brand text-lg">{category.icon}</span>
+                                                        ) : (
+                                                            <span className="material-icons text-gray-400 text-lg">category</span>
+                                                        )}
+                                                    </span>
+                                                    <span className="text-heading group-hover:text-brand text-sm font-medium">{category.name}</span>
+                                                </Link>
+                                            ))
+                                        ) : (
+                                            <p className="px-5 py-3 text-body text-sm">No categories available</p>
+                                        )}
+                                    </div>
+                                )}
                             </div>
-                            <Link href="/contact" className="text-heading hover:text-brand font-semibold transition-colors">Contact</Link>
-                        </nav>
+                        )}
+
+                        {/* Main Navigation / Categories */}
+                        {isSticky ? (
+                            <nav className="flex items-center gap-2 font-quicksand overflow-x-auto">
+                                <Link href="/shop" className="text-heading hover:text-brand hover:bg-gray-100 font-semibold text-sm transition-all whitespace-nowrap px-4 py-2 rounded-md">All</Link>
+                                {categories.slice(0, 8).map((category) => (
+                                    <Link
+                                        key={category.id}
+                                        href={`/shop?category=${category.slug}`}
+                                        className="text-heading hover:text-brand hover:bg-gray-100 font-semibold text-sm transition-all whitespace-nowrap px-4 py-2 rounded-md"
+                                    >
+                                        {category.name}
+                                    </Link>
+                                ))}
+                            </nav>
+                        ) : (
+                            <nav className="flex items-center gap-8 font-quicksand">
+                                <Link href="/" className="text-heading hover:text-brand font-semibold transition-colors">Home</Link>
+                                <Link href="/about" className="text-heading hover:text-brand font-semibold transition-colors">About</Link>
+                                <Link href="/shop" className="text-heading hover:text-brand font-semibold transition-colors">Shop</Link>
+                                <Link href="/vendors" className="text-heading hover:text-brand font-semibold transition-colors">Vendors</Link>
+                                <div className="relative group">
+                                    <Link href="/blog" className="text-heading hover:text-brand font-semibold transition-colors flex items-center gap-1">
+                                        Blog
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                        </svg>
+                                    </Link>
+                                </div>
+                                <Link href="/contact" className="text-heading hover:text-brand font-semibold transition-colors">Contact</Link>
+                            </nav>
+                        )}
+
+                        {/* Cart Icon (Sticky Nav) */}
+                        {isSticky && (
+                            <Link href="/cart" className="flex items-center gap-2 text-heading hover:text-brand hover:bg-gray-100 transition-all px-4 py-2 rounded-md">
+                                <div className="relative">
+                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                                    </svg>
+                                    {counts?.cart > 0 && (
+                                        <span className="absolute -top-2 -right-2 bg-brand text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                                            {counts.cart}
+                                        </span>
+                                    )}
+                                </div>
+                                <span className="text-sm font-semibold">Basket</span>
+                            </Link>
+                        )}
 
                         {/* Hotline */}
-                        <div className="flex items-center gap-3 font-quicksand">
-                            <img src="/images/frontend/theme/icons/icon-headphone.svg" alt="Support" className="w-10 h-10" />
-                            <div>
-                                <span className="text-brand font-bold text-xl">{siteSettings?.site_phone || '+265 999 123 456'}</span>
-                                <p className="text-xs text-body font-lato">24/7 Support Center</p>
+                        {!isSticky && (
+                            <div className="flex items-center gap-3 font-quicksand">
+                                <img src="/images/frontend/theme/icons/icon-headphone.svg" alt="Support" className="w-10 h-10" />
+                                <div>
+                                    <span className="text-brand font-bold text-xl">{siteSettings?.site_phone || '+265 999 123 456'}</span>
+                                    <p className="text-xs text-body font-lato">24/7 Support Center</p>
+                                </div>
                             </div>
-                        </div>
+                        )}
                     </div>
                 </div>
             </div>
