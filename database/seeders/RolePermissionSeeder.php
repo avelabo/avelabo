@@ -84,10 +84,6 @@ class RolePermissionSeeder extends Seeder
             ['name' => 'Manage Currencies', 'slug' => 'currencies.manage', 'group' => 'settings'],
             ['name' => 'Manage Payment Gateways', 'slug' => 'payments.manage', 'group' => 'settings'],
 
-            // Scraping permissions
-            ['name' => 'Manage Scraping', 'slug' => 'scraping.manage', 'group' => 'scraping'],
-            ['name' => 'View Scraping Logs', 'slug' => 'scraping.logs', 'group' => 'scraping'],
-
             // Reports permissions
             ['name' => 'View Reports', 'slug' => 'reports.view', 'group' => 'reports'],
             ['name' => 'Export Reports', 'slug' => 'reports.export', 'group' => 'reports'],

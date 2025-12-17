@@ -45,8 +45,8 @@ return new class extends Migration
             $table->string('meta_title')->nullable();
             $table->text('meta_description')->nullable();
 
-            // Scraping source
-            $table->string('source')->nullable(); // 'takealot', 'noon', null for manual
+            // External source
+            $table->string('source')->nullable(); // External source identifier
             $table->string('source_id')->nullable(); // External product ID
             $table->string('source_url')->nullable(); // Original product URL
 

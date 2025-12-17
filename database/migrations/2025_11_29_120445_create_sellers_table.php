@@ -31,8 +31,8 @@ return new class extends Migration
             $table->unsignedInteger('total_sales')->default(0);
             $table->boolean('is_verified')->default(false);
             $table->boolean('is_featured')->default(false);
-            $table->string('source')->nullable(); // 'takealot', 'noon', null for local sellers
-            $table->string('source_id')->nullable(); // External ID from scraped source
+            $table->string('source')->nullable(); // External source identifier
+            $table->string('source_id')->nullable(); // External ID from source
             $table->decimal('commission_rate', 5, 2)->default(10.00); // Platform commission %
             $table->timestamp('approved_at')->nullable();
             $table->timestamps();

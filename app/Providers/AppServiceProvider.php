@@ -2,7 +2,6 @@
 
 namespace App\Providers;
 
-use App\Services\Scraping\ScrapingService;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -12,10 +11,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        // Register ScrapingService as a singleton
-        $this->app->singleton(ScrapingService::class, function ($app) {
-            return new ScrapingService();
-        });
+        //
     }
 
     /**

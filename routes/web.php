@@ -28,7 +28,6 @@ use App\Http\Controllers\Frontend\ContactController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\PageContentController;
 use App\Http\Controllers\Admin\ContactMessageController;
-use App\Http\Controllers\Admin\ScrapingController;
 use App\Http\Controllers\Admin\SettingsController as AdminSettingsController;
 use App\Http\Controllers\Admin\SliderController;
 use Illuminate\Support\Facades\Route;
@@ -328,20 +327,6 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::put('/contact-messages/{contactMessage}/archive', [ContactMessageController::class, 'archive'])->name('contact-messages.archive');
     Route::delete('/contact-messages/{contactMessage}', [ContactMessageController::class, 'destroy'])->name('contact-messages.destroy');
     Route::post('/contact-messages/bulk-action', [ContactMessageController::class, 'bulkAction'])->name('contact-messages.bulk-action');
-
-    // Scraping Management
-    Route::prefix('scraping')->name('scraping.')->group(function () {
-        Route::get('/', [ScrapingController::class, 'index'])->name('index');
-        Route::get('/create', [ScrapingController::class, 'create'])->name('create');
-        Route::post('/', [ScrapingController::class, 'store'])->name('store');
-        Route::get('/sources/{source}', [ScrapingController::class, 'show'])->name('show');
-        Route::put('/sources/{source}', [ScrapingController::class, 'update'])->name('update');
-        Route::delete('/sources/{source}', [ScrapingController::class, 'destroy'])->name('destroy');
-        Route::post('/sources/{source}/toggle-active', [ScrapingController::class, 'toggleActive'])->name('toggle-active');
-        Route::post('/sources/{source}/start-job', [ScrapingController::class, 'startJob'])->name('start-job');
-        Route::get('/jobs/{job}', [ScrapingController::class, 'showJob'])->name('job');
-        Route::post('/jobs/{job}/cancel', [ScrapingController::class, 'cancelJob'])->name('cancel-job');
-    });
 
     // Sliders Management
     Route::resource('sliders', SliderController::class);

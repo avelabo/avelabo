@@ -42,9 +42,6 @@ class DatabaseSeeder extends Seeder
             // Test sellers
             SellerSeeder::class,
 
-            // Scraping sources
-            ScrapingSourceSeeder::class,
-
             // Test products
             ProductSeeder::class,
 

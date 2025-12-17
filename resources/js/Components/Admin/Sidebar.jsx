@@ -49,14 +49,6 @@ export default function Sidebar({ isOpen, isMobileOpen, onClose }) {
             ],
         },
         {
-            name: 'Scraping',
-            icon: 'cloud_download',
-            children: [
-                { name: 'Sources', href: '/admin/scraping' },
-                { name: 'Add Source', href: '/admin/scraping/create' },
-            ],
-        },
-        {
             name: 'Pages',
             icon: 'article',
             children: [
