@@ -1,38 +1,11 @@
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
 export default function MobileMenu({ isOpen, onClose }) {
-    const [expandedMenu, setExpandedMenu] = useState(null);
+    const { headerCategories, counts, siteSettings } = usePage().props;
+    const [categoriesOpen, setCategoriesOpen] = useState(false);
 
-    const menuItems = [
-        { name: 'Home', href: '/' },
-        { name: 'Shop', href: '/shop' },
-        {
-            name: 'Vendors',
-            href: '/vendors',
-            children: [
-                { name: 'Vendors List', href: '/vendors' },
-                { name: 'Vendor Details', href: '/vendors/1' },
-            ]
-        },
-        {
-            name: 'Pages',
-            href: '#',
-            children: [
-                { name: 'About Us', href: '/about' },
-                { name: 'Contact', href: '/contact' },
-                { name: 'My Account', href: '/account' },
-            ]
-        },
-        { name: 'Blog', href: '/blog' },
-        { name: 'Contact', href: '/contact' },
-    ];
-
-    const categories = [
-        'Milks and Dairies', 'Clothing & beauty', 'Pet Foods & Toy',
-        'Baking material', 'Fresh Fruit', 'Wines & Drinks',
-        'Fresh Seafood', 'Fast food', 'Vegetables', 'Bread and Juice'
-    ];
+    const categories = headerCategories || [];
 
     return (
         <>
@@ -74,54 +47,100 @@ export default function MobileMenu({ isOpen, onClose }) {
 
                 {/* Navigation */}
                 <div className="overflow-y-auto h-[calc(100%-200px)]">
-                    <nav className="p-4">
-                        <h6 className="text-brand font-semibold text-sm uppercase mb-4">Menu</h6>
-                        <ul className="space-y-2">
-                            {menuItems.map((item, index) => (
-                                <li key={index}>
-                                    {item.children ? (
-                                        <div>
-                                            <button
-                                                onClick={() => setExpandedMenu(expandedMenu === index ? null : index)}
-                                                className="flex items-center justify-between w-full py-2 text-heading hover:text-brand"
+                    {/* Categories Dropdown */}
+                    <div className="p-4 border-b">
+                        <button
+                            onClick={() => setCategoriesOpen(!categoriesOpen)}
+                            className="flex items-center justify-between w-full bg-brand text-white px-4 py-3 rounded-md font-quicksand"
+                        >
+                            <div className="flex items-center gap-2">
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                                </svg>
+                                <span className="font-semibold">All Categories</span>
+                            </div>
+                            <svg className={`w-4 h-4 transition-transform ${categoriesOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+                        {categoriesOpen && (
+                            <ul className="mt-2 space-y-1 max-h-60 overflow-y-auto">
+                                {categories.length > 0 ? (
+                                    categories.map((category) => (
+                                        <li key={category.id}>
+                                            <Link
+                                                href={`/shop?category=${category.slug}`}
+                                                className="block px-4 py-2 text-heading hover:text-brand hover:bg-gray-50 rounded-md text-sm font-medium"
+                                                onClick={onClose}
                                             >
-                                                <span>{item.name}</span>
-                                                <svg className={`w-4 h-4 transition-transform ${expandedMenu === index ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                                </svg>
-                                            </button>
-                                            {expandedMenu === index && (
-                                                <ul className="pl-4 space-y-2 mt-2">
-                                                    {item.children.map((child, childIndex) => (
-                                                        <li key={childIndex}>
-                                                            <Link href={child.href} className="block py-1 text-body hover:text-brand">
-                                                                {child.name}
-                                                            </Link>
-                                                        </li>
-                                                    ))}
-                                                </ul>
-                                            )}
-                                        </div>
-                                    ) : (
-                                        <Link href={item.href} className="block py-2 text-heading hover:text-brand">
-                                            {item.name}
-                                        </Link>
-                                    )}
+                                                {category.name}
+                                            </Link>
+                                        </li>
+                                    ))
+                                ) : (
+                                    <li className="px-4 py-2 text-body text-sm">No categories available</li>
+                                )}
+                            </ul>
+                        )}
+                    </div>
+
+                    {/* Category Links (same as desktop nav) */}
+                    <nav className="p-4">
+                        <h6 className="text-brand font-semibold text-sm uppercase mb-4">Browse Categories</h6>
+                        <ul className="space-y-2">
+                            {categories.slice(0, 8).map((category) => (
+                                <li key={category.id}>
+                                    <Link
+                                        href={`/shop?category=${category.slug}`}
+                                        className="block py-2 text-heading hover:text-brand font-medium text-sm"
+                                        onClick={onClose}
+                                    >
+                                        {category.name}
+                                    </Link>
                                 </li>
                             ))}
                         </ul>
                     </nav>
 
+                    {/* Quick Links */}
                     <div className="p-4 border-t">
-                        <h6 className="text-brand font-semibold text-sm uppercase mb-4">Categories</h6>
+                        <h6 className="text-brand font-semibold text-sm uppercase mb-4">Quick Links</h6>
                         <ul className="space-y-2">
-                            {categories.map((category, index) => (
-                                <li key={index}>
-                                    <Link href={`/shop?category=${category.toLowerCase()}`} className="block py-1 text-body hover:text-brand">
-                                        {category}
-                                    </Link>
-                                </li>
-                            ))}
+                            <li>
+                                <Link href="/" className="block py-2 text-heading hover:text-brand" onClick={onClose}>
+                                    Home
+                                </Link>
+                            </li>
+                            <li>
+                                <Link href="/shop" className="block py-2 text-heading hover:text-brand" onClick={onClose}>
+                                    Shop
+                                </Link>
+                            </li>
+                            <li>
+                                <Link href="/wishlist" className="flex items-center justify-between py-2 text-heading hover:text-brand" onClick={onClose}>
+                                    <span>Wishlist</span>
+                                    {counts?.wishlist > 0 && (
+                                        <span className="bg-brand text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                                            {counts.wishlist}
+                                        </span>
+                                    )}
+                                </Link>
+                            </li>
+                            <li>
+                                <Link href="/cart" className="flex items-center justify-between py-2 text-heading hover:text-brand" onClick={onClose}>
+                                    <span>Basket</span>
+                                    {counts?.cart > 0 && (
+                                        <span className="bg-brand text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                                            {counts.cart}
+                                        </span>
+                                    )}
+                                </Link>
+                            </li>
+                            <li>
+                                <Link href="/account" className="block py-2 text-heading hover:text-brand" onClick={onClose}>
+                                    Account
+                                </Link>
+                            </li>
                         </ul>
                     </div>
                 </div>
@@ -131,7 +150,7 @@ export default function MobileMenu({ isOpen, onClose }) {
                     <div className="flex items-center gap-3">
                         <img src="/images/frontend/theme/icons/icon-headphone.svg" alt="Support" className="w-10 h-10" />
                         <div>
-                            <span className="text-brand font-bold text-lg">1900 - 888</span>
+                            <span className="text-brand font-bold text-lg">{siteSettings?.site_phone || '+265 999 123 456'}</span>
                             <p className="text-xs text-body">24/7 Support Center</p>
                         </div>
                     </div>

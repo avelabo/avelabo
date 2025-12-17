@@ -163,16 +163,9 @@ export default function Header({ isSticky, onMobileMenuToggle }) {
                                                 <Link
                                                     key={category.id}
                                                     href={`/shop?category=${category.slug}`}
-                                                    className="flex items-center gap-3 px-5 py-2.5 hover:bg-gray-50 transition-colors group"
+                                                    className="flex items-center gap-3 px-10 py-3.5 hover:bg-gray-50 transition-colors group"
                                                     onClick={() => setCategoriesOpen(false)}
                                                 >
-                                                    <span className="w-8 h-8 flex items-center justify-center bg-gray-100 group-hover:bg-brand/10 rounded-lg flex-shrink-0">
-                                                        {category.icon ? (
-                                                            <span className="material-icons text-brand text-lg">{category.icon}</span>
-                                                        ) : (
-                                                            <span className="material-icons text-gray-400 text-lg">category</span>
-                                                        )}
-                                                    </span>
                                                     <span className="text-heading group-hover:text-brand text-sm font-medium">{category.name}</span>
                                                 </Link>
                                             ))
