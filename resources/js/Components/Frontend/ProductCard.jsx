@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { Link, router, usePage } from '@inertiajs/react';
 import { formatCurrency, getDefaultCurrency } from '@/utils/currency';
-import Toast from './Toast';
+import { useToast } from '@/Contexts/ToastContext';
 
 export default function ProductCard({ product }) {
     const { props } = usePage();
     const currency = getDefaultCurrency(props);
+    const toast = useToast();
     const [isLoading, setIsLoading] = useState(false);
-    const [showToast, setShowToast] = useState(false);
 
     const handleAddToBasket = (e) => {
         e.preventDefault();
@@ -20,10 +20,12 @@ export default function ProductCard({ product }) {
             preserveScroll: true,
             onSuccess: () => {
                 setIsLoading(false);
-                setShowToast(true);
+                toast.success('Product added to cart!');
             },
-            onError: () => {
+            onError: (errors) => {
                 setIsLoading(false);
+                const errorMessage = errors?.error || errors?.product_id || 'Failed to add product to cart';
+                toast.error(errorMessage);
             },
         });
     };
@@ -95,15 +97,7 @@ export default function ProductCard({ product }) {
     };
 
     return (
-        <>
-            {showToast && (
-                <Toast
-                    message="Product added to cart!"
-                    type="success"
-                    onClose={() => setShowToast(false)}
-                />
-            )}
-            <div className="product-card bg-white border border-gray-100 rounded-xl p-4 relative group">
+        <div className="product-card bg-white border border-gray-100 rounded-xl p-4 relative group">
             {/* Badge */}
             {displayBadge && (
                 <span className={`absolute top-4 left-4 px-3 py-1 text-xs font-semibold rounded badge-${displayBadge}`}>
@@ -204,6 +198,5 @@ export default function ProductCard({ product }) {
                 </button>
             </div>
         </div>
-        </>
     );
 }

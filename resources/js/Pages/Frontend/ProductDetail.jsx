@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, Head, router, usePage } from '@inertiajs/react';
 import FrontendLayout from '@/Layouts/FrontendLayout';
 import { formatCurrency, getDefaultCurrency } from '@/utils/currency';
+import { useToast } from '@/Contexts/ToastContext';
 
 export default function ProductDetail({ product, relatedProducts }) {
     const { props } = usePage();
@@ -13,12 +14,12 @@ export default function ProductDetail({ product, relatedProducts }) {
         return formatCurrency(amount, currency);
     };
 
+    const toast = useToast();
     const [selectedImage, setSelectedImage] = useState(0);
     const [quantity, setQuantity] = useState(1);
     const [selectedVariant, setSelectedVariant] = useState(null);
     const [activeTab, setActiveTab] = useState('description');
     const [addingToBasket, setAddingToBasket] = useState(false);
-    const [basketMessage, setBasketMessage] = useState(null);
 
     const getCurrentPrice = () => {
         if (selectedVariant) {
@@ -54,12 +55,11 @@ export default function ProductDetail({ product, relatedProducts }) {
 
         // Check if variant is required but not selected
         if (product.variants?.length > 0 && !selectedVariant) {
-            setBasketMessage({ type: 'error', text: 'Please select an option' });
+            toast.error('Please select an option');
             return;
         }
 
         setAddingToBasket(true);
-        setBasketMessage(null);
 
         router.post(route('cart.add'), {
             product_id: product.id,
@@ -68,11 +68,11 @@ export default function ProductDetail({ product, relatedProducts }) {
         }, {
             preserveScroll: true,
             onSuccess: () => {
-                setBasketMessage({ type: 'success', text: 'Added to basket!' });
-                setTimeout(() => setBasketMessage(null), 3000);
+                toast.success('Added to basket!');
             },
             onError: (errors) => {
-                setBasketMessage({ type: 'error', text: errors.error || 'Failed to add to basket' });
+                const errorMessage = errors?.error || errors?.product_id || 'Failed to add to basket';
+                toast.error(errorMessage);
             },
             onFinish: () => {
                 setAddingToBasket(false);
@@ -243,16 +243,6 @@ export default function ProductDetail({ product, relatedProducts }) {
                             </div>
                         )}
 
-                        {/* Basket Message */}
-                        {basketMessage && (
-                            <div className={`mb-4 p-3 rounded-lg text-sm ${
-                                basketMessage.type === 'success'
-                                    ? 'bg-green-100 text-green-700'
-                                    : 'bg-red-100 text-red-700'
-                            }`}>
-                                {basketMessage.text}
-                            </div>
-                        )}
 
                         {/* Quantity & Add to Basket */}
                         <div className="flex flex-col sm:flex-row gap-4 mb-8">

@@ -1,35 +1,35 @@
 <?php
 
-use App\Http\Controllers\Auth\AuthenticatedSessionController;
-use App\Http\Controllers\Auth\RegisteredUserController;
-use App\Http\Controllers\Auth\PasswordResetLinkController;
-use App\Http\Controllers\Auth\NewPasswordController;
-use App\Http\Controllers\Auth\EmailVerificationPromptController;
-use App\Http\Controllers\Seller\SellerRegistrationController;
-use App\Http\Controllers\Seller\DashboardController as SellerDashboardController;
-use App\Http\Controllers\Seller\ProductController as SellerProductController;
-use App\Http\Controllers\Seller\OrderController as SellerOrderController;
-use App\Http\Controllers\Admin\KycController;
-use App\Http\Controllers\Admin\SellerController as AdminSellerController;
-use App\Http\Controllers\Admin\MarkupTemplateController;
-use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Admin\CategoryController as AdminCategoryController;
-use App\Http\Controllers\CurrencyController;
-use App\Http\Controllers\Frontend\HomeController;
-use App\Http\Controllers\Frontend\ShopController;
-use App\Http\Controllers\Frontend\CartController;
-use App\Http\Controllers\Frontend\CheckoutController;
-use App\Http\Controllers\Frontend\PaymentController;
-use App\Http\Controllers\Frontend\OrderController as CustomerOrderController;
-use App\Http\Controllers\Frontend\AccountController;
-use App\Http\Controllers\Frontend\VendorController;
-use App\Http\Controllers\Frontend\PageController;
-use App\Http\Controllers\Frontend\ContactController;
+use App\Http\Controllers\Admin\ContactMessageController;
+use App\Http\Controllers\Admin\KycController;
+use App\Http\Controllers\Admin\MarkupTemplateController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\PageContentController;
-use App\Http\Controllers\Admin\ContactMessageController;
+use App\Http\Controllers\Admin\ProductController as AdminProductController;
+use App\Http\Controllers\Admin\SellerController as AdminSellerController;
 use App\Http\Controllers\Admin\SettingsController as AdminSettingsController;
 use App\Http\Controllers\Admin\SliderController;
+use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\Auth\EmailVerificationPromptController;
+use App\Http\Controllers\Auth\NewPasswordController;
+use App\Http\Controllers\Auth\PasswordResetLinkController;
+use App\Http\Controllers\Auth\RegisteredUserController;
+use App\Http\Controllers\CurrencyController;
+use App\Http\Controllers\Frontend\AccountController;
+use App\Http\Controllers\Frontend\CartController;
+use App\Http\Controllers\Frontend\CheckoutController;
+use App\Http\Controllers\Frontend\ContactController;
+use App\Http\Controllers\Frontend\HomeController;
+use App\Http\Controllers\Frontend\OrderController as CustomerOrderController;
+use App\Http\Controllers\Frontend\PageController;
+use App\Http\Controllers\Frontend\PaymentController;
+use App\Http\Controllers\Frontend\ShopController;
+use App\Http\Controllers\Frontend\VendorController;
+use App\Http\Controllers\Seller\DashboardController as SellerDashboardController;
+use App\Http\Controllers\Seller\OrderController as SellerOrderController;
+use App\Http\Controllers\Seller\ProductController as SellerProductController;
+use App\Http\Controllers\Seller\SellerRegistrationController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -117,6 +117,9 @@ Route::middleware('auth')->group(function () {
 */
 Route::get('/checkout', [CheckoutController::class, 'show'])->name('checkout');
 Route::post('/checkout', [CheckoutController::class, 'process'])->name('checkout.process');
+Route::get('/checkout/account', [CheckoutController::class, 'showAccountPrompt'])->name('checkout.account-prompt');
+Route::post('/checkout/create-account', [CheckoutController::class, 'createAccountAndCheckout'])->name('checkout.create-account');
+Route::post('/checkout/continue-guest', [CheckoutController::class, 'continueAsGuest'])->name('checkout.continue-guest');
 Route::get('/checkout/success', [CheckoutController::class, 'success'])->name('checkout.success');
 Route::get('/checkout/cancel', [CheckoutController::class, 'cancel'])->name('checkout.cancel');
 
@@ -237,6 +240,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         auth()->logout();
         request()->session()->invalidate();
         request()->session()->regenerateToken();
+
         return redirect()->route('admin.login');
     })->name('logout');
 });

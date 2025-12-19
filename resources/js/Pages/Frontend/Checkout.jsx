@@ -2,12 +2,15 @@ import { useState } from 'react';
 import { Head, Link, useForm, router, usePage } from '@inertiajs/react';
 import FrontendLayout from '@/Layouts/FrontendLayout';
 import { formatCurrency, getDefaultCurrency } from '@/utils/currency';
+import FormAlert from '@/Components/Frontend/FormAlert';
+import { useToast } from '@/Contexts/ToastContext';
 
 export default function Checkout({ cart, paymentGateways = [], countries = [], savedAddresses = [], user }) {
     const { props, flash } = usePage().props;
     const pageProps = usePage().props;
     const currency = getDefaultCurrency(pageProps);
     const format = (amount) => formatCurrency(amount, currency);
+    const toast = useToast();
 
     const [showLoginForm, setShowLoginForm] = useState(false);
     const [showShippingAddress, setShowShippingAddress] = useState(false);
@@ -51,7 +54,11 @@ export default function Checkout({ cart, paymentGateways = [], countries = [], s
         e.preventDefault();
         loginForm.post(route('login'), {
             onSuccess: () => {
+                toast.success('Logged in successfully!');
                 router.reload();
+            },
+            onError: () => {
+                toast.error('Invalid email or password. Please try again.');
             },
         });
     };
@@ -119,42 +126,21 @@ export default function Checkout({ cart, paymentGateways = [], countries = [], s
 
                     {/* Flash Messages */}
                     {pageProps.flash?.error && (
-                        <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
-                            <div className="flex items-center gap-2">
-                                <svg className="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                                </svg>
-                                <span className="text-red-700 font-medium">{pageProps.flash.error}</span>
-                            </div>
-                        </div>
+                        <FormAlert type="error" message={pageProps.flash.error} className="mb-6" />
                     )}
 
                     {pageProps.flash?.success && (
-                        <div className="mb-6 bg-green-50 border border-green-200 rounded-lg p-4">
-                            <div className="flex items-center gap-2">
-                                <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                </svg>
-                                <span className="text-green-700 font-medium">{pageProps.flash.success}</span>
-                            </div>
-                        </div>
+                        <FormAlert type="success" message={pageProps.flash.success} className="mb-6" />
                     )}
 
                     {/* Validation Error Display */}
                     {Object.keys(errors).length > 0 && (
-                        <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
-                            <h4 className="text-red-700 font-semibold mb-2 flex items-center gap-2">
-                                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                                </svg>
-                                Please fix the following errors:
-                            </h4>
-                            <ul className="list-disc list-inside text-red-600 text-sm space-y-1">
-                                {Object.entries(errors).map(([key, value]) => (
-                                    <li key={key}>{typeof value === 'string' ? value : JSON.stringify(value)}</li>
-                                ))}
-                            </ul>
-                        </div>
+                        <FormAlert 
+                            type="error" 
+                            title="Please fix the following errors:"
+                            errors={errors}
+                            className="mb-6" 
+                        />
                     )}
 
                     <form onSubmit={handleCheckoutSubmit}>

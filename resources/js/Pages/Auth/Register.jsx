@@ -1,5 +1,6 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import GuestLayout from '@/Layouts/GuestLayout';
+import FormAlert from '@/Components/Frontend/FormAlert';
 
 export default function Register() {
     const { data, setData, post, processing, errors, reset } = useForm({
@@ -25,6 +26,15 @@ export default function Register() {
                 <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 p-8">
                     <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Create Account</h2>
                     <p className="text-gray-600 dark:text-gray-400 mb-6">Join Avelabo to start shopping</p>
+
+                    {Object.keys(errors).length > 0 && (
+                        <FormAlert 
+                            type="error" 
+                            title="Registration Failed"
+                            errors={errors}
+                            className="mb-4" 
+                        />
+                    )}
 
                     <form onSubmit={handleSubmit}>
                         <div className="mb-4">

@@ -1,5 +1,6 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import GuestLayout from '@/Layouts/GuestLayout';
+import FormAlert from '@/Components/Frontend/FormAlert';
 
 export default function ForgotPassword({ status }) {
     const { data, setData, post, processing, errors } = useForm({
@@ -23,9 +24,16 @@ export default function ForgotPassword({ status }) {
                     </p>
 
                     {status && (
-                        <div className="mb-4 text-sm font-medium text-green-600 bg-green-50 p-3 rounded-lg">
-                            {status}
-                        </div>
+                        <FormAlert type="success" message={status} className="mb-4" />
+                    )}
+
+                    {Object.keys(errors).length > 0 && (
+                        <FormAlert 
+                            type="error" 
+                            title="Request Failed"
+                            errors={errors}
+                            className="mb-4" 
+                        />
                     )}
 
                     <form onSubmit={handleSubmit}>

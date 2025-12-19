@@ -1,5 +1,7 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import FrontendLayout from '@/Layouts/FrontendLayout';
+import FormAlert from '@/Components/Frontend/FormAlert';
+import { useToast } from '@/Contexts/ToastContext';
 
 export default function Contact({ contactInfo = {}, flash = {} }) {
     const { data, setData, post, processing, errors, reset } = useForm({
@@ -34,12 +36,18 @@ export default function Contact({ contactInfo = {}, flash = {} }) {
         },
     ];
 
+    const toast = useToast();
+
     const handleSubmit = (e) => {
         e.preventDefault();
         post(route('contact.store'), {
             preserveScroll: true,
             onSuccess: () => {
                 reset();
+                toast.success('Message sent successfully! We\'ll get back to you soon.');
+            },
+            onError: () => {
+                toast.error('Failed to send message. Please check the form and try again.');
             },
         });
     };
@@ -142,10 +150,11 @@ export default function Contact({ contactInfo = {}, flash = {} }) {
 
                         {/* Flash Message */}
                         {flash?.success && (
-                            <div className="mb-8 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative">
-                                <strong className="font-bold">Success!</strong>
-                                <span className="block sm:inline"> {flash.success}</span>
-                            </div>
+                            <FormAlert type="success" message={flash.success} className="mb-8" />
+                        )}
+
+                        {flash?.error && (
+                            <FormAlert type="error" message={flash.error} className="mb-8" />
                         )}
 
                         {/* Contact Form & Image */}

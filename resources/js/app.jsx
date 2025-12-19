@@ -5,6 +5,7 @@ import { createInertiaApp, router } from '@inertiajs/react';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { route } from 'ziggy-js';
 import SessionExpiredModal from '@/Components/SessionExpiredModal';
+import { ToastProvider } from '@/Contexts/ToastContext';
 import { useState, useEffect } from 'react';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Avelabo';
@@ -56,9 +57,11 @@ createInertiaApp({
         }
 
         root.render(
-            <SessionExpiredWrapper>
-                <App {...props} />
-            </SessionExpiredWrapper>
+            <ToastProvider>
+                <SessionExpiredWrapper>
+                    <App {...props} />
+                </SessionExpiredWrapper>
+            </ToastProvider>
         );
     },
     progress: {

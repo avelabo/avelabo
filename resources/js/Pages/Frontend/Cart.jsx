@@ -2,11 +2,13 @@ import { useState } from 'react';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import FrontendLayout from '@/Layouts/FrontendLayout';
 import { formatCurrency, getDefaultCurrency } from '@/utils/currency';
+import { useToast } from '@/Contexts/ToastContext';
 
 export default function Cart({ cart }) {
     const { props } = usePage();
     const currency = getDefaultCurrency(props);
     const format = (amount) => formatCurrency(amount, currency);
+    const toast = useToast();
 
     const [loading, setLoading] = useState(false);
     const [updatingItems, setUpdatingItems] = useState({});
@@ -28,6 +30,10 @@ export default function Cart({ cart }) {
             onFinish: () => {
                 setUpdatingItems(prev => ({ ...prev, [itemId]: false }));
             },
+            onError: (errors) => {
+                const errorMessage = errors?.error || errors?.quantity || 'Failed to update quantity';
+                toast.error(errorMessage);
+            },
         });
     };
 
@@ -42,6 +48,12 @@ export default function Cart({ cart }) {
             onFinish: () => {
                 setUpdatingItems(prev => ({ ...prev, [itemId]: false }));
             },
+            onSuccess: () => {
+                toast.success('Item removed from cart');
+            },
+            onError: () => {
+                toast.error('Failed to remove item from cart');
+            },
         });
     };
 
@@ -55,6 +67,12 @@ export default function Cart({ cart }) {
         router.delete(route('cart.clear'), {
             preserveScroll: true,
             onFinish: () => setLoading(false),
+            onSuccess: () => {
+                toast.success('Cart cleared successfully');
+            },
+            onError: () => {
+                toast.error('Failed to clear cart');
+            },
         });
     };
 

@@ -1,5 +1,6 @@
 import { Head, useForm } from '@inertiajs/react';
 import GuestLayout from '@/Layouts/GuestLayout';
+import FormAlert from '@/Components/Frontend/FormAlert';
 
 export default function ResetPassword({ token, email }) {
     const { data, setData, post, processing, errors, reset } = useForm({
@@ -26,6 +27,15 @@ export default function ResetPassword({ token, email }) {
                     <p className="text-gray-600 dark:text-gray-400 mb-6">
                         Enter your new password below.
                     </p>
+
+                    {Object.keys(errors).length > 0 && (
+                        <FormAlert 
+                            type="error" 
+                            title="Password Reset Failed"
+                            errors={errors}
+                            className="mb-4" 
+                        />
+                    )}
 
                     <form onSubmit={handleSubmit}>
                         <div className="mb-4">

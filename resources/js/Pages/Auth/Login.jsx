@@ -1,5 +1,6 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import GuestLayout from '@/Layouts/GuestLayout';
+import FormAlert from '@/Components/Frontend/FormAlert';
 
 export default function Login({ status, canResetPassword }) {
     const { data, setData, post, processing, errors, reset } = useForm({
@@ -25,9 +26,20 @@ export default function Login({ status, canResetPassword }) {
                     <p className="text-gray-600 dark:text-gray-400 mb-6">Sign in to your account to continue</p>
 
                     {status && (
-                        <div className="mb-4 text-sm font-medium text-green-600 bg-green-50 p-3 rounded-lg">
-                            {status}
-                        </div>
+                        <FormAlert type="success" message={status} className="mb-4" />
+                    )}
+
+                    {(errors.email || errors.password || errors.error) && (
+                        <FormAlert 
+                            type="error" 
+                            title="Login Failed"
+                            message={errors.error || (errors.email && !errors.password ? errors.email : null)}
+                            errors={!errors.error ? { 
+                                ...(errors.email && errors.password ? { email: errors.email } : {}),
+                                ...(errors.password ? { password: errors.password } : {})
+                            } : null}
+                            className="mb-4" 
+                        />
                     )}
 
                     <form onSubmit={handleSubmit}>
