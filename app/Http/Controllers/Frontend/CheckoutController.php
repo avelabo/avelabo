@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Frontend;
 
+use App\Actions\Fortify\CreateNewUser;
 use App\Http\Controllers\Controller;
 use App\Models\Country;
 use App\Models\PaymentGateway;
@@ -49,7 +50,7 @@ class CheckoutController extends Controller
             $savedAddresses = $user->addresses()
                 ->with('country')
                 ->get()
-                ->map(fn($addr) => [
+                ->map(fn ($addr) => [
                     'id' => $addr->id,
                     'label' => $addr->label,
                     'name' => $addr->full_name,
@@ -118,7 +119,7 @@ class CheckoutController extends Controller
         } catch (\Illuminate\Validation\ValidationException $e) {
             Log::error('Checkout validation failed', [
                 'errors' => $e->errors(),
-                'request_data' => $request->all()
+                'request_data' => $request->all(),
             ]);
             throw $e;
         }
@@ -132,36 +133,50 @@ class CheckoutController extends Controller
             $validated['shipping'] ?? []
         );
 
-        if (!empty($errors)) {
+        if (! empty($errors)) {
             Log::error('Checkout service validation failed', ['errors' => $errors]);
+
             return back()->withErrors($errors)->withInput();
         }
 
-        try {
-            // Process checkout
-            $order = $this->checkoutService->processCheckout(
-                $cart,
-                $validated['billing'],
-                $validated['shipping'] ?? ['same_as_billing' => true],
-                null,
-                $validated['notes'] ?? null
-            );
+        // If user is already logged in, process checkout directly
+        if (Auth::check()) {
+            try {
+                $order = $this->checkoutService->processCheckout(
+                    $cart,
+                    $validated['billing'],
+                    $validated['shipping'] ?? ['same_as_billing' => true],
+                    null,
+                    $validated['notes'] ?? null
+                );
 
-            Log::info('Order created successfully', ['order_id' => $order->id, 'order_number' => $order->order_number]);
+                Log::info('Order created successfully', ['order_id' => $order->id, 'order_number' => $order->order_number]);
 
-            // Store payment gateway selection in session for payment initiation
-            session(['checkout_payment_gateway' => $validated['payment_gateway_id']]);
+                session(['checkout_payment_gateway' => $validated['payment_gateway_id']]);
 
-            // Redirect to payment initiation
-            return redirect()->route('payment.initiate', $order);
+                return redirect()->route('payment.initiate', $order);
 
-        } catch (\Exception $e) {
-            Log::error('Checkout process failed', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            return back()->withErrors(['error' => $e->getMessage()])->withInput();
+            } catch (\Exception $e) {
+                Log::error('Checkout process failed', [
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
+                ]);
+
+                return back()->withErrors(['error' => $e->getMessage()])->withInput();
+            }
         }
+
+        // Guest checkout - store data in session and redirect to account prompt
+        session([
+            'checkout_data' => [
+                'billing' => $validated['billing'],
+                'shipping' => $validated['shipping'] ?? ['same_as_billing' => true],
+                'notes' => $validated['notes'] ?? null,
+                'payment_gateway_id' => $validated['payment_gateway_id'],
+            ],
+        ]);
+
+        return redirect()->route('checkout.account-prompt');
     }
 
     /**
@@ -171,13 +186,13 @@ class CheckoutController extends Controller
     {
         $orderNumber = $request->get('order');
 
-        if (!$orderNumber) {
+        if (! $orderNumber) {
             return redirect()->route('home');
         }
 
         $order = \App\Models\Order::where('order_number', $orderNumber)->first();
 
-        if (!$order) {
+        if (! $order) {
             return redirect()->route('home');
         }
 
@@ -200,5 +215,132 @@ class CheckoutController extends Controller
             'order_number' => $orderNumber,
             'message' => 'Your payment was cancelled. You can try again or contact support.',
         ]);
+    }
+
+    /**
+     * Show account prompt page for guest checkout
+     */
+    public function showAccountPrompt()
+    {
+        $checkoutData = session('checkout_data');
+
+        if (! $checkoutData) {
+            return redirect()->route('checkout')->with('error', 'Please complete checkout form first.');
+        }
+
+        // If user is already logged in, skip this step
+        if (Auth::check()) {
+            return $this->processGuestCheckout();
+        }
+
+        return Inertia::render('Frontend/CheckoutAccountPrompt', [
+            'billing' => $checkoutData['billing'],
+        ]);
+    }
+
+    /**
+     * Create account during checkout and proceed to payment
+     */
+    public function createAccountAndCheckout(Request $request)
+    {
+        $checkoutData = session('checkout_data');
+
+        if (! $checkoutData) {
+            return redirect()->route('checkout')->with('error', 'Session expired. Please try again.');
+        }
+
+        $validated = $request->validate([
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+        ]);
+
+        try {
+            // Use Fortify's CreateNewUser action
+            $createUser = app(CreateNewUser::class);
+            $user = $createUser->create([
+                'name' => trim($checkoutData['billing']['first_name'].' '.$checkoutData['billing']['last_name']),
+                'email' => $checkoutData['billing']['email'],
+                'password' => $validated['password'],
+                'password_confirmation' => $validated['password'],
+            ]);
+
+            // Update user phone if provided
+            if (! empty($checkoutData['billing']['phone'])) {
+                $user->update(['phone' => $checkoutData['billing']['phone']]);
+            }
+
+            // Log the user in
+            Auth::login($user);
+
+            // Transfer cart to user
+            $cart = $this->cartService->getOrCreateCart();
+            $cart->update(['user_id' => $user->id, 'session_id' => null]);
+
+            // Process checkout
+            return $this->processGuestCheckout();
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return back()->withErrors($e->errors())->withInput();
+        } catch (\Exception $e) {
+            Log::error('Account creation during checkout failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return back()->withErrors(['error' => 'Failed to create account. '.$e->getMessage()])->withInput();
+        }
+    }
+
+    /**
+     * Continue as guest and proceed to payment
+     */
+    public function continueAsGuest()
+    {
+        $checkoutData = session('checkout_data');
+
+        if (! $checkoutData) {
+            return redirect()->route('checkout')->with('error', 'Session expired. Please try again.');
+        }
+
+        return $this->processGuestCheckout();
+    }
+
+    /**
+     * Process checkout for guest (with or without account creation)
+     */
+    protected function processGuestCheckout()
+    {
+        $checkoutData = session('checkout_data');
+
+        if (! $checkoutData) {
+            return redirect()->route('checkout')->with('error', 'Session expired. Please try again.');
+        }
+
+        $cart = $this->cartService->getOrCreateCart();
+
+        try {
+            $order = $this->checkoutService->processCheckout(
+                $cart,
+                $checkoutData['billing'],
+                $checkoutData['shipping'],
+                null,
+                $checkoutData['notes'] ?? null
+            );
+
+            Log::info('Order created successfully', ['order_id' => $order->id, 'order_number' => $order->order_number]);
+
+            // Store payment gateway selection and clear checkout data
+            session(['checkout_payment_gateway' => $checkoutData['payment_gateway_id']]);
+            session()->forget('checkout_data');
+
+            return redirect()->route('payment.initiate', $order);
+
+        } catch (\Exception $e) {
+            Log::error('Guest checkout process failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return redirect()->route('checkout')->withErrors(['error' => $e->getMessage()])->withInput();
+        }
     }
 }
