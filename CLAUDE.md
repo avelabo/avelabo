@@ -88,7 +88,7 @@ Three separate portals:
 
 ## Reference Documentation
 
-Detailed specifications are in `ai_context/`:
+Detailed specifications are in `_reference/`:
 - `avelabo-claude-code.md` - Technical specification with all features and database schema
 - `avelabo-brd.md` - Business requirements and development phases
 
