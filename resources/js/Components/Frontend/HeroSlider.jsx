@@ -62,13 +62,13 @@ export default function HeroSlider({ sliders = [] }) {
                             <div className="container mx-auto px-8 lg:px-16">
                                 <div className="max-w-lg">
                                     {slide.subtitle && (
-                                        <p className="text-brand font-semibold mb-3">{slide.subtitle}</p>
+                                        <p className="text-white/90 font-semibold mb-3">{slide.subtitle}</p>
                                     )}
-                                    <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-heading mb-4">
+                                    <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold !text-white mb-4">
                                         {slide.title}
                                     </h1>
                                     {slide.description && (
-                                        <p className="text-gray-600 text-lg mb-8">{slide.description}</p>
+                                        <p className="text-white/80 text-lg mb-8">{slide.description}</p>
                                     )}
                                     {slide.button_text && slide.button_link && (
                                         <div className="flex items-center gap-4">
