@@ -17,7 +17,7 @@ export default function FrontendLayout({ children }) {
     }, []);
 
     return (
-        <div className="min-h-screen bg-white">
+        <div className="min-h-screen">
             <Header
                 isSticky={isSticky}
                 onMobileMenuToggle={() => setMobileMenuOpen(true)}
