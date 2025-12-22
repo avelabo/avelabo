@@ -13,7 +13,7 @@ class Cart extends Model
 
     protected $fillable = [
         'user_id',
-        'session_id',
+        'guest_token',
         'currency_id',
         'expires_at',
     ];
@@ -62,9 +62,9 @@ class Cart extends Model
         return $query->where('user_id', $userId);
     }
 
-    public function scopeForSession($query, $sessionId)
+    public function scopeForGuest($query, $guestToken)
     {
-        return $query->where('session_id', $sessionId);
+        return $query->where('guest_token', $guestToken);
     }
 
     public function isExpired(): bool

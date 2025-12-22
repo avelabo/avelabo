@@ -17,24 +17,32 @@ class CartService
     ) {}
 
     /**
+     * Get the cart token from the request
+     */
+    protected function getCartToken(): string
+    {
+        return request()->attributes->get('cart_token') ?? request()->cookie('cart_token') ?? session()->getId();
+    }
+
+    /**
      * Get or create a cart for the current user/session
      */
-    public function getOrCreateCart(?int $userId = null, ?string $sessionId = null): Cart
+    public function getOrCreateCart(?int $userId = null, ?string $cartToken = null): Cart
     {
         $userId = $userId ?? Auth::id();
-        $sessionId = $sessionId ?? session()->getId();
+        $cartToken = $cartToken ?? $this->getCartToken();
 
         // Try to find existing cart
         $cart = Cart::active()
-            ->when($userId, fn($q) => $q->forUser($userId))
-            ->when(!$userId, fn($q) => $q->forSession($sessionId))
+            ->when($userId, fn ($q) => $q->forUser($userId))
+            ->when(! $userId, fn ($q) => $q->forGuest($cartToken))
             ->first();
 
-        if (!$cart) {
+        if (! $cart) {
             // Get default currency (MWK) or first active currency
             $defaultCurrency = Currency::getDefault() ?? Currency::active()->first();
 
-            if (!$defaultCurrency) {
+            if (! $defaultCurrency) {
                 // Create default MWK currency if none exists
                 $defaultCurrency = Currency::create([
                     'name' => 'Malawian Kwacha',
@@ -49,9 +57,9 @@ class CartService
 
             $cart = Cart::create([
                 'user_id' => $userId,
-                'session_id' => $sessionId,
+                'guest_token' => $cartToken,
                 'currency_id' => $defaultCurrency->id,
-                'expires_at' => $userId ? null : now()->addDays(7),
+                'expires_at' => $userId ? null : now()->addDays(30),
             ]);
         }
 
@@ -151,12 +159,14 @@ class CartService
     /**
      * Merge guest cart with user cart on login
      */
-    public function mergeCarts(string $sessionId, int $userId): Cart
+    public function mergeCarts(?string $cartToken = null, ?int $userId = null): Cart
     {
-        $guestCart = Cart::active()->forSession($sessionId)->first();
+        $cartToken = $cartToken ?? $this->getCartToken();
+        $userId = $userId ?? Auth::id();
+        $guestCart = Cart::active()->forGuest($cartToken)->first();
         $userCart = $this->getOrCreateCart($userId);
 
-        if (!$guestCart || $guestCart->id === $userCart->id) {
+        if (! $guestCart || $guestCart->id === $userCart->id) {
             return $userCart;
         }
 
@@ -247,7 +257,7 @@ class CartService
         $errors = [];
 
         foreach ($cart->items as $item) {
-            if (!$this->isInStock($item->product, $item->variant, $item->quantity)) {
+            if (! $this->isInStock($item->product, $item->variant, $item->quantity)) {
                 $errors[] = [
                     'item_id' => $item->id,
                     'product_name' => $item->product->name,
@@ -265,7 +275,7 @@ class CartService
      */
     protected function validateStock(Product $product, ?ProductVariant $variant, int $quantity): void
     {
-        if (!$this->isInStock($product, $variant, $quantity)) {
+        if (! $this->isInStock($product, $variant, $quantity)) {
             $available = $this->getAvailableStock($product, $variant);
             throw new \Exception("Insufficient stock. Only {$available} available.");
         }
@@ -277,15 +287,17 @@ class CartService
     protected function isInStock(Product $product, ?ProductVariant $variant, int $quantity): bool
     {
         if ($variant) {
-            if (!$variant->track_inventory) {
+            if (! $variant->track_inventory) {
                 return true;
             }
+
             return $variant->stock_quantity >= $quantity || $variant->allow_backorders;
         }
 
-        if (!$product->track_inventory) {
+        if (! $product->track_inventory) {
             return true;
         }
+
         return $product->stock_quantity >= $quantity || $product->allow_backorders;
     }
 
@@ -297,6 +309,7 @@ class CartService
         if ($variant) {
             return $variant->track_inventory ? $variant->stock_quantity : 999;
         }
+
         return $product->track_inventory ? $product->stock_quantity : 999;
     }
 

@@ -85,11 +85,11 @@ class HandleInertiaRequests extends Middleware
     private function getCartCount(Request $request): int
     {
         $userId = $request->user()?->id;
-        $sessionId = $request->session()->getId();
+        $cartToken = $request->attributes->get('cart_token') ?? $request->cookie('cart_token');
 
         $cart = Cart::active()
             ->when($userId, fn ($q) => $q->forUser($userId))
-            ->when(!$userId, fn ($q) => $q->forSession($sessionId))
+            ->when(! $userId && $cartToken, fn ($q) => $q->forGuest($cartToken))
             ->with('items')
             ->first();
 
@@ -98,10 +98,16 @@ class HandleInertiaRequests extends Middleware
 
     private function getWishlistCount(Request $request): int
     {
-        if (!$request->user()) {
-            return count($request->session()->get('wishlist', []));
+        if ($request->user()) {
+            return Wishlist::where('user_id', $request->user()->id)->count();
         }
 
-        return Wishlist::where('user_id', $request->user()->id)->count();
+        $wishlistToken = $request->attributes->get('wishlist_token') ?? $request->cookie('wishlist_token');
+
+        if ($wishlistToken) {
+            return Wishlist::where('guest_token', $wishlistToken)->count();
+        }
+
+        return 0;
     }
 }

@@ -98,9 +98,11 @@ export default function Header({ isSticky, onMobileMenuToggle }) {
                             <Link href="/wishlist" className="hidden lg:flex items-center gap-2 text-heading hover:text-brand transition-colors">
                                 <div className="relative">
                                     <img src="/images/frontend/theme/icons/icon-heart.svg" alt="Wishlist" className="w-6 h-6" />
-                                    <span className="absolute -top-2 -right-2 bg-brand text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                                        {counts?.wishlist || 0}
-                                    </span>
+                                    {counts?.wishlist > 0 && (
+                                        <span className="absolute -top-2 -right-2 bg-brand text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                                            {counts.wishlist}
+                                        </span>
+                                    )}
                                 </div>
                                 <span className="text-sm">Wishlist</span>
                             </Link>
@@ -109,9 +111,11 @@ export default function Header({ isSticky, onMobileMenuToggle }) {
                             <Link href="/cart" className="flex items-center gap-2 text-heading hover:text-brand transition-colors">
                                 <div className="relative">
                                     <img src="/images/frontend/theme/icons/icon-cart.svg" alt="Basket" className="w-6 h-6" />
-                                    <span className="absolute -top-2 -right-2 bg-brand text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                                        {counts?.cart || 0}
-                                    </span>
+                                    {counts?.cart > 0 && (
+                                        <span className="absolute -top-2 -right-2 bg-brand text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                                            {counts.cart}
+                                        </span>
+                                    )}
                                 </div>
                                 <span className="hidden lg:block text-sm">Basket</span>
                             </Link>

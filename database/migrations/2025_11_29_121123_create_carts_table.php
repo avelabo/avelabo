@@ -14,13 +14,13 @@ return new class extends Migration
         Schema::create('carts', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->nullable()->constrained()->cascadeOnDelete();
-            $table->string('session_id')->nullable(); // For guest carts
+            $table->string('guest_token')->nullable();
             $table->foreignId('currency_id')->constrained('currencies');
             $table->timestamp('expires_at')->nullable();
             $table->timestamps();
 
             $table->index('user_id');
-            $table->index('session_id');
+            $table->index('guest_token');
             $table->index('expires_at');
         });
     }

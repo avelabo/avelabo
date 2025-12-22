@@ -12,6 +12,7 @@ class Wishlist extends Model
 
     protected $fillable = [
         'user_id',
+        'guest_token',
         'product_id',
     ];
 
@@ -28,5 +29,10 @@ class Wishlist extends Model
     public function scopeForUser($query, $userId)
     {
         return $query->where('user_id', $userId);
+    }
+
+    public function scopeForGuest($query, $guestToken)
+    {
+        return $query->where('guest_token', $guestToken);
     }
 }
