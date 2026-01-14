@@ -1,0 +1,151 @@
+{
+  "category": {
+    "id": 8,
+    "name": "Laptops",
+    "slug": "laptops",
+    "breadcrumbs": [
+      "Electronics",
+      "Laptops"
+    ]
+  },
+  "products": {
+    "current_page": 1,
+    "data": [
+      {
+        "id": 36,
+        "name": "MSI Modern 15 H AI Core Ultra 7 16GB RAM/512GB SSD Laptop + 15.6\" Backpack",
+        "slug": "msi-modern-15-h-ai-core-ultra-7-16gb-ram512gb-ssd-laptop-156-backpack",
+        "description": null,
+        "short_description": null,
+        "specifications": null,
+        "brand": {
+          "name": "MSI",
+          "slug": "msi"
+        },
+        "base_price": "24899.00",
+        "compare_at_price": null,
+        "rating": "0.00",
+        "reviews_count": 0,
+        "status": "draft",
+        "is_featured": false,
+        "is_new": true,
+        "images": [
+          {
+            "path": "products/takealot/36/3d04b6a0-2170-4098-b37e-bccf7273f703.jpg",
+            "alt_text": "MSI Modern 15 H AI Core Ultra 7 16GB RAM/512GB SSD Laptop + 15.6\" Backpack",
+            "is_primary": true,
+            "sort_order": 0
+          }
+        ],
+        "variants": [
+          {
+            "sku": null,
+            "name": "Default",
+            "price": "24899.00",
+            "list_price": null,
+            "stock_status": "out_of_stock",
+            "stock_locations": [],
+            "shipping_estimate_raw": null,
+            "shipping_estimate_days": null,
+            "is_default": true,
+            "attributes": []
+          }
+        ],
+        "source": "takealot",
+        "source_url": "https://www.takealot.com/msi-modern-15-h-ai-core-ultra-7-16gb-ram-512gb-ssd-laptop-15-6-backpack/PLID100281174"
+      },
+      {
+        "id": 1,
+        "name": "Lenovo IdeaPad Slim 3 Ryzen 7 8GB 512GB NVMe M.2 SSD 15.6\" FHD Notebook",
+        "slug": "lenovo-ideapad-slim-3-ryzen-7-8gb-512gb-nvme-m2-ssd-156-fhd-notebook",
+        "description": null,
+        "short_description": "Lenovo IdeaPad Slim 3 15ARB8 | AMD Ryzen 7 7730U | 8GB | 512GB NVMe SSD | 15.6\" FHD (1920x1080) | Arctic Grey",
+        "specifications": [],
+        "brand": {
+          "name": "Lenovo",
+          "slug": "lenovo"
+        },
+        "base_price": "8999.00",
+        "compare_at_price": null,
+        "rating": "4.60",
+        "reviews_count": 29,
+        "status": "draft",
+        "is_featured": false,
+        "is_new": false,
+        "images": [
+          {
+            "path": "products/takealot/1/421e75e7-f02a-43c3-8fdf-7ad0ca2e515a.png",
+            "alt_text": "Lenovo IdeaPad Slim 3 Ryzen 7 8GB 512GB NVMe M.2 SSD 15.6\" FHD Notebook",
+            "is_primary": true,
+            "sort_order": 0
+          }
+        ],
+        "variants": [
+          {
+            "sku": null,
+            "name": "Default",
+            "price": "8999.00",
+            "list_price": null,
+            "stock_status": "in_stock",
+            "stock_locations": [
+              "CPTThis item can be shipped from Cape Town.",
+              "CPT",
+              "DBNThis item can be shipped from Durban.",
+              "DBN",
+              "JHBThis item can be shipped from Johannesburg.",
+              "JHB",
+              "CPTThis item can be shipped from Cape Town.",
+              "CPT",
+              "DBNThis item can be shipped from Durban.",
+              "DBN",
+              "JHBThis item can be shipped from Johannesburg.",
+              "JHB"
+            ],
+            "shipping_estimate_raw": "02 January - 05 January",
+            "shipping_estimate_days": 3,
+            "is_default": true,
+            "attributes": []
+          }
+        ],
+        "source": "takealot",
+        "source_url": "https://www.takealot.com/lenovo-ideapad-slim-3-ryzen-7-8gb-512gb-nvme-m-2-ssd-15-6-fhd-no/PLID100536797"
+      }
+    ], 
+    "first_page_url": "https://ave-scraper.test/api/destinations/categories/8/products?page=1",
+    "from": 1,
+    "last_page": 2,
+    "last_page_url": "https://ave-scraper.test/api/destinations/categories/8/products?page=2",
+    "links": [
+      {
+        "url": null,
+        "label": "&laquo; Previous",
+        "page": null,
+        "active": false
+      },
+      {
+        "url": "https://ave-scraper.test/api/destinations/categories/8/products?page=1",
+        "label": "1",
+        "page": 1,
+        "active": true
+      },
+      {
+        "url": "https://ave-scraper.test/api/destinations/categories/8/products?page=2",
+        "label": "2",
+        "page": 2,
+        "active": false
+      },
+      {
+        "url": "https://ave-scraper.test/api/destinations/categories/8/products?page=2",
+        "label": "Next &raquo;",
+        "page": 2,
+        "active": false
+      }
+    ],
+    "next_page_url": "https://ave-scraper.test/api/destinations/categories/8/products?page=2",
+    "path": "https://ave-scraper.test/api/destinations/categories/8/products",
+    "per_page": 20,
+    "prev_page_url": null,
+    "to": 20,
+    "total": 37
+  }
+}

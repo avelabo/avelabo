@@ -34,6 +34,14 @@ export default function Sidebar({ isOpen, isMobileOpen, onClose }) {
             ],
         },
         {
+            name: 'Data Import',
+            icon: 'cloud_download',
+            children: [
+                { name: 'Data Sources', href: '/admin/import/data-sources' },
+                { name: 'Import Tasks', href: '/admin/import/tasks' },
+            ],
+        },
+        {
             name: 'Sliders',
             icon: 'view_carousel',
             children: [

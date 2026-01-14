@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\Admin\CategoryController as AdminCategoryController;
 use App\Http\Controllers\Admin\ContactMessageController;
+use App\Http\Controllers\Admin\ImportDataSourceController;
+use App\Http\Controllers\Admin\ImportTaskController;
 use App\Http\Controllers\Admin\KycController;
 use App\Http\Controllers\Admin\MarkupTemplateController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
@@ -334,4 +336,22 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 
     // Sliders Management
     Route::resource('sliders', SliderController::class);
+
+    // Data Import Module
+    Route::prefix('import')->name('import.')->group(function () {
+        // Data Sources
+        Route::resource('data-sources', ImportDataSourceController::class);
+        Route::patch('/data-sources/{dataSource}/toggle-status', [ImportDataSourceController::class, 'toggleStatus'])
+            ->name('data-sources.toggle-status');
+
+        // Import Tasks
+        Route::resource('tasks', ImportTaskController::class);
+        Route::post('/tasks/{task}/run', [ImportTaskController::class, 'run'])->name('tasks.run');
+        Route::get('/tasks/{task}/fetch-categories', [ImportTaskController::class, 'fetchCategories'])
+            ->name('tasks.fetch-categories');
+        Route::post('/tasks/fetch-source-categories', [ImportTaskController::class, 'fetchSourceCategories'])
+            ->name('tasks.fetch-source-categories');
+        Route::get('/tasks/{task}/runs/{run}', [ImportTaskController::class, 'runDetails'])
+            ->name('tasks.run-details');
+    });
 });

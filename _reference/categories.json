@@ -1,0 +1,31 @@
+{
+  "system": {
+    "name": "Avelabo.com",
+    "slug": "avelabo-com"
+  },
+  "categories": [
+    {
+      "id": 7,
+      "name": "Electronics",
+      "slug": "electronics",
+      "description": null,
+      "parent_id": null,
+      "breadcrumbs": [
+        "Electronics"
+      ],
+      "product_count": 0
+    },
+    {
+      "id": 8,
+      "name": "Laptops",
+      "slug": "laptops",
+      "description": null,
+      "parent_id": 7,
+      "breadcrumbs": [
+        "Electronics",
+        "Laptops"
+      ],
+      "product_count": 37
+    }
+  ]
+}

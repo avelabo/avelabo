@@ -22,6 +22,8 @@ class Category extends Model
         'is_active',
         'is_featured',
         'products_count',
+        'source',
+        'source_id',
     ];
 
     protected $casts = [
@@ -79,6 +81,7 @@ class Category extends Model
             $ancestors[] = $category->parent;
             $category = $category->parent;
         }
+
         return array_reverse($ancestors);
     }
 
