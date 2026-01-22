@@ -36,7 +36,7 @@ class ProductVariant extends Model
 
     public function attributes(): HasMany
     {
-        return $this->hasMany(ProductVariantAttribute::class);
+        return $this->hasMany(ProductVariantAttribute::class, 'variant_id');
     }
 
     public function cartItems(): HasMany

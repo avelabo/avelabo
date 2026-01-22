@@ -25,7 +25,7 @@ class ImportTaskController extends Controller
             'dataSource:id,name,slug',
             'seller:id,shop_name',
             'targetCategory:id,name',
-            'latestRun:id,import_task_id,status,started_at,completed_at,total_items,processed_items,created_items,updated_items,failed_items',
+            'latestRun',
         ])
             ->withCount('runs')
             ->when($request->search, function ($query, $search) {

@@ -37,6 +37,10 @@ class ProductConverter
             // Determine currency
             $currencyId = $dataSource->default_currency_id ?? 1;
 
+            // Determine stock status and backorder setting
+            $stockStatus = $data['stock_status'] ?? 'in_stock';
+            $allowBackorders = $stockStatus === 'in_stock';
+
             // Prepare product data
             $productData = [
                 'seller_id' => $task->seller_id,
@@ -50,6 +54,8 @@ class ProductConverter
                 'base_price' => (float) ($data['base_price'] ?? 0),
                 'compare_at_price' => ! empty($data['compare_at_price']) ? (float) $data['compare_at_price'] : null,
                 'currency_id' => $currencyId,
+                'stock_quantity' => $stockStatus === 'in_stock' ? 100 : 0,
+                'allow_backorders' => $allowBackorders,
                 'status' => 'draft',
                 'is_featured' => $data['is_featured'] ?? false,
                 'is_new' => $data['is_new'] ?? true,

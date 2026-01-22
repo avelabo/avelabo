@@ -1,6 +1,7 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import AdminLayout from '@/Layouts/AdminLayout';
 import { useState, useEffect } from 'react';
+import axios from 'axios';
 
 export default function Edit({ task, dataSources, sellers, categories, importTypes }) {
     const [sourceCategories, setSourceCategories] = useState([]);
@@ -31,25 +32,20 @@ export default function Edit({ task, dataSources, sellers, categories, importTyp
         setLoadingCategories(true);
         setFetchError(null);
         try {
-            const response = await fetch(route('admin.import.tasks.fetch-source-categories'), {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'),
-                },
-                body: JSON.stringify({ data_source_id: data.data_source_id }),
+            const response = await axios.post(route('admin.import.tasks.fetch-source-categories'), {
+                data_source_id: data.data_source_id,
             });
-            const result = await response.json();
-            if (result.success) {
-                setSourceCategories(result.categories || []);
+            if (response.data.success) {
+                setSourceCategories(response.data.categories || []);
                 setFetchError(null);
             } else {
-                setFetchError(result.message || 'Failed to fetch categories');
+                setFetchError(response.data.message || 'Failed to fetch categories');
                 setSourceCategories([]);
             }
         } catch (error) {
             console.error('Failed to fetch categories:', error);
-            setFetchError('Network error: Could not connect to data source');
+            console.error('Full error details:', error.response?.data || error.message);
+            setFetchError(error.response?.data?.message || 'Network error: Could not connect to data source');
             setSourceCategories([]);
         } finally {
             setLoadingCategories(false);
@@ -253,7 +249,7 @@ export default function Edit({ task, dataSources, sellers, categories, importTyp
                                                 <option value="all">All Categories</option>
                                                 {sourceCategories.map((cat) => (
                                                     <option key={cat.id} value={cat.id}>
-                                                        {cat.breadcrumbs?.join(' > ') || cat.name}
+                                                        {cat.breadcrumbs?.join(' > ') || cat.name} ({cat.product_count ?? 0} products)
                                                     </option>
                                                 ))}
                                             </>

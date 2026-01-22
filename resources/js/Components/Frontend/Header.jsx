@@ -55,15 +55,15 @@ export default function Header({ isSticky, onMobileMenuToggle }) {
             </div> */}
 
             {/* Middle Header */}
-            <div className="bg-white py-4 lg:py-6 border-b border-gray-100">
+            <div className="bg-[#221] py-4 lg:py-6 border-b border-gray-100">
                 <div className="container mx-auto px-4">
                     <div className="flex items-center justify-between gap-4">
                         {/* Logo */}
                         <Link href="/" className="flex-shrink-0">
                             <img
-                                src="/images/logo/logo-web-small.png"
+                                src="/images/logo/logo-alt-white-web-small.png"
                                 alt={siteSettings?.site_name || 'Avelabo'}
-                                className="h-10 lg:h-12"
+                                className="h-10 lg:h-10"
                             />
                         </Link>
 
@@ -82,10 +82,10 @@ export default function Header({ isSticky, onMobileMenuToggle }) {
                                     <input
                                         type="text"
                                         placeholder="Search for items..."
-                                        className="w-full border border-gray-200 px-4 py-3 text-sm focus:border-brand focus:ring-0"
+                                        className="w-full border border-gray-200 px-4 bg-white py-2 text-black text-sm focus:border-brand focus:ring-0"
                                     />
                                 </div>
-                                <button className="bg-brand hover:bg-brand-dark text-white px-6 rounded-r-md transition-colors">
+                                <button className="bg-[#f1b945] hover:bg-[#d9a53d] text-white px-6 rounded-r-md transition-colors">
                                     Search
                                 </button>
                             </div>
@@ -95,41 +95,41 @@ export default function Header({ isSticky, onMobileMenuToggle }) {
                         <div className="flex items-center gap-4 lg:gap-6">
 
                             {/* Wishlist */}
-                            <Link href="/wishlist" className="hidden lg:flex items-center gap-2 text-heading hover:text-brand transition-colors">
+                            <Link href="/wishlist" className="hidden lg:flex items-center gap-2 text-white hover:text-brand transition-colors">
                                 <div className="relative">
-                                    <img src="/images/frontend/theme/icons/icon-heart.svg" alt="Wishlist" className="w-6 h-6" />
+                                    <img src="/images/frontend/theme/icons/icon-heart.svg" alt="Wishlist" className="w-6 h-6 invert" />
                                     {counts?.wishlist > 0 && (
                                         <span className="absolute -top-2 -right-2 bg-brand text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                                             {counts.wishlist}
                                         </span>
                                     )}
                                 </div>
-                                <span className="text-sm">Wishlist</span>
+                                {/* <span className="text-sm">Wishlist</span> */}
                             </Link>
 
                             {/* Basket */}
-                            <Link href="/cart" className="flex items-center gap-2 text-heading hover:text-brand transition-colors">
+                            <Link href="/cart" className="flex items-center gap-2 text-white hover:text-brand transition-colors">
                                 <div className="relative">
-                                    <img src="/images/frontend/theme/icons/icon-cart.svg" alt="Basket" className="w-6 h-6" />
+                                    <img src="/images/frontend/theme/icons/icon-cart.svg" alt="Basket" className="w-6 h-6 invert" />
                                     {counts?.cart > 0 && (
                                         <span className="absolute -top-2 -right-2 bg-brand text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                                             {counts.cart}
                                         </span>
                                     )}
                                 </div>
-                                <span className="hidden lg:block text-sm">Basket</span>
+                                {/* <span className="hidden lg:block text-sm">Basket</span> */}
                             </Link>
 
                             {/* Account */}
-                            <Link href="/account" className="hidden lg:flex items-center gap-2 text-heading hover:text-brand transition-colors">
-                                <img src="/images/frontend/theme/icons/icon-user.svg" alt="Account" className="w-6 h-6" />
-                                <span className="text-sm">Account</span>
+                            <Link href="/account" className="hidden lg:flex items-center gap-2 text-white hover:text-[#f1b945] transition-colors">
+                                <img src="/images/frontend/theme/icons/icon-user.svg" alt="Account" className="w-6 h-6 invert" />
+                                <span className="text-sm">My Account</span>
                             </Link>
 
                             {/* Mobile Menu Toggle */}
                             <button
                                 onClick={onMobileMenuToggle}
-                                className="lg:hidden p-2"
+                                className="lg:hidden p-2 text-white"
                             >
                                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
