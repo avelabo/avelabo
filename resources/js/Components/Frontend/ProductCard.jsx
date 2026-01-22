@@ -8,6 +8,7 @@ export default function ProductCard({ product }) {
     const currency = getDefaultCurrency(props);
     const toast = useToast();
     const [isLoading, setIsLoading] = useState(false);
+    const [imageError, setImageError] = useState(false);
 
     const handleAddToBasket = (e) => {
         e.preventDefault();
@@ -59,8 +60,9 @@ export default function ProductCard({ product }) {
     // Handle seller/brand - could be string or object
     const brandName = typeof seller === 'object' ? seller?.shop_name : (seller || 'Avelabo');
 
-    // Handle image
-    const productImage = primary_image || image || '/images/frontend/placeholder-product.png';
+    // Handle image - use SVG data URI as final fallback to prevent infinite loops
+    const placeholderSvg = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"%3E%3Crect fill="%23f3f4f6" width="200" height="200"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" fill="%239ca3af" font-family="sans-serif" font-size="14"%3ENo Image%3C/text%3E%3C/svg%3E';
+    const productImage = imageError ? placeholderSvg : (primary_image || image || placeholderSvg);
 
     // Handle price
     const displayPrice = price || currentPrice || 0;
@@ -119,7 +121,7 @@ export default function ProductCard({ product }) {
                         src={productImage}
                         alt={name}
                         className="w-full aspect-square object-contain transition-all"
-                        onError={(e) => { e.target.src = '/images/frontend/placeholder-product.png'; }}
+                        onError={() => !imageError && setImageError(true)}
                     />
                 </Link>
 

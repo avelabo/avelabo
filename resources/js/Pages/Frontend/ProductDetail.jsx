@@ -93,7 +93,7 @@ export default function ProductDetail({ product, relatedProducts }) {
                 <div className="container mx-auto px-4">
                     <div className="flex items-center gap-2 text-sm">
                         <Link href="/" className="text-brand hover:text-brand-dark flex items-center gap-1">
-                            <i className="fi-rs-home"></i> Home
+                            <span className="material-icons text-sm">home</span> Home
                         </Link>
                         <span className="text-muted">•</span>
                         <Link href={route('shop')} className="text-muted hover:text-brand">Shop</Link>
@@ -143,7 +143,7 @@ export default function ProductDetail({ product, relatedProducts }) {
                                             <img src={image.url} alt={image.alt} className="w-full h-full object-cover" />
                                         ) : (
                                             <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-                                                <i className="fi-rs-picture text-gray-400"></i>
+                                                <span className="material-icons text-gray-400">image</span>
                                             </div>
                                         )}
                                     </button>
@@ -176,7 +176,7 @@ export default function ProductDetail({ product, relatedProducts }) {
                             <div className="flex items-center gap-3 mb-4">
                                 <div className="flex text-yellow-400">
                                     {[...Array(5)].map((_, i) => (
-                                        <i key={i} className={`fi-rs-star ${i < Math.floor(product.rating) ? '' : 'text-gray-300'}`}></i>
+                                        <span key={i} className={`material-icons text-lg ${i < Math.floor(product.rating) ? '' : 'text-gray-300'}`}>star</span>
                                     ))}
                                 </div>
                                 <span className="text-body">({product.reviews_count || 0} reviews)</span>
@@ -205,7 +205,7 @@ export default function ProductDetail({ product, relatedProducts }) {
                                         : 'bg-green-100 text-green-700'
                                     : 'bg-red-100 text-red-700'
                             }`}>
-                                <i className={`fi-rs-${isInStock() ? 'check' : 'cross'} text-xs`}></i>
+                                <span className="material-icons text-sm">{isInStock() ? 'check' : 'close'}</span>
                                 {isInStock()
                                     ? product.is_low_stock
                                         ? 'Low Stock'
@@ -249,21 +249,21 @@ export default function ProductDetail({ product, relatedProducts }) {
                             <div className="flex items-center border border-border rounded-lg">
                                 <button
                                     onClick={() => handleQuantityChange(-1)}
-                                    className="w-12 h-12 flex items-center justify-center hover:bg-gray-50 transition-colors"
+                                    className="w-12 h-12 flex items-center justify-center hover:bg-gray-50 transition-colors text-heading"
                                 >
-                                    <i className="fi-rs-minus"></i>
+                                    <span className="material-icons text-xl">remove</span>
                                 </button>
                                 <input
                                     type="number"
                                     value={quantity}
                                     onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-                                    className="w-16 h-12 text-center border-x border-border outline-none"
+                                    className="w-16 h-12 text-center border-x border-border outline-none text-heading"
                                 />
                                 <button
                                     onClick={() => handleQuantityChange(1)}
-                                    className="w-12 h-12 flex items-center justify-center hover:bg-gray-50 transition-colors"
+                                    className="w-12 h-12 flex items-center justify-center hover:bg-gray-50 transition-colors text-heading"
                                 >
-                                    <i className="fi-rs-plus"></i>
+                                    <span className="material-icons text-xl">add</span>
                                 </button>
                             </div>
                             <button
@@ -273,21 +273,21 @@ export default function ProductDetail({ product, relatedProducts }) {
                             >
                                 {addingToBasket ? (
                                     <>
-                                        <i className="fi-rs-spinner animate-spin"></i>
+                                        <span className="material-icons animate-spin text-xl">sync</span>
                                         Adding...
                                     </>
                                 ) : (
                                     <>
-                                        <i className="fi-rs-shopping-cart"></i>
+                                        <span className="material-icons text-xl">shopping_cart</span>
                                         Add to Basket
                                     </>
                                 )}
                             </button>
-                            <button className="w-12 h-12 flex items-center justify-center border border-border rounded-lg hover:border-brand hover:text-brand transition-colors">
-                                <i className="fi-rs-heart"></i>
+                            <button className="w-12 h-12 flex items-center justify-center border border-border rounded-lg hover:border-brand hover:text-brand transition-colors text-heading">
+                                <span className="material-icons text-xl">favorite_border</span>
                             </button>
-                            <button className="w-12 h-12 flex items-center justify-center border border-border rounded-lg hover:border-brand hover:text-brand transition-colors">
-                                <i className="fi-rs-shuffle"></i>
+                            <button className="w-12 h-12 flex items-center justify-center border border-border rounded-lg hover:border-brand hover:text-brand transition-colors text-heading">
+                                <span className="material-icons text-xl">compare_arrows</span>
                             </button>
                         </div>
 
@@ -362,7 +362,7 @@ export default function ProductDetail({ product, relatedProducts }) {
                                             <div key={review.id} className="border-b border-border pb-6 last:border-0">
                                                 <div className="flex items-center gap-3 mb-3">
                                                     <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-                                                        <i className="fi-rs-user text-gray-500"></i>
+                                                        <span className="material-icons text-gray-500">person</span>
                                                     </div>
                                                     <div>
                                                         <p className="font-semibold text-heading">{review.user_name}</p>
@@ -371,7 +371,7 @@ export default function ProductDetail({ product, relatedProducts }) {
                                                 </div>
                                                 <div className="flex text-yellow-400 mb-2">
                                                     {[...Array(5)].map((_, i) => (
-                                                        <i key={i} className={`fi-rs-star text-sm ${i < review.rating ? '' : 'text-gray-300'}`}></i>
+                                                        <span key={i} className={`material-icons text-sm ${i < review.rating ? '' : 'text-gray-300'}`}>star</span>
                                                     ))}
                                                 </div>
                                                 {review.title && <p className="font-semibold text-heading mb-2">{review.title}</p>}

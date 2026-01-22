@@ -9,7 +9,7 @@
 
 /* Tailwind v4 Theme Configuration */
 @theme {
-    --font-sans: 'Quicksand', ui-sans-serif, system-ui, sans-serif;
+    --font-sans: 'Satoshi', ui-sans-serif, system-ui, sans-serif;
     --font-body: 'Lato', ui-sans-serif, system-ui, sans-serif;
 
     /* Brand Colors */
@@ -52,7 +52,7 @@
 
 /* Base Styles */
 body {
-    font-family: 'Lato', sans-serif;
+    font-family: 'Satoshi', sans-serif;
     color: var(--color-body);
 }
 
@@ -61,7 +61,7 @@ body.dark {
 }
 
 h1, h2, h3, h4, h5, h6 {
-    font-family: 'Quicksand', sans-serif;
+    font-family: 'Satoshi', sans-serif;
     color: var(--color-heading);
     font-weight: 700;
 }
@@ -326,7 +326,7 @@ h1, h2, h3, h4, h5, h6 {
 
 .swiper-button-next,
 .swiper-button-prev {
-    color: var(--color-brand);
+    color: #000 !important;
 }
 
 /* Table Styles */
@@ -427,8 +427,8 @@ textarea:focus {
 .hover\:text-brand-dark:hover { color: var(--color-brand-dark); }
 
 /* Font Family Utilities */
-.font-quicksand { font-family: 'Quicksand', ui-sans-serif, system-ui, sans-serif; }
-.font-lato { font-family: 'Lato', ui-sans-serif, system-ui, sans-serif; }
+.font-quicksand { font-family: 'Satoshi', ui-sans-serif, system-ui, sans-serif; }
+.font-lato { font-family: 'Satoshi', ui-sans-serif, system-ui, sans-serif; }
 
 /* Global Cursor Styles */
 a,
@@ -730,28 +730,23 @@ label {
 /* Swiper Custom Navigation */
 .swiper-button-next,
 .swiper-button-prev {
-  width: 40px;
-  height: 40px;
-  background: #fff;
+  width: 40px !important;
+  height: 40px !important;
+  background: transparent !important;
   border-radius: 50%;
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: none !important;
 }
 
 .swiper-button-next::after,
 .swiper-button-prev::after {
-  font-size: 14px;
-  color: #253d4e;
+  font-size: 20px !important;
+  color: #000 !important;
   font-weight: bold;
-}
-
-.swiper-button-next:hover,
-.swiper-button-prev:hover {
-  background: #3bb77e;
 }
 
 .swiper-button-next:hover::after,
 .swiper-button-prev:hover::after {
-  color: #fff;
+  color: #333 !important;
 }
 
 /* Progress Bar */

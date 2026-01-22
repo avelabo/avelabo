@@ -1,7 +1,13 @@
+import { useState } from 'react';
 import { Head, Link } from '@inertiajs/react';
 import FrontendLayout from '@/Layouts/FrontendLayout';
 
+// SVG placeholder to prevent infinite loops when images fail to load
+const placeholderSvg = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"%3E%3Crect fill="%23f3f4f6" width="400" height="300"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" fill="%239ca3af" font-family="sans-serif" font-size="16"%3EImage%3C/text%3E%3C/svg%3E';
+
 export default function About() {
+    const [heroImageError, setHeroImageError] = useState(false);
+    const [whyChooseImageError, setWhyChooseImageError] = useState(false);
     const stats = [
         { number: '10K+', label: 'Products' },
         { number: '500+', label: 'Vendors' },
@@ -60,10 +66,10 @@ export default function About() {
                         </div>
                         <div className="relative">
                             <img
-                                src="/images/frontend/about/about-hero.png"
+                                src={heroImageError ? placeholderSvg : "/images/frontend/about/about-hero.png"}
                                 alt="About Avelabo"
                                 className="rounded-xl shadow-lg"
-                                onError={(e) => { e.target.src = '/images/frontend/placeholder-product.png'; }}
+                                onError={() => !heroImageError && setHeroImageError(true)}
                             />
                         </div>
                     </div>
@@ -128,10 +134,10 @@ export default function About() {
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
                         <div>
                             <img
-                                src="/images/frontend/about/why-choose.png"
+                                src={whyChooseImageError ? placeholderSvg : "/images/frontend/about/why-choose.png"}
                                 alt="Why Choose Us"
                                 className="rounded-xl"
-                                onError={(e) => { e.target.src = '/images/frontend/placeholder-product.png'; }}
+                                onError={() => !whyChooseImageError && setWhyChooseImageError(true)}
                             />
                         </div>
                         <div>
