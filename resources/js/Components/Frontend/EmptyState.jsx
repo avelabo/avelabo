@@ -49,6 +49,13 @@ export default function EmptyState({
 
     // Icon components
     const icons = {
+        avelabo: (
+            <img
+                src="/images/frontend/theme/grey-avelabo-icon.png"
+                alt=""
+                className={`${config.iconSize} opacity-40`}
+            />
+        ),
         cart: (
             <svg className={`${config.iconSize} text-gray-300`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -60,9 +67,11 @@ export default function EmptyState({
             </svg>
         ),
         box: (
-            <svg className={`${config.iconSize} text-gray-300`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-            </svg>
+            <img
+                src="/images/frontend/theme/grey-avelabo-icon.png"
+                alt=""
+                className={`${config.iconSize} opacity-40`}
+            />
         ),
         shop: (
             <svg className={`${config.iconSize} text-gray-300`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
