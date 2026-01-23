@@ -47,8 +47,7 @@ class MarkupTemplateController extends Controller
             'ranges' => ['required', 'array', 'min:1'],
             'ranges.*.min_price' => ['required', 'numeric', 'min:0'],
             'ranges.*.max_price' => ['nullable', 'numeric', 'min:0'],
-            'ranges.*.markup_type' => ['required', 'in:percentage,fixed'],
-            'ranges.*.markup_value' => ['required', 'numeric', 'min:0'],
+            'ranges.*.markup_amount' => ['required', 'numeric', 'min:0'],
         ]);
 
         DB::transaction(function () use ($validated) {
@@ -64,14 +63,12 @@ class MarkupTemplateController extends Controller
                 'is_active' => $validated['is_active'] ?? true,
             ]);
 
-            foreach ($validated['ranges'] as $index => $range) {
+            foreach ($validated['ranges'] as $range) {
                 SellerMarkupTemplateRange::create([
-                    'seller_markup_template_id' => $template->id,
+                    'template_id' => $template->id,
                     'min_price' => $range['min_price'],
                     'max_price' => $range['max_price'],
-                    'markup_type' => $range['markup_type'],
-                    'markup_value' => $range['markup_value'],
-                    'sort_order' => $index,
+                    'markup_amount' => $range['markup_amount'],
                 ]);
             }
         });
@@ -85,7 +82,7 @@ class MarkupTemplateController extends Controller
      */
     public function show(SellerMarkupTemplate $markupTemplate)
     {
-        $markupTemplate->load(['ranges' => fn($q) => $q->orderBy('sort_order'), 'sellers:id,shop_name']);
+        $markupTemplate->load(['ranges' => fn ($q) => $q->orderBy('min_price'), 'sellers:id,shop_name']);
 
         return Inertia::render('Admin/MarkupTemplates/Show', [
             'template' => $markupTemplate,
@@ -97,7 +94,7 @@ class MarkupTemplateController extends Controller
      */
     public function edit(SellerMarkupTemplate $markupTemplate)
     {
-        $markupTemplate->load(['ranges' => fn($q) => $q->orderBy('sort_order')]);
+        $markupTemplate->load(['ranges' => fn ($q) => $q->orderBy('min_price'), 'currency']);
 
         return Inertia::render('Admin/MarkupTemplates/Edit', [
             'template' => $markupTemplate,
@@ -117,13 +114,12 @@ class MarkupTemplateController extends Controller
             'ranges' => ['required', 'array', 'min:1'],
             'ranges.*.min_price' => ['required', 'numeric', 'min:0'],
             'ranges.*.max_price' => ['nullable', 'numeric', 'min:0'],
-            'ranges.*.markup_type' => ['required', 'in:percentage,fixed'],
-            'ranges.*.markup_value' => ['required', 'numeric', 'min:0'],
+            'ranges.*.markup_amount' => ['required', 'numeric', 'min:0'],
         ]);
 
         DB::transaction(function () use ($validated, $markupTemplate) {
             // If setting as default, unset other defaults
-            if (($validated['is_default'] ?? false) && !$markupTemplate->is_default) {
+            if (($validated['is_default'] ?? false) && ! $markupTemplate->is_default) {
                 SellerMarkupTemplate::where('is_default', true)->update(['is_default' => false]);
             }
 
@@ -137,14 +133,12 @@ class MarkupTemplateController extends Controller
             // Delete existing ranges and recreate
             $markupTemplate->ranges()->delete();
 
-            foreach ($validated['ranges'] as $index => $range) {
+            foreach ($validated['ranges'] as $range) {
                 SellerMarkupTemplateRange::create([
-                    'seller_markup_template_id' => $markupTemplate->id,
+                    'template_id' => $markupTemplate->id,
                     'min_price' => $range['min_price'],
                     'max_price' => $range['max_price'],
-                    'markup_type' => $range['markup_type'],
-                    'markup_value' => $range['markup_value'],
-                    'sort_order' => $index,
+                    'markup_amount' => $range['markup_amount'],
                 ]);
             }
         });

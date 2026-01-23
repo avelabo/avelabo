@@ -18,11 +18,11 @@ class SellerController extends Controller
     {
         $sellers = Seller::with(['user:id,name,email'])
             ->withCount(['products', 'orders'])
-            ->when($request->status, fn($q, $status) => $q->where('status', $status))
+            ->when($request->status, fn ($q, $status) => $q->where('status', $status))
             ->when($request->search, function ($query, $search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('shop_name', 'like', "%{$search}%")
-                        ->orWhereHas('user', fn($u) => $u->where('name', 'like', "%{$search}%")->orWhere('email', 'like', "%{$search}%"));
+                        ->orWhereHas('user', fn ($u) => $u->where('name', 'like', "%{$search}%")->orWhere('email', 'like', "%{$search}%"));
                 });
             })
             ->latest()
@@ -36,10 +36,16 @@ class SellerController extends Controller
             'rejected' => Seller::where('status', 'rejected')->count(),
         ];
 
+        $markupTemplates = SellerMarkupTemplate::where('is_active', true)
+            ->with('ranges')
+            ->orderBy('name')
+            ->get();
+
         return Inertia::render('Admin/Sellers/Index', [
             'sellers' => $sellers,
             'stats' => $stats,
             'filters' => $request->only(['status', 'search']),
+            'markupTemplates' => $markupTemplates,
         ]);
     }
 
@@ -63,7 +69,10 @@ class SellerController extends Controller
             'total_revenue' => $seller->orders()->whereNotNull('paid_at')->sum('total'),
         ];
 
-        $markupTemplates = SellerMarkupTemplate::where('is_active', true)->get();
+        $markupTemplates = SellerMarkupTemplate::where('is_active', true)
+            ->with('ranges')
+            ->orderBy('name')
+            ->get();
 
         return Inertia::render('Admin/Sellers/Show', [
             'seller' => $seller,
@@ -109,6 +118,24 @@ class SellerController extends Controller
         // TODO: Send notification to seller
 
         return back()->with('success', 'Seller status updated.');
+    }
+
+    /**
+     * Assign or remove markup template from seller (via dropdown)
+     */
+    public function assignMarkup(Request $request, Seller $seller)
+    {
+        $validated = $request->validate([
+            'markup_template_id' => ['nullable', 'exists:seller_markup_templates,id'],
+        ]);
+
+        $seller->update(['markup_template_id' => $validated['markup_template_id']]);
+
+        $message = $validated['markup_template_id']
+            ? 'Markup template assigned successfully.'
+            : 'Markup template removed.';
+
+        return back()->with('success', $message);
     }
 
     /**

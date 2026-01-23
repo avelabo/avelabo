@@ -4,6 +4,7 @@ import { useState } from 'react';
 
 export default function Show({ seller, stats, markupTemplates }) {
     const [activeTab, setActiveTab] = useState('overview');
+    const [applyingTemplate, setApplyingTemplate] = useState(null);
 
     const { data, setData, put, processing } = useForm({
         shop_name: seller?.shop_name || '',
@@ -21,12 +22,16 @@ export default function Show({ seller, stats, markupTemplates }) {
 
     const handleStatusChange = (status) => {
         if (confirm(`Are you sure you want to change the seller status to ${status}?`)) {
-            router.post(route('admin.sellers.status', seller.id), { status });
+            router.patch(route('admin.sellers.update-status', seller.id), { status });
         }
     };
 
     const handleApplyTemplate = (templateId) => {
-        router.post(route('admin.sellers.apply-markup', seller.id), { template_id: templateId });
+        setApplyingTemplate(templateId);
+        router.post(route('admin.sellers.apply-markup-template', seller.id), { template_id: templateId }, {
+            preserveScroll: true,
+            onFinish: () => setApplyingTemplate(null),
+        });
     };
 
     const formatCurrency = (amount) => {
@@ -403,10 +408,12 @@ export default function Show({ seller, stats, markupTemplates }) {
                                                 </p>
                                                 {seller?.markup_template_id !== template.id && (
                                                     <button
+                                                        type="button"
                                                         onClick={() => handleApplyTemplate(template.id)}
-                                                        className="mt-3 px-3 py-1.5 bg-brand hover:bg-brand-dark text-white text-xs rounded-lg"
+                                                        disabled={applyingTemplate !== null}
+                                                        className="mt-3 px-3 py-1.5 bg-brand hover:bg-brand-dark text-white text-xs rounded-lg disabled:opacity-50"
                                                     >
-                                                        Apply Template
+                                                        {applyingTemplate === template.id ? 'Applying...' : 'Apply Template'}
                                                     </button>
                                                 )}
                                                 {seller?.markup_template_id === template.id && (

@@ -271,6 +271,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::get('/sellers/{seller}', [AdminSellerController::class, 'show'])->name('sellers.show');
     Route::put('/sellers/{seller}', [AdminSellerController::class, 'update'])->name('sellers.update');
     Route::patch('/sellers/{seller}/status', [AdminSellerController::class, 'updateStatus'])->name('sellers.update-status');
+    Route::patch('/sellers/{seller}/assign-markup', [AdminSellerController::class, 'assignMarkup'])->name('sellers.assign-markup');
     Route::post('/sellers/{seller}/apply-markup-template', [AdminSellerController::class, 'applyMarkupTemplate'])->name('sellers.apply-markup-template');
     Route::post('/sellers/{seller}/custom-markup', [AdminSellerController::class, 'setCustomMarkup'])->name('sellers.custom-markup');
 

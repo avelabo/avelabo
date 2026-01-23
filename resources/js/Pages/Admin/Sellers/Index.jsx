@@ -5,6 +5,7 @@ import { useState } from 'react';
 export default function SellersIndex({ sellers, filters, markupTemplates }) {
     const [status, setStatus] = useState(filters?.status || '');
     const [search, setSearch] = useState(filters?.search || '');
+    const [updatingMarkup, setUpdatingMarkup] = useState(null);
 
     const handleFilter = (newStatus) => {
         setStatus(newStatus);
@@ -17,9 +18,14 @@ export default function SellersIndex({ sellers, filters, markupTemplates }) {
     };
 
     const handleMarkupChange = (sellerId, templateId) => {
+        setUpdatingMarkup(sellerId);
         router.patch(route('admin.sellers.assign-markup', sellerId), {
             markup_template_id: templateId || null,
-        }, { preserveState: true });
+        }, {
+            preserveState: true,
+            preserveScroll: true,
+            onFinish: () => setUpdatingMarkup(null),
+        });
     };
 
     const statusColors = {
@@ -151,18 +157,24 @@ export default function SellersIndex({ sellers, filters, markupTemplates }) {
                                                 <p className="font-medium text-gray-900 dark:text-white">{formatCurrency(seller.total_revenue)}</p>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                <select
-                                                    value={seller.markup_template_id || ''}
-                                                    onChange={(e) => handleMarkupChange(seller.id, e.target.value)}
-                                                    className="px-3 py-1.5 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm outline-none focus:ring-2 focus:ring-brand dark:text-white"
-                                                >
-                                                    <option value="">No template</option>
-                                                    {markupTemplates?.map((template) => (
-                                                        <option key={template.id} value={template.id}>
-                                                            {template.name}
-                                                        </option>
-                                                    ))}
-                                                </select>
+                                                <div className="relative">
+                                                    <select
+                                                        value={seller.markup_template_id || ''}
+                                                        onChange={(e) => handleMarkupChange(seller.id, e.target.value)}
+                                                        disabled={updatingMarkup === seller.id}
+                                                        className="px-3 py-1.5 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm outline-none focus:ring-2 focus:ring-brand dark:text-white disabled:opacity-50"
+                                                    >
+                                                        <option value="">No template</option>
+                                                        {markupTemplates?.map((template) => (
+                                                            <option key={template.id} value={template.id}>
+                                                                {template.name}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                    {updatingMarkup === seller.id && (
+                                                        <span className="absolute right-8 top-1/2 -translate-y-1/2 text-xs text-gray-500">Saving...</span>
+                                                    )}
+                                                </div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${statusColors[seller.status] || 'bg-gray-100 text-gray-700'}`}>
