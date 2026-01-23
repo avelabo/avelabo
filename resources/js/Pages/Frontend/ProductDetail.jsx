@@ -201,7 +201,7 @@ export default function ProductDetail({ product, relatedProducts }) {
                                 )}
                                 {product.category && product.brand && <span>/</span>}
                                 {product.brand && (
-                                    <span className="text-brand-2">{product.brand.name}</span>
+                                    <span className="font-medium text-[#2a2a2a]">{product.brand.name}</span>
                                 )}
                             </div>
 

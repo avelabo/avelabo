@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Storage;
 
 class Seller extends Model
 {
@@ -154,6 +155,40 @@ class Seller extends Model
     public function getDisplayNameAttribute(): string
     {
         return $this->show_seller_name ? $this->shop_name : 'Avelabo';
+    }
+
+    /**
+     * Get the logo URL
+     */
+    public function getLogoUrlAttribute(): ?string
+    {
+        if (!$this->logo) {
+            return null;
+        }
+
+        // If it's already a full URL, return as-is
+        if (str_starts_with($this->logo, 'http://') || str_starts_with($this->logo, 'https://')) {
+            return $this->logo;
+        }
+
+        return Storage::url($this->logo);
+    }
+
+    /**
+     * Get the banner URL
+     */
+    public function getBannerUrlAttribute(): ?string
+    {
+        if (!$this->banner) {
+            return null;
+        }
+
+        // If it's already a full URL, return as-is
+        if (str_starts_with($this->banner, 'http://') || str_starts_with($this->banner, 'https://')) {
+            return $this->banner;
+        }
+
+        return Storage::url($this->banner);
     }
 
     /**

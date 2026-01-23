@@ -251,7 +251,7 @@ class ShopController extends Controller
         $product = Product::with([
             'category',
             'brand',
-            'seller:id,shop_name,description,logo',
+            'seller:id,slug,shop_name,description,logo,show_seller_name,has_storefront',
             'images',
             'variants.attributes.attribute',
             'variants.attributes.attributeValue',
