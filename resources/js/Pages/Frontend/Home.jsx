@@ -80,12 +80,11 @@ export default function Home({
         <FrontendLayout>
             <Head title="Home - Avelabo Marketplace" />
 
-            {/* Hero Section */}
-            <section className="mb-10 lg:mb-14">
-                <HeroSlider sliders={sliders} />
-            </section>
-
             <div className="container mx-auto px-4">
+                {/* Hero Section */}
+                <section className="mb-8 lg:mb-10 pt-4">
+                    <HeroSlider sliders={sliders} />
+                </section>
                 {/* Featured Categories */}
                 {categories.length > 0 && (
                     <section className="mb-10 lg:mb-14">
