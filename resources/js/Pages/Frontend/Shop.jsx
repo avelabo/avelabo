@@ -2,12 +2,20 @@ import { useState } from 'react';
 import { Link, Head, router } from '@inertiajs/react';
 import FrontendLayout from '@/Layouts/FrontendLayout';
 import Toast from '@/Components/Frontend/Toast';
+import { PageHeader } from '@/Components/Frontend/Breadcrumb';
+import ProductCard from '@/Components/Frontend/ProductCard';
+import ProductListItem from '@/Components/Frontend/ProductListItem';
+import EmptyState from '@/Components/Frontend/EmptyState';
+import Pagination from '@/Components/Frontend/Pagination';
+import { CategoryFilter, PriceRangeFilter, BrandFilter } from '@/Components/Frontend/Filters';
+import { useCurrency } from '@/hooks/useCurrency';
 
 export default function Shop({ products, categories, brands, priceRange, featuredProducts, currentCategory, filters }) {
+    const { format } = useCurrency();
+
     // Filter states
     const [localPriceRange, setLocalPriceRange] = useState(filters?.max_price || priceRange?.max || 500);
     const [showDropdown, setShowDropdown] = useState(null);
-    const [loadingProductId, setLoadingProductId] = useState(null);
     const [showToast, setShowToast] = useState(false);
 
     const sortOptions = [
@@ -23,60 +31,22 @@ export default function Shop({ products, categories, brands, priceRange, feature
         router.get(route('shop'), { ...filters, [key]: value || undefined }, { preserveState: true, preserveScroll: true });
     };
 
-    const handlePriceFilter = () => {
-        router.get(route('shop'), { ...filters, min_price: priceRange?.min || 0, max_price: localPriceRange }, { preserveState: true });
+    const handlePriceFilter = (min, max) => {
+        router.get(route('shop'), { ...filters, min_price: min, max_price: max }, { preserveState: true });
     };
 
     const clearFilters = () => {
         router.get(route('shop'));
     };
 
-    const formatCurrency = (amount) => {
-        return new Intl.NumberFormat('en-MW', {
-            style: 'currency',
-            currency: 'MWK',
-            minimumFractionDigits: 0,
-        }).format(amount || 0);
-    };
-
-    const getBadgeClass = (product) => {
-        if (product.is_on_sale) return 'bg-red-500';
-        if (product.is_featured) return 'bg-brand';
-        return 'bg-yellow-500';
-    };
-
-    const getBadgeText = (product) => {
-        if (product.is_on_sale) return `-${product.discount_percentage}%`;
-        if (product.is_featured) return 'Featured';
-        return 'New';
-    };
-
     const hasActiveFilters = filters?.category || filters?.brand || filters?.min_price || filters?.max_price || filters?.search;
 
-    // Truncate price text to 8 characters
-    const truncatePrice = (text) => {
-        if (!text) return text;
-        const str = String(text);
-        return str.length > 8 ? str.substring(0, 8) + '...' : str;
-    };
-
-    const handleAddToBasket = (product) => {
-        setLoadingProductId(product.id);
-
-        router.post(route('cart.add'), {
-            product_id: product.id,
-            quantity: 1,
-        }, {
-            preserveScroll: true,
-            onSuccess: () => {
-                setLoadingProductId(null);
-                setShowToast(true);
-            },
-            onError: () => {
-                setLoadingProductId(null);
-            },
-        });
-    };
+    // Breadcrumb items
+    const breadcrumbItems = [
+        { label: 'Home', href: '/' },
+        { label: 'Shop', href: route('shop') },
+        ...(currentCategory ? [{ label: currentCategory.name }] : []),
+    ];
 
     return (
         <FrontendLayout>
@@ -90,144 +60,65 @@ export default function Shop({ products, categories, brands, priceRange, feature
             <Head title={currentCategory ? currentCategory.name : 'Shop'} />
 
             {/* Page Header / Breadcrumb */}
-            <div className="py-8 mb-8">
-                <div className="container mx-auto px-4">
-                    <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
-                        <div>
-                            <h1 className="text-3xl font-quicksand font-bold text-heading mb-3">
-                                {currentCategory ? currentCategory.name : 'Shop'}
-                            </h1>
-                            <div className="flex items-center gap-2 text-sm">
-                                <Link href="/" className="text-brand hover:text-brand-dark flex items-center gap-1">
-                                    <i className="fi-rs-home"></i> Home
-                                </Link>
-                                <span className="text-muted">•</span>
-                                <span className="text-heading">Shop</span>
-                                {currentCategory && (
-                                    <>
-                                        <span className="text-muted">•</span>
-                                        <span className="text-body">{currentCategory.name}</span>
-                                    </>
-                                )}
-                            </div>
-                        </div>
-                        {/* Active Filter Tags */}
-                        {hasActiveFilters && (
-                            <div className="flex items-center gap-3 flex-wrap">
-                                {filters?.search && (
-                                    <span className="flex items-center gap-2 px-4 py-2 border border-brand bg-brand/5 text-brand rounded-full text-sm">
-                                        Search: {filters.search}
-                                        <button onClick={() => handleFilterChange('search', null)} className="hover:text-brand-dark">
-                                            <i className="fi-rs-cross text-xs"></i>
-                                        </button>
-                                    </span>
-                                )}
-                                {filters?.category && (
-                                    <span className="flex items-center gap-2 px-4 py-2 border border-brand bg-brand/5 text-brand rounded-full text-sm">
-                                        {currentCategory?.name}
-                                        <button onClick={() => handleFilterChange('category', null)} className="hover:text-brand-dark">
-                                            <i className="fi-rs-cross text-xs"></i>
-                                        </button>
-                                    </span>
-                                )}
-                                <button onClick={clearFilters} className="text-sm text-muted hover:text-brand">
-                                    Clear all
+            <PageHeader
+                title={currentCategory ? currentCategory.name : 'Shop'}
+                breadcrumbItems={breadcrumbItems}
+            >
+                {/* Active Filter Tags */}
+                {hasActiveFilters && (
+                    <div className="flex items-center gap-3 flex-wrap">
+                        {filters?.search && (
+                            <span className="flex items-center gap-2 px-4 py-2 border border-brand bg-brand/5 text-brand rounded-full text-sm">
+                                Search: {filters.search}
+                                <button onClick={() => handleFilterChange('search', null)} className="hover:text-brand-dark">
+                                    <i className="fi-rs-cross text-xs"></i>
                                 </button>
-                            </div>
+                            </span>
                         )}
+                        {filters?.category && (
+                            <span className="flex items-center gap-2 px-4 py-2 border border-brand bg-brand/5 text-brand rounded-full text-sm">
+                                {currentCategory?.name}
+                                <button onClick={() => handleFilterChange('category', null)} className="hover:text-brand-dark">
+                                    <i className="fi-rs-cross text-xs"></i>
+                                </button>
+                            </span>
+                        )}
+                        <button onClick={clearFilters} className="text-sm text-muted hover:text-brand">
+                            Clear all
+                        </button>
                     </div>
-                </div>
-            </div>
+                )}
+            </PageHeader>
 
             {/* Shop Content */}
             <div className="container mx-auto px-4 mb-12">
                 <div className="flex flex-col lg:flex-row gap-8">
                     {/* Sidebar (Left) */}
                     <aside className="w-full lg:w-[280px] flex-shrink-0 order-2 lg:order-1">
-                        {/* Category Widget */}
-                        <div className="bg-white border border-border rounded-xl p-6 mb-6">
-                            <h5 className="font-quicksand font-bold text-heading text-lg mb-5 pb-4 border-b border-border">Category</h5>
-                            <ul className="space-y-3">
-                                {categories?.map((category) => (
-                                    <li key={category.id}>
-                                        <Link
-                                            href={route('shop', { category: category.slug })}
-                                            className={`flex items-center justify-between group ${filters?.category === category.slug ? 'text-brand' : ''}`}
-                                        >
-                                            <div className="flex items-center gap-3">
-                                                {category.icon && <i className={category.icon}></i>}
-                                                <span className="text-heading group-hover:text-brand transition-colors">{category.name}</span>
-                                            </div>
-                                            <span className="bg-brand/10 text-brand text-xs px-2 py-1 rounded-full">{category.products_count}</span>
-                                        </Link>
-                                        {/* Subcategories */}
-                                        {category.children?.length > 0 && (
-                                            <ul className="ml-6 mt-2 space-y-2">
-                                                {category.children.map((child) => (
-                                                    <li key={child.id}>
-                                                        <Link
-                                                            href={route('shop', { category: child.slug })}
-                                                            className={`flex items-center justify-between text-sm ${filters?.category === child.slug ? 'text-brand' : 'text-body hover:text-brand'}`}
-                                                        >
-                                                            <span>{child.name}</span>
-                                                            <span className="text-xs text-muted">({child.products_count})</span>
-                                                        </Link>
-                                                    </li>
-                                                ))}
-                                            </ul>
-                                        )}
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
+                        {/* Category Filter */}
+                        <CategoryFilter
+                            categories={categories}
+                            activeCategory={filters?.category}
+                            onCategoryChange={(slug) => handleFilterChange('category', slug)}
+                            className="mb-6"
+                        />
 
-                        {/* Price Filter Widget */}
-                        <div className="bg-white border border-border rounded-xl p-6 mb-6">
-                            <h5 className="font-quicksand font-bold text-heading text-lg mb-5 pb-4 border-b border-border">Filter by price</h5>
-                            <div className="mb-5">
-                                <input
-                                    type="range"
-                                    min={priceRange?.min || 0}
-                                    max={priceRange?.max || 10000}
-                                    value={localPriceRange}
-                                    onChange={(e) => setLocalPriceRange(parseInt(e.target.value))}
-                                    className="w-full accent-brand"
-                                />
-                                <div className="flex justify-between text-sm mt-2">
-                                    <span>From: <strong className="text-brand">{formatCurrency(priceRange?.min || 0)}</strong></span>
-                                    <span>To: <strong className="text-brand">{formatCurrency(localPriceRange)}</strong></span>
-                                </div>
-                            </div>
-                            <button
-                                onClick={handlePriceFilter}
-                                className="inline-flex items-center gap-2 bg-brand hover:bg-brand-dark text-white px-5 py-2.5 rounded-md text-sm font-semibold transition-colors"
-                            >
-                                <i className="fi-rs-filter"></i> Filter
-                            </button>
-                        </div>
+                        {/* Price Range Filter */}
+                        <PriceRangeFilter
+                            min={priceRange?.min || 0}
+                            max={priceRange?.max || 10000}
+                            currentMax={filters?.max_price}
+                            onApply={handlePriceFilter}
+                            className="mb-6"
+                        />
 
-                        {/* Brand Filter Widget */}
-                        {brands?.length > 0 && (
-                            <div className="bg-white border border-border rounded-xl p-6 mb-6">
-                                <h5 className="font-quicksand font-bold text-heading text-lg mb-5 pb-4 border-b border-border">Brands</h5>
-                                <ul className="space-y-2">
-                                    {brands.map((brand) => (
-                                        <li key={brand.id}>
-                                            <label className="flex items-center gap-2 cursor-pointer">
-                                                <input
-                                                    type="radio"
-                                                    name="brand"
-                                                    className="w-4 h-4 accent-brand"
-                                                    checked={filters?.brand === brand.id?.toString()}
-                                                    onChange={() => handleFilterChange('brand', brand.id)}
-                                                />
-                                                <span className="text-sm text-body">{brand.name}</span>
-                                            </label>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-                        )}
+                        {/* Brand Filter */}
+                        <BrandFilter
+                            brands={brands}
+                            activeBrand={filters?.brand}
+                            onBrandChange={(brandId) => handleFilterChange('brand', brandId)}
+                            className="mb-6"
+                        />
 
                         {/* Featured Products Widget */}
                         {featuredProducts?.length > 0 && (
@@ -235,23 +126,12 @@ export default function Shop({ products, categories, brands, priceRange, feature
                                 <h5 className="font-quicksand font-bold text-heading text-lg mb-5 pb-4 border-b border-border">Featured Products</h5>
                                 <div className="space-y-4">
                                     {featuredProducts.map((product) => (
-                                        <div key={product.id} className="flex gap-3">
-                                            <Link href={route('product.detail', product.slug)} className="w-20 h-20 flex-shrink-0">
-                                                {product.primary_image ? (
-                                                    <img src={`/storage/${product.primary_image}`} alt={product.name} className="w-full h-full object-cover rounded-lg" />
-                                                ) : (
-                                                    <div className="w-full h-full bg-gray-200 rounded-lg flex items-center justify-center">
-                                                        <span className="text-gray-400 text-xs">No image</span>
-                                                    </div>
-                                                )}
-                                            </Link>
-                                            <div className="flex-1">
-                                                <h6 className="font-quicksand font-semibold text-heading text-sm mb-1">
-                                                    <Link href={route('product.detail', product.slug)} className="hover:text-brand line-clamp-2">{product.name}</Link>
-                                                </h6>
-                                                <p className="text-brand font-bold text-sm">{formatCurrency(product.price)}</p>
-                                            </div>
-                                        </div>
+                                        <ProductListItem
+                                            key={product.id}
+                                            product={product}
+                                            showRating={false}
+                                            imageSize="md"
+                                        />
                                     ))}
                                 </div>
                             </div>
@@ -323,124 +203,23 @@ export default function Shop({ products, categories, brands, priceRange, feature
                         {products?.data?.length > 0 ? (
                             <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 mb-8">
                                 {products.data.map((product) => (
-                                    <div key={product.id} className="product-cart-wrap bg-white border border-border rounded-xl overflow-hidden hover:border-border-2 hover:shadow-lg transition-all group">
-                                        <div className="relative">
-                                            <Link href={route('product.detail', product.slug)} className="block overflow-hidden">
-                                                {product.primary_image ? (
-                                                    <img src={`/storage/${product.primary_image}`} alt={product.name} className="w-full aspect-square object-cover group-hover:scale-105 transition-transform duration-300" />
-                                                ) : (
-                                                    <div className="w-full aspect-square bg-gray-100 flex items-center justify-center">
-                                                        <span className="text-gray-400">No image</span>
-                                                    </div>
-                                                )}
-                                            </Link>
-                                            {(product.is_on_sale || product.is_featured) && (
-                                                <div className="absolute top-3 left-3">
-                                                    <span className={`${getBadgeClass(product)} text-white text-xs font-semibold px-2 py-1 rounded max-w-[50px] truncate block`}>
-                                                        {getBadgeText(product)}
-                                                    </span>
-                                                </div>
-                                            )}
-                                            {!product.is_in_stock && (
-                                                <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                                                    <span className="bg-red-500 text-white px-3 py-1 rounded text-sm font-semibold">Out of Stock</span>
-                                                </div>
-                                            )}
-                                            <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <button className="w-9 h-9 bg-white rounded-full flex items-center justify-center shadow-md hover:bg-brand hover:text-white transition-colors">
-                                                    <i className="fi-rs-heart"></i>
-                                                </button>
-                                                <button className="w-9 h-9 bg-white rounded-full flex items-center justify-center shadow-md hover:bg-brand hover:text-white transition-colors">
-                                                    <i className="fi-rs-shuffle"></i>
-                                                </button>
-                                            </div>
-                                        </div>
-                                        <div className="p-4">
-                                            {product.category && (
-                                                <Link href={route('shop', { category: product.category.slug })} className="text-xs text-muted hover:text-brand">
-                                                    {product.category.name}
-                                                </Link>
-                                            )}
-                                            <h6 className="font-quicksand font-semibold text-heading text-sm mt-1 mb-2 line-clamp-2 h-10">
-                                                <Link href={route('product.detail', product.slug)} className="hover:text-brand">{product.name}</Link>
-                                            </h6>
-                                            {product.rating > 0 && (
-                                                <div className="flex items-center gap-2 mb-2">
-                                                    <div className="flex text-yellow-400">
-                                                        {[...Array(5)].map((_, i) => (
-                                                            <i key={i} className={`fi-rs-star text-xs ${i < Math.floor(product.rating) ? '' : 'text-gray-300'}`}></i>
-                                                        ))}
-                                                    </div>
-                                                    <span className="text-xs text-muted">({product.reviews_count || 0})</span>
-                                                </div>
-                                            )}
-                                            {product.seller && (
-                                                <p className="text-xs text-muted mb-3">By <span className="text-brand">{product.seller.name}</span></p>
-                                            )}
-                                            <div className="space-y-3">
-                                                <div className="flex items-center flex-wrap gap-x-2">
-                                                    <span className="text-brand font-bold text-lg">{formatCurrency(product.price)}</span>
-                                                    {product.compare_price && product.compare_price > product.price && (
-                                                        <span className="text-muted line-through text-sm" title={formatCurrency(product.compare_price)}>{truncatePrice(formatCurrency(product.compare_price))}</span>
-                                                    )}
-                                                </div>
-                                                <button
-                                                    onClick={() => handleAddToBasket(product)}
-                                                    disabled={!product.is_in_stock || loadingProductId === product.id}
-                                                    className="w-full bg-brand-light text-brand py-2 rounded text-sm font-semibold hover:bg-brand hover:text-white transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                                                >
-                                                    {loadingProductId === product.id ? (
-                                                        <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                                        </svg>
-                                                    ) : (
-                                                        <>
-                                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                                                            </svg>
-                                                            Add to Basket
-                                                        </>
-                                                    )}
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
+                                    <ProductCard key={product.id} product={product} />
                                 ))}
                             </div>
                         ) : (
-                            <div className="text-center py-16">
-                                <i className="fi-rs-box text-6xl text-gray-300 mb-4"></i>
-                                <h3 className="text-xl font-semibold text-heading mb-2">No products found</h3>
-                                <p className="text-body mb-6">Try adjusting your filters or search terms</p>
-                                <button
-                                    onClick={clearFilters}
-                                    className="inline-flex items-center gap-2 bg-brand hover:bg-brand-dark text-white px-6 py-3 rounded-md font-semibold transition-colors"
-                                >
-                                    Clear Filters
-                                </button>
-                            </div>
+                            <EmptyState
+                                icon="box"
+                                title="No products found"
+                                description="Try adjusting your filters or search terms"
+                                action={{
+                                    label: 'Clear Filters',
+                                    onClick: clearFilters,
+                                }}
+                            />
                         )}
 
                         {/* Pagination */}
-                        {products?.last_page > 1 && (
-                            <nav className="flex items-center justify-center gap-2 mb-10">
-                                {products.links.map((link, index) => (
-                                    <Link
-                                        key={index}
-                                        href={link.url || '#'}
-                                        className={`px-4 py-2 flex items-center justify-center border rounded-md transition-colors ${
-                                            link.active
-                                                ? 'border-brand bg-brand text-white'
-                                                : link.url
-                                                ? 'border-border hover:border-brand hover:text-brand'
-                                                : 'border-border text-gray-400 cursor-not-allowed'
-                                        }`}
-                                        dangerouslySetInnerHTML={{ __html: link.label }}
-                                    />
-                                ))}
-                            </nav>
-                        )}
+                        <Pagination pagination={products} className="mb-10" />
                     </div>
                 </div>
             </div>

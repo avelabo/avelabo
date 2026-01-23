@@ -1,15 +1,10 @@
 import { Head, Link, router } from '@inertiajs/react';
 import FrontendLayout from '@/Layouts/FrontendLayout';
+import Breadcrumb from '@/Components/Frontend/Breadcrumb';
+import EmptyState from '@/Components/Frontend/EmptyState';
+import { InlinePrice } from '@/Components/Frontend/PriceDisplay';
 
 export default function Wishlist({ items = [] }) {
-    const formatCurrency = (amount) => {
-        return new Intl.NumberFormat('en-MW', {
-            style: 'currency',
-            currency: 'MWK',
-            minimumFractionDigits: 0,
-        }).format(amount || 0);
-    };
-
     const handleRemove = (productId) => {
         router.delete(route('wishlist.remove', productId), {
             preserveScroll: true,
@@ -25,6 +20,11 @@ export default function Wishlist({ items = [] }) {
         });
     };
 
+    const breadcrumbItems = [
+        { label: 'Home', href: '/' },
+        { label: 'Wishlist' },
+    ];
+
     return (
         <FrontendLayout>
             <Head title="My Wishlist" />
@@ -32,11 +32,7 @@ export default function Wishlist({ items = [] }) {
             {/* Breadcrumb */}
             <div className="bg-gray-50 py-4">
                 <div className="container mx-auto px-4">
-                    <nav className="flex items-center gap-2 text-sm">
-                        <Link href="/" className="text-body hover:text-brand">Home</Link>
-                        <span className="text-body">/</span>
-                        <span className="text-brand">Wishlist</span>
-                    </nav>
+                    <Breadcrumb items={breadcrumbItems} separator="slash" />
                 </div>
             </div>
 
@@ -76,7 +72,7 @@ export default function Wishlist({ items = [] }) {
                                             </div>
                                         </td>
                                         <td className="py-4 px-6">
-                                            <span className="text-brand font-bold">{formatCurrency(item.product?.price)}</span>
+                                            <InlinePrice price={item.product?.price} />
                                         </td>
                                         <td className="py-4 px-6">
                                             {item.product?.in_stock ? (
@@ -114,19 +110,16 @@ export default function Wishlist({ items = [] }) {
                         </table>
                     </div>
                 ) : (
-                    <div className="text-center py-16 bg-gray-50 rounded-xl">
-                        <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                        </svg>
-                        <h3 className="text-xl font-semibold text-heading mb-2">Your Wishlist is Empty</h3>
-                        <p className="text-body mb-6">Save items you love to your wishlist and come back to them anytime.</p>
-                        <Link
-                            href="/shop"
-                            className="inline-flex items-center gap-2 px-6 py-3 bg-brand hover:bg-brand-dark text-white rounded-lg font-semibold transition-colors"
-                        >
-                            Start Shopping
-                        </Link>
-                    </div>
+                    <EmptyState
+                        icon="heart"
+                        title="Your Wishlist is Empty"
+                        description="Save items you love to your wishlist and come back to them anytime."
+                        action={{
+                            label: 'Start Shopping',
+                            href: '/shop',
+                        }}
+                        className="bg-gray-50 rounded-xl"
+                    />
                 )}
             </div>
         </FrontendLayout>

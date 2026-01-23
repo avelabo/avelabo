@@ -1,11 +1,13 @@
 import { useState } from 'react';
-import { Link, router, usePage } from '@inertiajs/react';
-import { formatCurrency, getDefaultCurrency } from '@/utils/currency';
+import { Link, router } from '@inertiajs/react';
 import { useToast } from '@/Contexts/ToastContext';
+import { useCurrency } from '@/hooks/useCurrency';
+import StarRating from '@/Components/Frontend/StarRating';
+import Badge, { getProductBadgeVariant } from '@/Components/Frontend/Badge';
+import PriceDisplay from '@/Components/Frontend/PriceDisplay';
 
 export default function ProductCard({ product }) {
-    const { props } = usePage();
-    const currency = getDefaultCurrency(props);
+    const { format } = useCurrency();
     const toast = useToast();
     const [isLoading, setIsLoading] = useState(false);
     const [imageError, setImageError] = useState(false);
@@ -37,7 +39,6 @@ export default function ProductCard({ product }) {
         slug = 'product-name',
         primary_image,
         image = '/images/frontend/shop/product-1-1.jpg',
-        hoverImage = '/images/frontend/shop/product-1-2.jpg',
         category,
         seller,
         rating = 0,
@@ -47,11 +48,7 @@ export default function ProductCard({ product }) {
         currentPrice = 28.85,
         compare_price,
         oldPrice = null,
-        badge = null, // 'hot', 'new', 'sale', 'best'
-        discount = null, // e.g. '-15%'
-        is_featured = false,
-        is_new = false,
-        is_on_sale = false,
+        discount = null,
     } = product || {};
 
     // Handle category - could be string or object
@@ -71,45 +68,23 @@ export default function ProductCard({ product }) {
     // Handle reviews count
     const reviewCount = reviews_count || reviews || 0;
 
-    // Determine badge
-    const displayBadge = badge || (is_featured ? 'hot' : is_new ? 'new' : is_on_sale ? 'sale' : null);
-
-    // Truncate price text to 8 characters
-    const truncatePrice = (text) => {
-        if (!text) return text;
-        const str = String(text);
-        return str.length > 8 ? str.substring(0, 8) + '...' : str;
-    };
-
-    const renderStars = () => {
-        const stars = [];
-        for (let i = 1; i <= 5; i++) {
-            stars.push(
-                <svg
-                    key={i}
-                    className={`w-4 h-4 ${i <= rating ? 'text-brand-2' : 'text-gray-300'}`}
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                >
-                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                </svg>
-            );
-        }
-        return stars;
-    };
+    // Determine badge variant
+    const badgeVariant = getProductBadgeVariant(product);
 
     return (
         <div className="product-card bg-white border border-gray-100 rounded-xl p-4 relative group">
             {/* Badge */}
-            {displayBadge && (
-                <span className={`absolute top-4 left-4 px-3 py-1 text-xs font-semibold rounded badge-${displayBadge}`}>
-                    {displayBadge.charAt(0).toUpperCase() + displayBadge.slice(1)}
-                </span>
+            {badgeVariant && (
+                <Badge
+                    variant={badgeVariant}
+                    size="sm"
+                    className="absolute top-4 left-4 z-10"
+                />
             )}
 
             {/* Discount Badge */}
             {discount && (
-                <span className="absolute top-4 right-4 bg-brand-2 text-heading px-2 py-1 text-xs font-semibold rounded">
+                <span className="absolute top-4 right-4 bg-brand-2 text-heading px-2 py-1 text-xs font-semibold rounded z-10">
                     {discount}
                 </span>
             )}
@@ -157,10 +132,12 @@ export default function ProductCard({ product }) {
             </h6>
 
             {/* Rating */}
-            <div className="flex items-center gap-2 mb-3">
-                <div className="flex">{renderStars()}</div>
-                <span className="text-sm text-body">({reviewCount})</span>
-            </div>
+            <StarRating
+                rating={rating}
+                reviewCount={reviewCount}
+                size="sm"
+                className="mb-3"
+            />
 
             {/* Vendor */}
             <p className="text-xs text-body mb-3">
@@ -169,16 +146,12 @@ export default function ProductCard({ product }) {
 
             {/* Price & Add to Basket */}
             <div className="space-y-3">
-                <div className="flex items-center flex-wrap gap-x-2">
-                    <span className="text-brand font-bold text-lg">
-                        {formatCurrency(displayPrice, currency)}
-                    </span>
-                    {displayOldPrice && displayOldPrice > displayPrice && (
-                        <span className="text-body line-through text-sm" title={formatCurrency(displayOldPrice, currency)}>
-                            {truncatePrice(formatCurrency(displayOldPrice, currency))}
-                        </span>
-                    )}
-                </div>
+                <PriceDisplay
+                    price={displayPrice}
+                    comparePrice={displayOldPrice}
+                    size="md"
+                    truncate={true}
+                />
                 <button
                     onClick={handleAddToBasket}
                     disabled={isLoading}

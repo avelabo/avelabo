@@ -1,13 +1,13 @@
 import { useState } from 'react';
-import { Head, Link, router, usePage } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import FrontendLayout from '@/Layouts/FrontendLayout';
-import { formatCurrency, getDefaultCurrency } from '@/utils/currency';
 import { useToast } from '@/Contexts/ToastContext';
+import { useCurrency } from '@/hooks/useCurrency';
+import Breadcrumb from '@/Components/Frontend/Breadcrumb';
+import EmptyState from '@/Components/Frontend/EmptyState';
 
 export default function Cart({ cart }) {
-    const { props } = usePage();
-    const currency = getDefaultCurrency(props);
-    const format = (amount) => formatCurrency(amount, currency);
+    const { format } = useCurrency();
     const toast = useToast();
 
     const [loading, setLoading] = useState(false);
@@ -91,6 +91,12 @@ export default function Cart({ cart }) {
     const shipping = cart?.shipping || 0;
     const total = cart?.total || 0;
 
+    const breadcrumbItems = [
+        { label: 'Home', href: '/' },
+        { label: 'Shop', href: route('shop') },
+        { label: 'Basket' },
+    ];
+
     return (
         <FrontendLayout>
             <Head title="Shopping Basket" />
@@ -98,15 +104,7 @@ export default function Cart({ cart }) {
             {/* Page Header / Breadcrumb */}
             <div className="bg-grey-9 py-5">
                 <div className="container mx-auto px-4">
-                    <div className="flex items-center gap-2 text-sm">
-                        <Link href="/" className="text-brand hover:text-brand-dark flex items-center gap-1">
-                            <i className="fi-rs-home"></i> Home
-                        </Link>
-                        <span className="text-muted">-</span>
-                        <Link href={route('shop')} className="text-muted hover:text-brand">Shop</Link>
-                        <span className="text-muted">-</span>
-                        <span className="text-body">Basket</span>
-                    </div>
+                    <Breadcrumb items={breadcrumbItems} separator="dash" />
                 </div>
             </div>
 
@@ -151,17 +149,17 @@ export default function Cart({ cart }) {
 
                             {/* Basket Items */}
                             {cartItems.length === 0 ? (
-                                <div className="px-6 py-12 text-center">
-                                    <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                        <i className="fi-rs-shopping-cart text-4xl text-gray-400"></i>
-                                    </div>
-                                    <p className="text-muted text-lg mb-4">Your basket is empty</p>
-                                    <Link
-                                        href={route('shop')}
-                                        className="inline-flex items-center gap-2 px-6 py-3 bg-brand hover:bg-brand-dark text-white rounded-md font-semibold transition-colors"
-                                    >
-                                        Continue Shopping
-                                    </Link>
+                                <div className="px-6 py-12">
+                                    <EmptyState
+                                        icon="cart"
+                                        title="Your basket is empty"
+                                        description="Add some products to your basket to get started."
+                                        action={{
+                                            label: 'Continue Shopping',
+                                            href: route('shop'),
+                                        }}
+                                        size="sm"
+                                    />
                                 </div>
                             ) : (
                                 cartItems.map((item, index) => (
