@@ -1,14 +1,11 @@
 import { Head, Link, router } from '@inertiajs/react';
 import FrontendLayout from '@/Layouts/FrontendLayout';
+import Pagination from '@/Components/Frontend/Pagination';
+import EmptyState from '@/Components/Frontend/EmptyState';
+import { useCurrency } from '@/hooks/useCurrency';
 
 export default function OrdersIndex({ orders, filters, statuses }) {
-    const formatCurrency = (amount) => {
-        return new Intl.NumberFormat('en-MW', {
-            style: 'currency',
-            currency: 'MWK',
-            minimumFractionDigits: 0,
-        }).format(amount || 0);
-    };
+    const { format } = useCurrency();
 
     const formatDate = (dateString) => {
         if (!dateString) return '';
@@ -107,7 +104,7 @@ export default function OrdersIndex({ orders, filters, statuses }) {
                                         <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
                                             {statuses[order.status] || order.status}
                                         </span>
-                                        <span className="font-bold text-brand text-lg">{formatCurrency(order.total)}</span>
+                                        <span className="font-bold text-brand text-lg">{format(order.total)}</span>
                                     </div>
                                 </div>
 
@@ -125,7 +122,9 @@ export default function OrdersIndex({ orders, filters, statuses }) {
                                                         />
                                                     ) : (
                                                         <div className="w-full h-full flex items-center justify-center text-gray-400">
-                                                            <i className="fi-rs-picture text-lg"></i>
+                                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                            </svg>
                                                         </div>
                                                     )}
                                                 </div>
@@ -149,8 +148,10 @@ export default function OrdersIndex({ orders, filters, statuses }) {
                                 <div className="px-6 py-4 border-t border-border flex flex-wrap items-center justify-between gap-4">
                                     <div className="flex flex-wrap gap-2">
                                         {order.items?.some(item => item.tracking_number) && (
-                                            <span className="text-sm text-muted">
-                                                <i className="fi-rs-truck-side mr-1"></i>
+                                            <span className="text-sm text-muted flex items-center gap-1">
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
+                                                </svg>
                                                 Tracking available
                                             </span>
                                         )}
@@ -180,48 +181,22 @@ export default function OrdersIndex({ orders, filters, statuses }) {
                         ))}
                     </div>
                 ) : (
-                    <div className="bg-white rounded-xl border border-border p-12 text-center">
-                        <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                            <i className="fi-rs-shopping-bag text-4xl text-gray-400"></i>
-                        </div>
-                        <h3 className="text-xl font-bold text-heading mb-2">No orders yet</h3>
-                        <p className="text-muted mb-6">
-                            {filters.status
-                                ? `No ${statuses[filters.status]?.toLowerCase() || filters.status} orders found.`
-                                : "You haven't placed any orders yet. Start shopping to see your orders here."}
-                        </p>
-                        <Link
-                            href={route('shop')}
-                            className="inline-flex items-center gap-2 px-6 py-3 bg-brand hover:bg-brand-dark text-white rounded-lg font-semibold transition-colors"
-                        >
-                            Start Shopping
-                            <i className="fi-rs-arrow-right"></i>
-                        </Link>
-                    </div>
+                    <EmptyState
+                        icon="orders"
+                        title="No orders yet"
+                        description={filters.status
+                            ? `No ${statuses[filters.status]?.toLowerCase() || filters.status} orders found.`
+                            : "You haven't placed any orders yet. Start shopping to see your orders here."}
+                        action={{
+                            label: 'Start Shopping',
+                            href: route('shop'),
+                        }}
+                        className="bg-white rounded-xl border border-border"
+                    />
                 )}
 
                 {/* Pagination */}
-                {orders.last_page > 1 && (
-                    <div className="flex justify-center mt-8">
-                        <div className="flex gap-2">
-                            {orders.links.map((link, index) => (
-                                <Link
-                                    key={index}
-                                    href={link.url || '#'}
-                                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                                        link.active
-                                            ? 'bg-brand text-white'
-                                            : link.url
-                                            ? 'bg-white border border-border text-heading hover:bg-gray-50'
-                                            : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                    }`}
-                                    dangerouslySetInnerHTML={{ __html: link.label }}
-                                    preserveScroll
-                                />
-                            ))}
-                        </div>
-                    </div>
-                )}
+                <Pagination pagination={orders} className="mt-8" />
             </div>
         </FrontendLayout>
     );

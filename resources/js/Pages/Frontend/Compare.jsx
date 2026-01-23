@@ -1,13 +1,40 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import FrontendLayout from '@/Layouts/FrontendLayout';
+import Breadcrumb from '@/Components/Frontend/Breadcrumb';
+import StarRating from '@/Components/Frontend/StarRating';
+import EmptyState from '@/Components/Frontend/EmptyState';
+import { useCurrency } from '@/hooks/useCurrency';
+import { useToast } from '@/Contexts/ToastContext';
 
 export default function Compare({ products = [] }) {
-    const formatCurrency = (amount) => {
-        return new Intl.NumberFormat('en-MW', {
-            style: 'currency',
-            currency: 'MWK',
-            minimumFractionDigits: 0,
-        }).format(amount || 0);
+    const { format } = useCurrency();
+    const toast = useToast();
+
+    const breadcrumbItems = [
+        { label: 'Home', href: '/' },
+        { label: 'Compare Products' },
+    ];
+
+    const handleAddToCart = (product) => {
+        router.post(route('cart.add'), {
+            product_id: product.id,
+            quantity: 1,
+        }, {
+            preserveScroll: true,
+            onSuccess: () => {
+                toast.success('Product added to cart!');
+            },
+            onError: (errors) => {
+                const errorMessage = errors?.error || errors?.product_id || 'Failed to add to cart';
+                toast.error(errorMessage);
+            },
+        });
+    };
+
+    const handleRemoveFromCompare = (productId) => {
+        router.delete(route('compare.remove', productId), {
+            preserveScroll: true,
+        });
     };
 
     return (
@@ -17,11 +44,7 @@ export default function Compare({ products = [] }) {
             {/* Breadcrumb */}
             <div className="bg-gray-50 py-4">
                 <div className="container mx-auto px-4">
-                    <nav className="flex items-center gap-2 text-sm">
-                        <Link href="/" className="text-body hover:text-brand">Home</Link>
-                        <span className="text-body">/</span>
-                        <span className="text-brand">Compare Products</span>
-                    </nav>
+                    <Breadcrumb items={breadcrumbItems} separator="slash" />
                 </div>
             </div>
 
@@ -36,9 +59,18 @@ export default function Compare({ products = [] }) {
                                     <th className="border border-gray-200 p-4 bg-gray-50 text-left">Product</th>
                                     {products.map((product) => (
                                         <th key={product.id} className="border border-gray-200 p-4 min-w-[200px]">
-                                            <div className="text-center">
+                                            <div className="text-center relative">
+                                                <button
+                                                    onClick={() => handleRemoveFromCompare(product.id)}
+                                                    className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
+                                                    title="Remove from compare"
+                                                >
+                                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                                    </svg>
+                                                </button>
                                                 <img
-                                                    src={product.image || '/images/frontend/placeholder-product.png'}
+                                                    src={product.image || product.primary_image || '/images/frontend/placeholder-product.png'}
                                                     alt={product.name}
                                                     className="w-32 h-32 object-contain mx-auto mb-3"
                                                 />
@@ -58,7 +90,12 @@ export default function Compare({ products = [] }) {
                                     <td className="border border-gray-200 p-4 bg-gray-50 font-semibold">Price</td>
                                     {products.map((product) => (
                                         <td key={product.id} className="border border-gray-200 p-4 text-center">
-                                            <span className="text-brand font-bold text-xl">{formatCurrency(product.price)}</span>
+                                            <span className="text-brand font-bold text-xl">{format(product.price)}</span>
+                                            {product.compare_price && product.compare_price > product.price && (
+                                                <span className="block text-gray-400 line-through text-sm mt-1">
+                                                    {format(product.compare_price)}
+                                                </span>
+                                            )}
                                         </td>
                                     ))}
                                 </tr>
@@ -66,7 +103,7 @@ export default function Compare({ products = [] }) {
                                     <td className="border border-gray-200 p-4 bg-gray-50 font-semibold">Availability</td>
                                     {products.map((product) => (
                                         <td key={product.id} className="border border-gray-200 p-4 text-center">
-                                            <span className={product.in_stock ? 'text-green-600' : 'text-red-600'}>
+                                            <span className={`px-3 py-1 rounded-full text-sm ${product.in_stock ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                                                 {product.in_stock ? 'In Stock' : 'Out of Stock'}
                                             </span>
                                         </td>
@@ -75,27 +112,46 @@ export default function Compare({ products = [] }) {
                                 <tr>
                                     <td className="border border-gray-200 p-4 bg-gray-50 font-semibold">Rating</td>
                                     {products.map((product) => (
-                                        <td key={product.id} className="border border-gray-200 p-4 text-center">
-                                            <div className="flex items-center justify-center gap-1">
-                                                {[...Array(5)].map((_, i) => (
-                                                    <svg
-                                                        key={i}
-                                                        className={`w-4 h-4 ${i < (product.rating || 0) ? 'text-yellow-400' : 'text-gray-300'}`}
-                                                        fill="currentColor"
-                                                        viewBox="0 0 20 20"
-                                                    >
-                                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                                                    </svg>
-                                                ))}
+                                        <td key={product.id} className="border border-gray-200 p-4">
+                                            <div className="flex justify-center">
+                                                <StarRating
+                                                    rating={product.rating || 0}
+                                                    reviewCount={product.reviews_count}
+                                                    size="sm"
+                                                />
                                             </div>
                                         </td>
                                     ))}
                                 </tr>
+                                {products.some(p => p.category) && (
+                                    <tr>
+                                        <td className="border border-gray-200 p-4 bg-gray-50 font-semibold">Category</td>
+                                        {products.map((product) => (
+                                            <td key={product.id} className="border border-gray-200 p-4 text-center">
+                                                <span className="text-body">{product.category?.name || '-'}</span>
+                                            </td>
+                                        ))}
+                                    </tr>
+                                )}
+                                {products.some(p => p.brand) && (
+                                    <tr>
+                                        <td className="border border-gray-200 p-4 bg-gray-50 font-semibold">Brand</td>
+                                        {products.map((product) => (
+                                            <td key={product.id} className="border border-gray-200 p-4 text-center">
+                                                <span className="text-body">{product.brand?.name || '-'}</span>
+                                            </td>
+                                        ))}
+                                    </tr>
+                                )}
                                 <tr>
                                     <td className="border border-gray-200 p-4 bg-gray-50 font-semibold">Action</td>
                                     {products.map((product) => (
                                         <td key={product.id} className="border border-gray-200 p-4 text-center">
-                                            <button className="px-6 py-2 bg-brand hover:bg-brand-dark text-white rounded-lg font-semibold transition-colors">
+                                            <button
+                                                onClick={() => handleAddToCart(product)}
+                                                disabled={!product.in_stock}
+                                                className="px-6 py-2 bg-brand hover:bg-brand-dark text-white rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                            >
                                                 Add to Cart
                                             </button>
                                         </td>
@@ -105,19 +161,16 @@ export default function Compare({ products = [] }) {
                         </table>
                     </div>
                 ) : (
-                    <div className="text-center py-16 bg-gray-50 rounded-xl">
-                        <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                        </svg>
-                        <h3 className="text-xl font-semibold text-heading mb-2">No Products to Compare</h3>
-                        <p className="text-body mb-6">Add products to your compare list to see them side by side.</p>
-                        <Link
-                            href="/shop"
-                            className="inline-flex items-center gap-2 px-6 py-3 bg-brand hover:bg-brand-dark text-white rounded-lg font-semibold transition-colors"
-                        >
-                            Browse Products
-                        </Link>
-                    </div>
+                    <EmptyState
+                        icon="compare"
+                        title="No Products to Compare"
+                        description="Add products to your compare list to see them side by side."
+                        action={{
+                            label: 'Browse Products',
+                            href: '/shop',
+                        }}
+                        className="bg-gray-50 rounded-xl"
+                    />
                 )}
             </div>
         </FrontendLayout>

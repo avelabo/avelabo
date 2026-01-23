@@ -100,20 +100,6 @@ export default function Checkout({ cart, paymentGateways = [], countries = [], s
             <Head title="Checkout" />
 
             <style>{`
-                /* Custom checkbox styling */
-                .custom-checkbox input[type="checkbox"] { display: none; }
-                .custom-checkbox label { position: relative; padding-left: 28px; cursor: pointer; display: inline-block; }
-                .custom-checkbox label:before { content: ''; position: absolute; left: 0; top: 2px; width: 18px; height: 18px; border: 1px solid #ced4da; border-radius: 3px; background: #fff; }
-                .custom-checkbox input[type="checkbox"]:checked + label:before { background: #3BB77E; border-color: #3BB77E; }
-                .custom-checkbox input[type="checkbox"]:checked + label:after { content: '✓'; position: absolute; left: 4px; top: 0px; color: white; font-size: 14px; }
-
-                /* Custom radio styling */
-                .custom-radio input[type="radio"] { display: none; }
-                .custom-radio label { position: relative; padding-left: 28px; cursor: pointer; display: inline-block; }
-                .custom-radio label:before { content: ''; position: absolute; left: 0; top: 3px; width: 18px; height: 18px; border: 1px solid #ced4da; border-radius: 50%; background: #fff; }
-                .custom-radio input[type="radio"]:checked + label:before { border-color: #3BB77E; }
-                .custom-radio input[type="radio"]:checked + label:after { content: ''; position: absolute; left: 5px; top: 8px; width: 8px; height: 8px; background: #3BB77E; border-radius: 50%; }
-
                 /* Collapsible sections */
                 .collapse {
                     max-height: 0;
@@ -131,30 +117,38 @@ export default function Checkout({ cart, paymentGateways = [], countries = [], s
             `}</style>
 
             {/* Breadcrumb */}
-            <div className="bg-white py-4 border-b border-gray-100">
-                <div className="container mx-auto px-4">
+            <div className="border-b border-border-light">
+                <div className="container mx-auto px-4 py-4">
                     <div className="flex items-center gap-2 text-sm">
-                        <Link href="/" className="text-muted hover:text-brand flex items-center gap-1">
-                            <i className="fi-rs-home"></i> Home
-                        </Link>
-                        <span className="text-muted">-</span>
-                        <Link href={route('shop')} className="text-muted hover:text-brand">Shop</Link>
-                        <span className="text-muted">-</span>
-                        <Link href={route('cart')} className="text-muted hover:text-brand">Basket</Link>
-                        <span className="text-muted">-</span>
-                        <span className="text-body">Checkout</span>
+                        <Link href="/" className="text-muted hover:text-brand transition-colors">Home</Link>
+                        <svg className="w-4 h-4 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                        <Link href={route('shop')} className="text-muted hover:text-brand transition-colors">Shop</Link>
+                        <svg className="w-4 h-4 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                        <Link href={route('cart')} className="text-muted hover:text-brand transition-colors">Basket</Link>
+                        <svg className="w-4 h-4 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                        <span className="text-heading font-medium">Checkout</span>
                     </div>
                 </div>
             </div>
 
             {/* Checkout Section */}
-            <section className="py-12 lg:py-20">
+            <section className="py-8 lg:py-12">
                 <div className="container mx-auto px-4">
                     {/* Page Header */}
-                    <div className="mb-10">
-                        <h1 className="text-3xl lg:text-4xl font-bold text-heading font-quicksand mb-2">Checkout</h1>
+                    <div className="mb-8">
+                        <h1 className="text-2xl lg:text-3xl font-bold text-heading mb-2">Checkout</h1>
                         <p className="text-body">
-                            There are <span className="text-brand font-semibold">{itemCount}</span> products in your basket
+                            {itemCount > 0 ? (
+                                <>Complete your order with <span className="text-heading font-semibold">{itemCount}</span> {itemCount === 1 ? 'item' : 'items'}</>
+                            ) : (
+                                'Your basket is empty'
+                            )}
                         </p>
                     </div>
 
@@ -241,8 +235,8 @@ export default function Checkout({ cart, paymentGateways = [], countries = [], s
                             {/* Left Column - Billing Form */}
                             <div className="lg:w-7/12">
                                 {/* Billing Details Form */}
-                                <div className="bg-white p-6 lg:p-8 rounded-lg border border-gray-200">
-                                    <h4 className="text-xl font-bold text-heading font-quicksand mb-6">Billing Details</h4>
+                                <div className="bg-surface p-6 lg:p-8 rounded-xl border border-border-light">
+                                    <h4 className="text-lg font-bold text-heading mb-6">Billing Details</h4>
 
                                     {/* Phone & Email Row - MOST IMPORTANT */}
                                     <div className="grid md:grid-cols-2 gap-4 mb-4">
@@ -484,8 +478,8 @@ export default function Checkout({ cart, paymentGateways = [], countries = [], s
                             {/* Right Column - Order Summary & Payment */}
                             <div className="lg:w-5/12">
                                 {/* Payment Section */}
-                                <div className="bg-white p-6 lg:p-8 rounded-lg border border-gray-200 mb-6">
-                                    <h4 className="text-xl font-bold text-heading font-quicksand mb-6">Payment Method</h4>
+                                <div className="bg-surface p-6 lg:p-8 rounded-xl border border-border-light mb-6">
+                                    <h4 className="text-lg font-bold text-heading mb-6">Payment Method</h4>
 
                                     {/* Payment Options */}
                                     <div className="space-y-4 mb-8">
@@ -621,12 +615,9 @@ export default function Checkout({ cart, paymentGateways = [], countries = [], s
                                 </div>
 
                                 {/* Order Summary */}
-                                <div className="bg-white p-6 lg:p-8 rounded-lg border border-gray-200 ">
-                                    <div className="flex items-end justify-between mb-6">
-                                        <h4 className="text-xl font-bold text-heading font-quicksand">Your Order</h4>
-                                        <span className="text-body text-sm">Subtotal</span>
-                                    </div>
-                                    <div className="border-t-2 border-brand mb-6"></div>
+                                <div className="bg-surface p-6 lg:p-8 rounded-xl border border-border-light">
+                                    <h4 className="text-lg font-bold text-heading mb-6">Your Order</h4>
+                                    <div className="border-t border-border-light mb-6"></div>
 
                                     {/* Order Items */}
                                     <div className="space-y-4">

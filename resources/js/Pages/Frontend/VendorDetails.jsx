@@ -2,6 +2,13 @@ import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
 import FrontendLayout from '@/Layouts/FrontendLayout';
 import ProductCard from '@/Components/Frontend/ProductCard';
+import Breadcrumb from '@/Components/Frontend/Breadcrumb';
+import StarRating from '@/Components/Frontend/StarRating';
+import Pagination from '@/Components/Frontend/Pagination';
+import EmptyState from '@/Components/Frontend/EmptyState';
+import ProductListItem from '@/Components/Frontend/ProductListItem';
+import { FilterWidget, PriceRangeFilter } from '@/Components/Frontend/Filters';
+import { useCurrency } from '@/hooks/useCurrency';
 
 export default function VendorDetails({
     vendor = {},
@@ -10,15 +17,13 @@ export default function VendorDetails({
     dealProducts = [],
     filters = {},
 }) {
-    const [priceRange, setPriceRange] = useState(filters.max_price || 500000);
+    const { format } = useCurrency();
 
-    const formatCurrency = (amount) => {
-        return new Intl.NumberFormat('en-MW', {
-            style: 'currency',
-            currency: 'MWK',
-            minimumFractionDigits: 0,
-        }).format(amount || 0);
-    };
+    const breadcrumbItems = [
+        { label: 'Home', href: '/' },
+        { label: 'Vendors', href: route('vendors') },
+        { label: vendor.shop_name },
+    ];
 
     const handleFilterChange = (key, value) => {
         router.get(route('vendor.details', vendor.slug), {
@@ -30,12 +35,12 @@ export default function VendorDetails({
         });
     };
 
-    const handleAddToCart = (product) => {
-        router.post(route('cart.add'), {
-            product_id: product.id,
-            quantity: 1,
+    const handlePriceFilter = (min, max) => {
+        router.get(route('vendor.details', vendor.slug), {
+            ...filters,
+            max_price: max,
         }, {
-            preserveScroll: true,
+            preserveState: true,
         });
     };
 
@@ -46,15 +51,7 @@ export default function VendorDetails({
             {/* Breadcrumb */}
             <div className="bg-white py-4 border-b border-gray-100">
                 <div className="max-w-7xl mx-auto px-4">
-                    <div className="flex items-center gap-2 text-sm">
-                        <Link href="/" className="text-gray-500 hover:text-brand transition-colors">
-                            <i className="fi fi-rs-home"></i>
-                        </Link>
-                        <span className="text-gray-500">/</span>
-                        <Link href={route('vendors')} className="text-gray-500 hover:text-brand transition-colors">Vendors</Link>
-                        <span className="text-gray-500">/</span>
-                        <span className="text-brand">{vendor.shop_name}</span>
-                    </div>
+                    <Breadcrumb items={breadcrumbItems} separator="slash" />
                 </div>
             </div>
 
@@ -83,18 +80,16 @@ export default function VendorDetails({
                         {/* Vendor Info */}
                         <div className="text-center lg:text-left flex-1">
                             <span className="text-gray-300 text-sm">Since {vendor.created_at}</span>
-                            <h1 className="text-3xl lg:text-4xl font-bold text-white font-quicksand mt-2 mb-4">
+                            <h1 className="text-3xl lg:text-4xl font-bold text-white font-quicksand mt-2 mb-4 flex items-center justify-center lg:justify-start gap-2">
                                 {vendor.shop_name}
                                 {vendor.is_verified && (
-                                    <i className="fi fi-rs-badge-check text-blue-400 ml-2" title="Verified Seller"></i>
+                                    <svg className="w-6 h-6 text-blue-400" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+                                    </svg>
                                 )}
                             </h1>
-                            <div className="flex items-center justify-center lg:justify-start gap-2 mb-6">
-                                <div className="flex">
-                                    {[1,2,3,4,5].map((star) => (
-                                        <i key={star} className={`fi fi-rs-star text-xs ${star <= Math.round(vendor.rating) ? 'text-yellow-400' : 'text-gray-300'}`}></i>
-                                    ))}
-                                </div>
+                            <div className="flex items-center justify-center lg:justify-start gap-4 mb-6">
+                                <StarRating rating={vendor.rating || 0} size="sm" />
                                 <span className="text-gray-300 text-sm">({vendor.rating?.toFixed(1) || '0.0'})</span>
                                 <span className="text-gray-300 text-sm">| {vendor.total_reviews || 0} reviews</span>
                             </div>
@@ -110,16 +105,23 @@ export default function VendorDetails({
                                 {/* Stats */}
                                 <div className="text-white/90 text-sm space-y-2">
                                     <div className="flex items-center gap-2 justify-center lg:justify-start">
-                                        <i className="fi fi-rs-box text-brand-light"></i>
+                                        <svg className="w-4 h-4 text-brand-light" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                                        </svg>
                                         <span><strong>{vendor.total_products || 0}</strong> Products</span>
                                     </div>
                                     <div className="flex items-center gap-2 justify-center lg:justify-start">
-                                        <i className="fi fi-rs-shopping-bag text-brand-light"></i>
+                                        <svg className="w-4 h-4 text-brand-light" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                                        </svg>
                                         <span><strong>{vendor.total_sales || 0}</strong> Sales</span>
                                     </div>
                                     {vendor.country && (
                                         <div className="flex items-center gap-2 justify-center lg:justify-start">
-                                            <i className="fi fi-rs-marker text-brand-light"></i>
+                                            <svg className="w-4 h-4 text-brand-light" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            </svg>
                                             <span>{vendor.country}</span>
                                         </div>
                                     )}
@@ -189,29 +191,16 @@ export default function VendorDetails({
                                     ))}
                                 </div>
                             ) : (
-                                <div className="text-center py-12 bg-gray-50 rounded-xl">
-                                    <i className="fi fi-rs-shopping-bag text-5xl text-gray-300 mb-4"></i>
-                                    <p className="text-gray-500">No products available from this seller yet</p>
-                                </div>
+                                <EmptyState
+                                    icon="box"
+                                    title="No products available"
+                                    description="This seller hasn't listed any products yet."
+                                    className="bg-gray-50 rounded-xl"
+                                />
                             )}
 
                             {/* Pagination */}
-                            {products.last_page > 1 && (
-                                <nav className="flex items-center justify-center gap-2 mb-12">
-                                    {products.links?.map((link, index) => (
-                                        <Link
-                                            key={index}
-                                            href={link.url || '#'}
-                                            className={`w-10 h-10 flex items-center justify-center border rounded transition-colors ${
-                                                link.active
-                                                    ? 'border-brand bg-brand text-white'
-                                                    : 'border-gray-200 hover:border-brand hover:text-brand'
-                                            } ${!link.url ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                            dangerouslySetInnerHTML={{ __html: link.label }}
-                                        />
-                                    ))}
-                                </nav>
-                            )}
+                            <Pagination pagination={products} className="mb-12" />
 
                             {/* Deals of the Day */}
                             {dealProducts.length > 0 && (
@@ -235,26 +224,14 @@ export default function VendorDetails({
                                                             {product.name}
                                                         </h6>
                                                     </Link>
-                                                    <div className="flex items-center gap-2 mb-2">
-                                                        <div className="flex">
-                                                            {[1,2,3,4,5].map((star) => (
-                                                                <i key={star} className={`fi fi-rs-star text-xs ${star <= (product.rating || 0) ? 'text-yellow-400' : 'text-gray-300'}`}></i>
-                                                            ))}
-                                                        </div>
-                                                    </div>
+                                                    <StarRating rating={product.rating || 0} size="xs" className="mb-2" />
                                                     <div className="flex items-center justify-between">
                                                         <div>
-                                                            <span className="text-brand font-bold">{formatCurrency(product.price)}</span>
+                                                            <span className="text-brand font-bold">{format(product.price)}</span>
                                                             {product.compare_price && (
-                                                                <span className="text-gray-500 line-through text-xs ml-1">{formatCurrency(product.compare_price)}</span>
+                                                                <span className="text-gray-500 line-through text-xs ml-1">{format(product.compare_price)}</span>
                                                             )}
                                                         </div>
-                                                        <button
-                                                            onClick={() => handleAddToCart(product)}
-                                                            className="text-brand hover:text-brand-dark text-sm flex items-center gap-1"
-                                                        >
-                                                            <i className="fi fi-rs-shopping-cart"></i> Add
-                                                        </button>
                                                     </div>
                                                 </div>
                                             </div>
@@ -268,8 +245,7 @@ export default function VendorDetails({
                         <aside className="w-full lg:w-72 flex-shrink-0 order-1 lg:order-2">
                             {/* Categories Widget */}
                             {categories.length > 0 && (
-                                <div className="bg-white border border-gray-100 rounded-xl p-6 mb-6">
-                                    <h5 className="font-quicksand font-bold text-heading text-lg mb-5 pb-4 border-b border-gray-100">Categories</h5>
+                                <FilterWidget title="Categories" className="mb-6">
                                     <ul className="space-y-3">
                                         <li>
                                             <button
@@ -297,36 +273,17 @@ export default function VendorDetails({
                                             </li>
                                         ))}
                                     </ul>
-                                </div>
+                                </FilterWidget>
                             )}
 
-                            {/* Filter by Price Widget */}
-                            <div className="bg-white border border-gray-100 rounded-xl p-6 mb-6">
-                                <h5 className="font-quicksand font-bold text-heading text-lg mb-5 pb-4 border-b border-gray-100">Filter by Price</h5>
-
-                                <div className="mb-6">
-                                    <input
-                                        type="range"
-                                        min="0"
-                                        max="1000000"
-                                        step="10000"
-                                        value={priceRange}
-                                        onChange={(e) => setPriceRange(e.target.value)}
-                                        className="w-full mb-4 accent-brand"
-                                    />
-                                    <div className="flex justify-between text-sm">
-                                        <span>From: <strong className="text-brand">{formatCurrency(0)}</strong></span>
-                                        <span>To: <strong className="text-brand">{formatCurrency(priceRange)}</strong></span>
-                                    </div>
-                                </div>
-
-                                <button
-                                    onClick={() => handleFilterChange('max_price', priceRange)}
-                                    className="bg-brand hover:bg-brand-dark text-white px-4 py-2 rounded-md text-sm font-semibold transition-colors flex items-center gap-2 w-fit"
-                                >
-                                    <i className="fi fi-rs-filter"></i> Apply Filter
-                                </button>
-                            </div>
+                            {/* Price Range Filter */}
+                            <PriceRangeFilter
+                                min={0}
+                                max={1000000}
+                                currentMax={filters.max_price}
+                                onApply={handlePriceFilter}
+                                className="mb-6"
+                            />
                         </aside>
                     </div>
                 </div>

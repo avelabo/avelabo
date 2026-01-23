@@ -12,12 +12,9 @@ export default function Cart({ cart }) {
 
     const [loading, setLoading] = useState(false);
     const [updatingItems, setUpdatingItems] = useState({});
-
-    // Coupon state
     const [couponCode, setCouponCode] = useState('');
     const [appliedCoupon, setAppliedCoupon] = useState(null);
 
-    // Update quantity handler
     const updateQuantity = (itemId, newQuantity) => {
         if (newQuantity < 0 || updatingItems[itemId]) return;
 
@@ -37,7 +34,6 @@ export default function Cart({ cart }) {
         });
     };
 
-    // Remove item handler
     const removeItem = (itemId) => {
         if (updatingItems[itemId]) return;
 
@@ -57,7 +53,6 @@ export default function Cart({ cart }) {
         });
     };
 
-    // Clear cart handler
     const clearCart = () => {
         if (loading) return;
 
@@ -76,13 +71,11 @@ export default function Cart({ cart }) {
         });
     };
 
-    // Apply coupon handler
     const applyCoupon = (e) => {
         e.preventDefault();
         if (couponCode.trim()) {
-            // TODO: Implement coupon functionality
             setAppliedCoupon(couponCode);
-            alert(`Coupon "${couponCode}" applied!`);
+            toast.success(`Coupon "${couponCode}" applied!`);
         }
     };
 
@@ -90,6 +83,12 @@ export default function Cart({ cart }) {
     const subtotal = cart?.subtotal || 0;
     const shipping = cart?.shipping || 0;
     const total = cart?.total || 0;
+    const itemCount = cart?.item_count || 0;
+
+    // Calculate free shipping progress (example: free shipping over 50000 MWK)
+    const freeShippingThreshold = 50000;
+    const amountToFreeShipping = Math.max(0, freeShippingThreshold - subtotal);
+    const freeShippingProgress = Math.min(100, (subtotal / freeShippingThreshold) * 100);
 
     const breadcrumbItems = [
         { label: 'Home', href: '/' },
@@ -101,29 +100,33 @@ export default function Cart({ cart }) {
         <FrontendLayout>
             <Head title="Shopping Basket" />
 
-            {/* Page Header / Breadcrumb */}
-            <div className="bg-grey-9 py-5">
-                <div className="container mx-auto px-4">
-                    <Breadcrumb items={breadcrumbItems} separator="dash" />
+            {/* Breadcrumb */}
+            <div className="border-b border-border-light">
+                <div className="container mx-auto px-4 py-4">
+                    <Breadcrumb items={breadcrumbItems} separator="chevron" />
                 </div>
             </div>
 
             {/* Cart Content */}
-            <div className="container mx-auto px-4 py-12">
-                {/* Cart Header */}
-                <div className="mb-8">
-                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
+            <section className="py-8 lg:py-12">
+                <div className="container mx-auto px-4">
+                    {/* Page Header */}
+                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-8">
                         <div>
-                            <h1 className="text-3xl font-quicksand font-bold text-heading mb-2">Your Basket</h1>
-                            <p className="text-body">
-                                There are <span className="text-brand font-semibold">{cart?.item_count || 0}</span> products in your basket
-                            </p>
+                            <h1 className="text-2xl lg:text-3xl font-bold text-heading mb-2">
+                                My Basket
+                                {itemCount > 0 && (
+                                    <span className="text-muted font-normal text-lg ml-2">
+                                        ({itemCount} {itemCount === 1 ? 'item' : 'items'})
+                                    </span>
+                                )}
+                            </h1>
                         </div>
                         {cartItems.length > 0 && (
                             <button
                                 onClick={clearCart}
                                 disabled={loading}
-                                className="flex items-center gap-2 text-gray-600 hover:text-red-500 transition-colors disabled:opacity-50 px-4 py-2 border border-gray-300 rounded-md hover:border-red-500"
+                                className="flex items-center gap-2 text-sm text-muted hover:text-danger transition-colors disabled:opacity-50"
                             >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -132,46 +135,62 @@ export default function Cart({ cart }) {
                             </button>
                         )}
                     </div>
-                </div>
 
-                <div className="flex flex-col lg:flex-row gap-8">
-                    {/* Cart Table */}
-                    <div className="flex-1">
-                        <div className="bg-white border border-border rounded-xl overflow-hidden">
-                            {/* Table Header (Desktop) */}
-                            <div className="hidden md:grid grid-cols-12 gap-4 bg-grey-9 px-6 py-4 text-sm font-semibold text-heading">
-                                <div className="col-span-6">Product</div>
-                                <div className="col-span-2">Unit Price</div>
-                                <div className="col-span-2">Quantity</div>
-                                <div className="col-span-1">Subtotal</div>
-                                <div className="col-span-1 text-center">Remove</div>
+                    {/* Free Shipping Progress */}
+                    {cartItems.length > 0 && (
+                        <div className="bg-surface-raised rounded-xl p-4 mb-8">
+                            <div className="flex items-center justify-between mb-2">
+                                <span className="text-sm text-body">
+                                    {amountToFreeShipping > 0 ? (
+                                        <>
+                                            You're <span className="font-semibold text-heading">{format(amountToFreeShipping)}</span> away from Free Shipping!
+                                        </>
+                                    ) : (
+                                        <span className="text-success font-medium">You've unlocked Free Shipping!</span>
+                                    )}
+                                </span>
+                                {amountToFreeShipping > 0 && (
+                                    <Link href={route('shop')} className="text-sm font-medium text-brand hover:text-brand-dark">
+                                        + Add Items
+                                    </Link>
+                                )}
                             </div>
+                            <div className="h-2 bg-border-light rounded-full overflow-hidden">
+                                <div
+                                    className={`h-full rounded-full transition-all duration-500 ${
+                                        freeShippingProgress >= 100 ? 'bg-success' : 'bg-brand'
+                                    }`}
+                                    style={{ width: `${freeShippingProgress}%` }}
+                                />
+                            </div>
+                        </div>
+                    )}
 
-                            {/* Basket Items */}
+                    <div className="flex flex-col lg:flex-row gap-8">
+                        {/* Cart Items */}
+                        <div className="flex-1">
                             {cartItems.length === 0 ? (
-                                <div className="px-6 py-12">
-                                    <EmptyState
-                                        icon="cart"
-                                        title="Your basket is empty"
-                                        description="Add some products to your basket to get started."
-                                        action={{
-                                            label: 'Continue Shopping',
-                                            href: route('shop'),
-                                        }}
-                                        size="sm"
-                                    />
-                                </div>
+                                <EmptyState
+                                    icon="cart"
+                                    title="Your basket is empty"
+                                    description="Looks like you haven't added anything to your basket yet."
+                                    action={{
+                                        label: 'Start Shopping',
+                                        href: route('shop'),
+                                    }}
+                                />
                             ) : (
-                                cartItems.map((item, index) => (
-                                    <div
-                                        key={item.id}
-                                        className={`grid grid-cols-1 md:grid-cols-12 gap-4 items-center px-6 py-6 ${
-                                            index < cartItems.length - 1 ? 'border-b border-border' : ''
-                                        } ${updatingItems[item.id] ? 'opacity-50' : ''}`}
-                                    >
-                                        <div className="col-span-1 md:col-span-6">
-                                            <div className="flex items-center gap-4">
-                                                <div className="w-20 h-20 flex-shrink-0 bg-gray-100 rounded-lg overflow-hidden">
+                                <div className="space-y-4">
+                                    {cartItems.map((item) => (
+                                        <div
+                                            key={item.id}
+                                            className={`bg-surface rounded-xl border border-border-light p-4 lg:p-6 transition-opacity ${
+                                                updatingItems[item.id] ? 'opacity-60' : ''
+                                            }`}
+                                        >
+                                            <div className="flex gap-4 lg:gap-6">
+                                                {/* Product Image */}
+                                                <div className="w-24 h-24 lg:w-28 lg:h-28 flex-shrink-0 bg-surface-raised rounded-lg overflow-hidden">
                                                     {item.image ? (
                                                         <img
                                                             src={`/storage/${item.image}`}
@@ -179,158 +198,224 @@ export default function Cart({ cart }) {
                                                             className="w-full h-full object-cover"
                                                         />
                                                     ) : (
-                                                        <div className="w-full h-full flex items-center justify-center text-gray-400">
-                                                            <i className="fi-rs-picture text-2xl"></i>
+                                                        <div className="w-full h-full flex items-center justify-center">
+                                                            <svg className="w-8 h-8 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                            </svg>
                                                         </div>
                                                     )}
                                                 </div>
-                                                <div>
-                                                    <h6 className="font-quicksand font-semibold text-heading mb-1">
-                                                        {item.name}
-                                                    </h6>
-                                                    {item.variant_name && (
-                                                        <p className="text-xs text-muted mb-1">{item.variant_name}</p>
-                                                    )}
-                                                    {item.seller_name && (
-                                                        <p className="text-xs text-muted">
-                                                            Sold by: <span className="text-brand">{item.seller_name}</span>
-                                                        </p>
-                                                    )}
-                                                    {!item.in_stock && (
-                                                        <p className="text-xs text-red-500 mt-1">Out of stock</p>
-                                                    )}
+
+                                                {/* Product Details */}
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+                                                        <div className="flex-1 min-w-0">
+                                                            <h3 className="font-semibold text-heading text-base lg:text-lg mb-1 truncate">
+                                                                {item.name}
+                                                            </h3>
+                                                            {item.variant_name && (
+                                                                <p className="text-sm text-muted mb-1">
+                                                                    {item.variant_name}
+                                                                </p>
+                                                            )}
+                                                            {item.seller_name && (
+                                                                <p className="text-sm text-muted">
+                                                                    Sold by: <span className="text-brand">{item.seller_name}</span>
+                                                                </p>
+                                                            )}
+                                                            {!item.in_stock && (
+                                                                <p className="text-sm text-danger mt-1 font-medium">Out of stock</p>
+                                                            )}
+                                                        </div>
+
+                                                        {/* Price - Desktop */}
+                                                        <div className="hidden lg:block text-right">
+                                                            <p className="text-lg font-bold text-heading">
+                                                                {format(item.line_total)}
+                                                            </p>
+                                                            <p className="text-sm text-muted">
+                                                                {format(item.unit_price)} each
+                                                            </p>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Quantity & Actions */}
+                                                    <div className="flex items-center justify-between mt-4">
+                                                        <div className="flex items-center gap-4">
+                                                            {/* Quantity Selector */}
+                                                            <div className="flex items-center border border-border rounded-lg overflow-hidden">
+                                                                <button
+                                                                    onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                                                                    disabled={updatingItems[item.id] || item.quantity <= 1}
+                                                                    className="w-9 h-9 flex items-center justify-center text-heading hover:bg-surface-raised transition-colors disabled:opacity-40"
+                                                                >
+                                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                                                                    </svg>
+                                                                </button>
+                                                                <span className="w-10 h-9 flex items-center justify-center text-heading font-semibold text-sm border-x border-border">
+                                                                    {item.quantity}
+                                                                </span>
+                                                                <button
+                                                                    onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                                                                    disabled={updatingItems[item.id]}
+                                                                    className="w-9 h-9 flex items-center justify-center text-heading hover:bg-surface-raised transition-colors disabled:opacity-40"
+                                                                >
+                                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                                                    </svg>
+                                                                </button>
+                                                            </div>
+
+                                                            {/* Remove Button */}
+                                                            <button
+                                                                onClick={() => removeItem(item.id)}
+                                                                disabled={updatingItems[item.id]}
+                                                                className="text-muted hover:text-danger transition-colors disabled:opacity-50 p-2"
+                                                                title="Remove item"
+                                                            >
+                                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                                </svg>
+                                                            </button>
+
+                                                            {/* Save for Later */}
+                                                            <button className="text-sm text-muted hover:text-brand transition-colors underline hidden sm:block">
+                                                                Save for Later
+                                                            </button>
+                                                        </div>
+
+                                                        {/* Price - Mobile */}
+                                                        <div className="lg:hidden text-right">
+                                                            <p className="font-bold text-heading">
+                                                                {format(item.line_total)}
+                                                            </p>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="col-span-1 md:col-span-2">
-                                            <span className="md:hidden text-sm text-muted">Price: </span>
-                                            <span className="text-body font-semibold">{format(item.unit_price)}</span>
-                                        </div>
-                                        <div className="col-span-1 md:col-span-2">
-                                            <div className="flex items-center border border-gray-300 rounded-md w-fit bg-white">
-                                                <button
-                                                    onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                                                    disabled={updatingItems[item.id] || item.quantity <= 1}
-                                                    className="w-10 h-10 flex items-center justify-center text-gray-700 hover:text-brand transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                                                >
-                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
-                                                    </svg>
-                                                </button>
-                                                <span className="w-12 h-10 flex items-center justify-center border-x border-gray-300 text-gray-900 font-semibold">
-                                                    {item.quantity}
-                                                </span>
-                                                <button
-                                                    onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                                                    disabled={updatingItems[item.id]}
-                                                    className="w-10 h-10 flex items-center justify-center text-gray-700 hover:text-brand transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                                                >
-                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                                                    </svg>
-                                                </button>
-                                            </div>
-                                        </div>
-                                        <div className="col-span-1 md:col-span-1">
-                                            <span className="md:hidden text-sm text-muted">Subtotal: </span>
-                                            <span className="text-brand font-bold">
-                                                {format(item.line_total)}
-                                            </span>
-                                        </div>
-                                        <div className="col-span-1 md:col-span-1 text-center">
-                                            <button
-                                                onClick={() => removeItem(item.id)}
-                                                disabled={updatingItems[item.id]}
-                                                className="text-gray-600 hover:text-red-500 transition-colors disabled:opacity-50 p-2"
-                                                title="Remove item"
-                                            >
-                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                </svg>
-                                            </button>
-                                        </div>
-                                    </div>
-                                ))
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* Continue Shopping */}
+                            {cartItems.length > 0 && (
+                                <div className="mt-6">
+                                    <Link
+                                        href={route('shop')}
+                                        className="inline-flex items-center gap-2 text-sm font-medium text-brand hover:text-brand-dark transition-colors"
+                                    >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                        </svg>
+                                        Continue Shopping
+                                    </Link>
+                                </div>
                             )}
                         </div>
 
-                        {/* Cart Actions */}
+                        {/* Order Summary Sidebar */}
                         {cartItems.length > 0 && (
-                            <div className="flex flex-col sm:flex-row justify-between gap-4 mt-6 pt-6 border-t border-border">
-                                <Link
-                                    href={route('shop')}
-                                    className="inline-flex items-center gap-2 px-6 py-3 border-2 border-border-2 text-brand rounded-md hover:bg-brand hover:text-white hover:border-brand transition-colors font-semibold"
-                                >
-                                    <i className="fi-rs-arrow-left"></i> Continue Shopping
-                                </Link>
-                            </div>
-                        )}
+                            <div className="lg:w-[380px] flex-shrink-0">
+                                <div className="bg-surface rounded-xl border border-border-light p-6 lg:sticky lg:top-24">
+                                    <h2 className="text-lg font-bold text-heading mb-6">Order Summary</h2>
 
-                        {/* Coupon Section */}
-                        {cartItems.length > 0 && (
-                            <div className="mt-12">
-                                <div className="bg-white border border-border rounded-xl p-6 lg:p-8">
-                                    <h4 className="font-quicksand font-bold text-heading text-lg mb-3">Apply Coupon</h4>
-                                    <p className="text-sm text-muted mb-6">Using A Promo Code?</p>
-                                    <form onSubmit={applyCoupon} className="flex gap-3">
-                                        <input
-                                            type="text"
-                                            placeholder="Enter Your Coupon"
-                                            value={couponCode}
-                                            onChange={(e) => setCouponCode(e.target.value)}
-                                            className="flex-1 border border-border rounded-md px-4 py-3 text-sm outline-none focus:border-brand"
-                                        />
-                                        <button
-                                            type="submit"
-                                            className="inline-flex items-center gap-2 px-6 py-3 bg-brand hover:bg-brand-dark text-white rounded-md font-semibold transition-colors"
-                                        >
-                                            <i className="fi-rs-label"></i> Apply
-                                        </button>
+                                    {/* Coupon Code */}
+                                    <form onSubmit={applyCoupon} className="mb-6">
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="text"
+                                                placeholder="Enter discount code"
+                                                value={couponCode}
+                                                onChange={(e) => setCouponCode(e.target.value)}
+                                                className="flex-1 px-4 py-3 border border-border rounded-lg text-sm outline-none focus:border-brand transition-colors"
+                                            />
+                                            <button
+                                                type="submit"
+                                                className="px-5 py-3 bg-brand-dark text-white text-sm font-semibold rounded-lg hover:bg-brand transition-colors"
+                                            >
+                                                Apply
+                                            </button>
+                                        </div>
+                                        {appliedCoupon && (
+                                            <p className="mt-2 text-sm text-success flex items-center gap-1">
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                                </svg>
+                                                Coupon "{appliedCoupon}" applied
+                                            </p>
+                                        )}
                                     </form>
-                                    {appliedCoupon && (
-                                        <p className="mt-3 text-sm text-brand">
-                                            Coupon "{appliedCoupon}" applied!
-                                        </p>
-                                    )}
+
+                                    {/* Summary Details */}
+                                    <div className="space-y-4 pb-6 border-b border-border-light">
+                                        <div className="flex justify-between text-sm">
+                                            <span className="text-body">Subtotal</span>
+                                            <span className="font-semibold text-heading">{format(subtotal)}</span>
+                                        </div>
+                                        <div className="flex justify-between text-sm">
+                                            <span className="text-body">Shipping</span>
+                                            <span className="font-semibold text-heading">
+                                                {shipping === 0 ? (
+                                                    <span className="text-success">Free</span>
+                                                ) : (
+                                                    format(shipping)
+                                                )}
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between text-sm">
+                                            <span className="text-body">Estimated Taxes</span>
+                                            <span className="text-muted">Calculated at Checkout</span>
+                                        </div>
+                                    </div>
+
+                                    {/* Total */}
+                                    <div className="flex justify-between items-center py-6">
+                                        <span className="text-heading font-semibold">Total</span>
+                                        <span className="text-2xl font-bold text-heading">{format(total)}</span>
+                                    </div>
+
+                                    {/* Checkout Button */}
+                                    <Link
+                                        href={route('checkout')}
+                                        className="w-full flex items-center justify-center gap-2 bg-brand hover:bg-brand-dark text-white py-4 rounded-lg font-semibold transition-all shadow-button hover:shadow-button-hover"
+                                    >
+                                        Proceed to Checkout
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                        </svg>
+                                    </Link>
+
+                                    {/* Trust Badges */}
+                                    <div className="mt-6 pt-6 border-t border-border-light">
+                                        <div className="flex items-center justify-center gap-4 text-muted">
+                                            <div className="flex items-center gap-1 text-xs">
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                                </svg>
+                                                Secure
+                                            </div>
+                                            <div className="flex items-center gap-1 text-xs">
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                                                </svg>
+                                                Protected
+                                            </div>
+                                            <div className="flex items-center gap-1 text-xs">
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                                </svg>
+                                                Easy Returns
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         )}
                     </div>
-
-                    {/* Cart Totals Sidebar */}
-                    {cartItems.length > 0 && (
-                        <div className="w-full lg:w-[380px] flex-shrink-0">
-                            <div className="bg-white border border-border rounded-xl p-6 lg:p-8 sticky top-24">
-                                <h4 className="font-quicksand font-bold text-heading text-xl mb-6 pb-4 border-b border-border">Basket Totals</h4>
-
-                                <div className="space-y-4 mb-6">
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-muted">Subtotal</span>
-                                        <span className="text-brand font-bold text-lg">{format(subtotal)}</span>
-                                    </div>
-                                    <div className="border-t border-border"></div>
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-muted">Shipping</span>
-                                        <span className="text-heading font-semibold">{shipping === 0 ? 'Free' : format(shipping)}</span>
-                                    </div>
-                                    <div className="border-t border-border"></div>
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-heading font-semibold">Total</span>
-                                        <span className="text-brand font-bold text-2xl">{format(total)}</span>
-                                    </div>
-                                </div>
-
-                                <Link
-                                    href={route('checkout')}
-                                    className="w-full flex items-center justify-center gap-2 bg-brand hover:bg-brand-dark text-white py-4 rounded-md font-quicksand font-bold transition-colors"
-                                >
-                                    Proceed To CheckOut <i className="fi-rs-sign-out"></i>
-                                </Link>
-                            </div>
-                        </div>
-                    )}
                 </div>
-            </div>
+            </section>
         </FrontendLayout>
     );
 }

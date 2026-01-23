@@ -60,7 +60,7 @@ class CurrencyService
             $from = $this->getCurrency($fromCurrency);
             $to = $this->getCurrency($toCurrency);
 
-            if (!$from || !$to) {
+            if (! $from || ! $to) {
                 return 1.0;
             }
 
@@ -88,6 +88,7 @@ class CurrencyService
             if ($from->id !== $defaultCurrency->id && $to->id !== $defaultCurrency->id) {
                 $toDefault = $this->getExchangeRate($fromCurrency, $defaultCurrency->code);
                 $fromDefault = $this->getExchangeRate($defaultCurrency->code, $toCurrency);
+
                 return $toDefault * $fromDefault;
             }
 
@@ -99,15 +100,15 @@ class CurrencyService
     {
         $currency = $this->getCurrency($currencyCode);
 
-        if (!$currency) {
-            return number_format($amount, 2) . ' ' . $currencyCode;
+        if (! $currency) {
+            return number_format($amount, 2).' '.$currencyCode;
         }
 
         $formatted = number_format($amount, $currency->decimal_places, '.', ',');
 
-        return $currency->symbol_position === 'before'
-            ? $currency->symbol . $formatted
-            : $formatted . ' ' . $currency->symbol;
+        return $currency->symbol_before
+            ? $currency->symbol.$formatted
+            : $formatted.' '.$currency->symbol;
     }
 
     public function clearCache(): void

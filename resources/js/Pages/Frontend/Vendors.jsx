@@ -1,9 +1,18 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
 import FrontendLayout from '@/Layouts/FrontendLayout';
+import Breadcrumb from '@/Components/Frontend/Breadcrumb';
+import StarRating from '@/Components/Frontend/StarRating';
+import Pagination from '@/Components/Frontend/Pagination';
+import EmptyState from '@/Components/Frontend/EmptyState';
 
 export default function Vendors({ vendors = { data: [] }, filters = {} }) {
     const [search, setSearch] = useState(filters.search || '');
+
+    const breadcrumbItems = [
+        { label: 'Home', href: '/' },
+        { label: 'Our Sellers' },
+    ];
 
     const handleSearch = (e) => {
         e.preventDefault();
@@ -19,35 +28,29 @@ export default function Vendors({ vendors = { data: [] }, filters = {} }) {
             <Head title="Our Sellers - Avelabo Marketplace" />
 
             {/* Breadcrumb */}
-            <div className="bg-white py-4 border-b border-gray-100">
-                <div className="max-w-7xl mx-auto px-4">
-                    <div className="flex items-center gap-2 text-sm">
-                        <Link href="/" className="text-gray-500 hover:text-brand transition-colors">
-                            <i className="fi fi-rs-home"></i>
-                        </Link>
-                        <span className="text-gray-500">/</span>
-                        <span className="text-brand">Our Sellers</span>
-                    </div>
+            <div className="border-b border-border-light">
+                <div className="container mx-auto px-4 py-4">
+                    <Breadcrumb items={breadcrumbItems} separator="chevron" />
                 </div>
             </div>
 
             {/* Hero Section */}
-            <section className="py-12 bg-gradient-to-r from-brand to-brand-dark text-white">
-                <div className="max-w-7xl mx-auto px-4">
+            <section className="py-12 lg:py-16 bg-brand">
+                <div className="container mx-auto px-4">
                     <div className="max-w-2xl">
-                        <h1 className="text-3xl lg:text-4xl font-bold font-quicksand mb-4">
+                        <h1 className="text-3xl lg:text-4xl font-bold text-white mb-4">
                             Our Trusted Sellers
                         </h1>
-                        <p className="text-white/90 text-lg">
-                            Browse through our verified sellers and find quality products from trusted merchants across Malawi.
+                        <p className="text-white/80 text-lg">
+                            Browse through our verified sellers and find quality products from trusted merchants.
                         </p>
                     </div>
                 </div>
             </section>
 
             {/* Main Content */}
-            <section className="py-12 lg:py-16">
-                <div className="max-w-7xl mx-auto px-4">
+            <section className="py-10 lg:py-14">
+                <div className="container mx-auto px-4">
                     {/* Search and Sort */}
                     <div className="flex flex-col md:flex-row gap-4 justify-between mb-8">
                         <form onSubmit={handleSearch} className="flex gap-2 max-w-md flex-1">
@@ -56,22 +59,24 @@ export default function Vendors({ vendors = { data: [] }, filters = {} }) {
                                 placeholder="Search sellers..."
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
-                                className="flex-1 px-4 py-2 border border-gray-200 rounded-lg focus:border-brand focus:outline-none"
+                                className="flex-1 px-4 py-3 border border-border rounded-lg focus:border-brand focus:outline-none transition-colors"
                             />
                             <button
                                 type="submit"
-                                className="px-4 py-2 bg-brand hover:bg-brand-dark text-white rounded-lg transition-colors"
+                                className="px-5 py-3 bg-brand hover:bg-brand-dark text-white rounded-lg transition-colors"
                             >
-                                <i className="fi fi-rs-search"></i>
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                </svg>
                             </button>
                         </form>
 
-                        <div className="flex items-center gap-2">
-                            <span className="text-gray-500 text-sm">Sort by:</span>
+                        <div className="flex items-center gap-3">
+                            <span className="text-muted text-sm">Sort by:</span>
                             <select
                                 value={filters.sort || 'featured'}
                                 onChange={(e) => handleSort(e.target.value)}
-                                className="border border-gray-200 rounded-lg px-3 py-2 focus:border-brand focus:outline-none"
+                                className="border border-border rounded-lg px-4 py-3 focus:border-brand focus:outline-none bg-surface transition-colors"
                             >
                                 <option value="featured">Featured</option>
                                 <option value="newest">Newest</option>
@@ -82,104 +87,102 @@ export default function Vendors({ vendors = { data: [] }, filters = {} }) {
                     </div>
 
                     {/* Results Count */}
-                    <p className="text-gray-500 mb-6">
-                        Showing <strong className="text-brand">{vendors.total || vendors.data?.length || 0}</strong> sellers
+                    <p className="text-body mb-6">
+                        Showing <span className="font-semibold text-heading">{vendors.total || vendors.data?.length || 0}</span> sellers
                     </p>
 
                     {/* Vendors Grid */}
                     {vendors.data?.length > 0 ? (
-                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
                             {vendors.data.map((vendor) => (
                                 <Link
                                     key={vendor.id}
                                     href={route('vendor.details', vendor.slug)}
-                                    className="bg-white border border-gray-100 rounded-xl overflow-hidden hover:shadow-lg transition-all group"
+                                    className="group bg-surface border border-border-light rounded-xl overflow-hidden hover:border-border hover:shadow-card-hover transition-all"
                                 >
                                     {/* Banner */}
                                     <div
-                                        className="h-32 bg-cover bg-center"
+                                        className="h-28 bg-cover bg-center relative"
                                         style={{
                                             backgroundImage: vendor.banner
-                                                ? `linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('${vendor.banner}')`
-                                                : 'linear-gradient(rgba(59,130,246,0.8), rgba(59,130,246,0.9))'
+                                                ? `url('${vendor.banner}')`
+                                                : 'linear-gradient(135deg, #1a1a1a 0%, #333 100%)'
                                         }}
                                     >
-                                        <div className="h-full flex items-center justify-center">
-                                            {vendor.is_featured && (
-                                                <span className="bg-yellow-500 text-white px-3 py-1 rounded-full text-xs font-semibold">
-                                                    Featured Seller
+                                        <div className="absolute inset-0 bg-black/20"></div>
+                                        {vendor.is_featured && (
+                                            <div className="absolute top-3 right-3">
+                                                <span className="bg-brand-2 text-brand-dark px-2.5 py-1 rounded text-[10px] font-bold uppercase">
+                                                    Featured
                                                 </span>
-                                            )}
-                                        </div>
+                                            </div>
+                                        )}
                                     </div>
 
                                     {/* Content */}
-                                    <div className="p-6 relative">
+                                    <div className="p-5 relative">
                                         {/* Logo */}
-                                        <div className="absolute -top-10 left-6">
+                                        <div className="absolute -top-8 left-5">
                                             {vendor.logo ? (
                                                 <img
                                                     src={vendor.logo}
                                                     alt={vendor.shop_name}
-                                                    className="w-16 h-16 rounded-xl object-cover border-4 border-white shadow-lg"
+                                                    className="w-14 h-14 rounded-xl object-cover border-3 border-surface shadow-card"
                                                 />
                                             ) : (
-                                                <div className="w-16 h-16 rounded-xl bg-brand flex items-center justify-center border-4 border-white shadow-lg">
-                                                    <span className="text-2xl font-bold text-white">
+                                                <div className="w-14 h-14 rounded-xl bg-brand flex items-center justify-center border-3 border-surface shadow-card">
+                                                    <span className="text-xl font-bold text-white">
                                                         {vendor.shop_name?.charAt(0)}
                                                     </span>
                                                 </div>
                                             )}
                                         </div>
 
-                                        <div className="mt-8">
-                                            <h3 className="font-quicksand font-bold text-lg text-heading group-hover:text-brand transition-colors flex items-center gap-2">
+                                        <div className="mt-6">
+                                            <h3 className="font-bold text-lg text-heading group-hover:text-brand transition-colors flex items-center gap-2">
                                                 {vendor.shop_name}
                                                 {vendor.is_verified && (
-                                                    <i className="fi fi-rs-badge-check text-blue-500" title="Verified Seller"></i>
+                                                    <svg className="w-4 h-4 text-info" fill="currentColor" viewBox="0 0 24 24">
+                                                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+                                                    </svg>
                                                 )}
                                             </h3>
 
                                             {/* Rating */}
-                                            <div className="flex items-center gap-2 mt-2">
-                                                <div className="flex">
-                                                    {[1, 2, 3, 4, 5].map((star) => (
-                                                        <i
-                                                            key={star}
-                                                            className={`fi fi-rs-star text-xs ${
-                                                                star <= Math.round(vendor.rating || 0) ? 'text-yellow-400' : 'text-gray-300'
-                                                            }`}
-                                                        ></i>
-                                                    ))}
-                                                </div>
-                                                <span className="text-gray-500 text-sm">
-                                                    ({vendor.rating?.toFixed(1) || '0.0'})
-                                                </span>
+                                            <div className="mt-1.5">
+                                                <StarRating rating={vendor.rating || 0} size="xs" />
                                             </div>
 
                                             {/* Description */}
                                             {vendor.description && (
-                                                <p className="text-gray-500 text-sm mt-3 line-clamp-2">
+                                                <p className="text-body text-sm mt-3 line-clamp-2">
                                                     {vendor.description}
                                                 </p>
                                             )}
 
                                             {/* Stats */}
-                                            <div className="flex items-center gap-4 mt-4 text-sm text-gray-500">
-                                                <span className="flex items-center gap-1">
-                                                    <i className="fi fi-rs-box text-brand"></i>
+                                            <div className="flex items-center gap-5 mt-4 text-sm text-muted">
+                                                <span className="flex items-center gap-1.5">
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                                                    </svg>
                                                     {vendor.total_products || 0} products
                                                 </span>
-                                                <span className="flex items-center gap-1">
-                                                    <i className="fi fi-rs-shopping-bag text-brand"></i>
+                                                <span className="flex items-center gap-1.5">
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                                                    </svg>
                                                     {vendor.total_sales || 0} sales
                                                 </span>
                                             </div>
 
                                             {/* Location */}
                                             {vendor.country && (
-                                                <div className="flex items-center gap-1 mt-3 text-sm text-gray-400">
-                                                    <i className="fi fi-rs-marker"></i>
+                                                <div className="flex items-center gap-1.5 mt-3 text-sm text-subtle">
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                    </svg>
                                                     {vendor.country}
                                                 </div>
                                             )}
@@ -189,52 +192,38 @@ export default function Vendors({ vendors = { data: [] }, filters = {} }) {
                             ))}
                         </div>
                     ) : (
-                        <div className="text-center py-12 bg-gray-50 rounded-xl">
-                            <i className="fi fi-rs-shop text-5xl text-gray-300 mb-4 block"></i>
-                            <h3 className="text-lg font-medium text-gray-900 mb-2">No sellers found</h3>
-                            <p className="text-gray-500">
-                                {filters.search
-                                    ? 'No sellers match your search criteria.'
-                                    : 'No sellers available at the moment.'}
-                            </p>
-                        </div>
+                        <EmptyState
+                            icon="shop"
+                            title="No sellers found"
+                            description={filters.search
+                                ? 'No sellers match your search criteria.'
+                                : 'No sellers available at the moment.'}
+                        />
                     )}
 
                     {/* Pagination */}
-                    {vendors.last_page > 1 && (
-                        <nav className="flex items-center justify-center gap-2">
-                            {vendors.links?.map((link, index) => (
-                                <Link
-                                    key={index}
-                                    href={link.url || '#'}
-                                    className={`w-10 h-10 flex items-center justify-center border rounded transition-colors ${
-                                        link.active
-                                            ? 'border-brand bg-brand text-white'
-                                            : 'border-gray-200 hover:border-brand hover:text-brand'
-                                    } ${!link.url ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                    dangerouslySetInnerHTML={{ __html: link.label }}
-                                />
-                            ))}
-                        </nav>
-                    )}
+                    <Pagination pagination={vendors} />
                 </div>
             </section>
 
             {/* CTA Section */}
-            <section className="py-12 bg-gray-50">
-                <div className="max-w-7xl mx-auto px-4">
-                    <div className="max-w-3xl mx-auto text-center">
-                        <h2 className="text-2xl lg:text-3xl font-bold text-heading font-quicksand mb-4">
+            <section className="py-12 lg:py-16 bg-surface-raised">
+                <div className="container mx-auto px-4">
+                    <div className="max-w-2xl mx-auto text-center">
+                        <h2 className="text-2xl lg:text-3xl font-bold text-heading mb-4">
                             Want to become a seller?
                         </h2>
-                        <p className="text-gray-500 mb-6">
+                        <p className="text-body mb-6">
                             Join our marketplace and reach thousands of customers across Malawi.
                         </p>
                         <Link
                             href={route('vendor.guide')}
-                            className="inline-block bg-brand hover:bg-brand-dark text-white px-8 py-4 rounded-lg font-semibold transition-colors"
+                            className="inline-flex items-center gap-2 bg-brand hover:bg-brand-dark text-white px-8 py-4 rounded-lg font-semibold transition-all shadow-button hover:shadow-button-hover"
                         >
                             Learn How to Sell
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                            </svg>
                         </Link>
                     </div>
                 </div>

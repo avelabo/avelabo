@@ -76,68 +76,48 @@ export default function Home({
         { id: 'sale', label: 'On Sale' },
     ];
 
-    // Add category tabs if we have categories
-    const categoryTabs = categories.slice(0, 4).map(cat => ({
-        id: `cat-${cat.slug}`,
-        label: cat.name,
-        slug: cat.slug,
-    }));
-
     return (
         <FrontendLayout>
             <Head title="Home - Avelabo Marketplace" />
 
-            <div className="container mx-auto px-4 py-8">
-                {/* Hero Section */}
-                <section className="mb-12">
-                    <HeroSlider sliders={sliders} />
-                </section>
+            {/* Hero Section */}
+            <section className="mb-10 lg:mb-14">
+                <HeroSlider sliders={sliders} />
+            </section>
 
+            <div className="container mx-auto px-4">
                 {/* Featured Categories */}
-                <section className="mb-12">
-                    <h3 className="text-2xl font-bold text-heading mb-6 font-quicksand">Featured Categories</h3>
-                    <CategorySlider categories={categories} />
-                </section>
-
-                {/* Promotional Banners */}
-                <section className="mb-12">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {[
-                            { image: '/images/frontend/banner/banner-1.png', title: 'Everyday Fresh & Clean with Our Products', link: '/shop' },
-                            { image: '/images/frontend/banner/banner-2.png', title: 'Make your Breakfast Healthy and Easy', link: '/shop' },
-                            { image: '/images/frontend/banner/banner-3.png', title: 'The best Organic Products Online', link: '/shop' },
-                        ].map((banner, index) => (
+                {categories.length > 0 && (
+                    <section className="mb-10 lg:mb-14">
+                        <div className="flex items-center justify-between mb-6">
+                            <h2 className="text-xl lg:text-2xl font-bold text-heading">Featured Categories</h2>
                             <Link
-                                key={index}
-                                href={banner.link}
-                                className="relative rounded-xl overflow-hidden group h-48"
+                                href={route('shop')}
+                                className="text-sm font-medium text-brand hover:text-brand-dark transition-colors flex items-center gap-1"
                             >
-                                <img
-                                    src={banner.image}
-                                    alt={banner.title}
-                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                />
-                                <div className="absolute inset-0 bg-gradient-to-r from-black/20 to-transparent flex items-center p-6">
-                                    <h4 className="text-white font-bold text-xl max-w-[60%]">{banner.title}</h4>
-                                </div>
+                                View All
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                </svg>
                             </Link>
-                        ))}
-                    </div>
-                </section>
+                        </div>
+                        <CategorySlider categories={categories} />
+                    </section>
+                )}
 
                 {/* Popular Products */}
-                <section className="mb-12">
+                <section className="mb-10 lg:mb-14">
                     <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-                        <h3 className="text-2xl font-bold text-heading font-quicksand">Popular Products</h3>
+                        <h2 className="text-xl lg:text-2xl font-bold text-heading">Popular Products</h2>
                         <div className="flex flex-wrap gap-2">
                             {tabs.map((tab) => (
                                 <button
                                     key={tab.id}
                                     onClick={() => setActiveTab(tab.id)}
-                                    className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                                         activeTab === tab.id
                                             ? 'bg-brand text-white'
-                                            : 'text-heading hover:bg-gray-100'
+                                            : 'text-body hover:bg-surface-raised'
                                     }`}
                                 >
                                     {tab.label}
@@ -147,16 +127,18 @@ export default function Home({
                     </div>
 
                     {displayProducts.length > 0 ? (
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 lg:gap-6">
                             {displayProducts.map((product) => (
                                 <ProductCard key={product.id} product={product} />
                             ))}
                         </div>
                     ) : (
-                        <div className="text-center py-12 bg-gray-50 rounded-xl">
-                            <i className="fi-rs-shopping-bag text-5xl text-gray-300 mb-4"></i>
-                            <p className="text-gray-500">No products available yet</p>
-                            <Link href="/shop" className="inline-block mt-4 px-6 py-2 bg-brand text-white rounded-lg hover:bg-brand-dark transition-colors">
+                        <div className="text-center py-16 bg-surface-raised rounded-xl">
+                            <svg className="w-16 h-16 text-muted mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                            </svg>
+                            <p className="text-muted mb-4">No products available yet</p>
+                            <Link href="/shop" className="inline-block px-6 py-3 bg-brand text-white rounded-lg font-semibold hover:bg-brand-dark transition-colors">
                                 Browse Shop
                             </Link>
                         </div>
@@ -164,13 +146,13 @@ export default function Home({
                 </section>
 
                 {/* Deals Section */}
-                <section className="mb-12">
+                <section className="mb-10 lg:mb-14">
                     <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
                         {/* Deal of the Day */}
-                        <div className="lg:col-span-1 bg-brand-light rounded-xl p-6">
-                            <h3 className="text-xl font-bold text-heading mb-4 font-quicksand">Deal Of The Day</h3>
+                        <div className="lg:col-span-1 bg-surface-raised rounded-xl p-6">
+                            <h3 className="text-lg font-bold text-heading mb-4">Deal Of The Day</h3>
                             {dealProduct ? (
-                                <div className="bg-white rounded-xl p-4">
+                                <div className="bg-surface rounded-xl p-4 border border-border-light">
                                     <Link href={route('product.detail', dealProduct.slug)}>
                                         <img
                                             src={dealProduct.primary_image || '/images/frontend/placeholder-product.png'}
@@ -184,34 +166,34 @@ export default function Home({
                                         </h6>
                                     </Link>
                                     <div className="flex items-center gap-2 mb-3">
-                                        <span className="text-brand font-bold text-xl">{formatPrice(dealProduct.price)}</span>
+                                        <span className="text-heading font-bold text-xl">{formatPrice(dealProduct.price)}</span>
                                         {dealProduct.compare_price && (
-                                            <span className="text-body line-through text-sm">{formatPrice(dealProduct.compare_price)}</span>
+                                            <span className="text-muted line-through text-sm">{formatPrice(dealProduct.compare_price)}</span>
                                         )}
                                     </div>
                                     {/* Countdown Timer */}
                                     <div className="flex gap-2 mb-4">
                                         {[
                                             { value: countdown.days, label: 'Days' },
-                                            { value: countdown.hours, label: 'Hours' },
-                                            { value: countdown.mins, label: 'Mins' },
-                                            { value: countdown.secs, label: 'Secs' },
+                                            { value: countdown.hours, label: 'Hrs' },
+                                            { value: countdown.mins, label: 'Min' },
+                                            { value: countdown.secs, label: 'Sec' },
                                         ].map((item, idx) => (
-                                            <div key={idx} className="bg-brand/10 rounded px-2 py-1 text-center flex-1">
-                                                <span className="text-brand font-bold">{String(item.value).padStart(2, '0')}</span>
-                                                <span className="text-xs text-body block">{item.label}</span>
+                                            <div key={idx} className="bg-surface-sunken rounded-lg px-2 py-1.5 text-center flex-1">
+                                                <span className="text-heading font-bold text-sm block">{String(item.value).padStart(2, '0')}</span>
+                                                <span className="text-[10px] text-muted">{item.label}</span>
                                             </div>
                                         ))}
                                     </div>
                                     <button
                                         onClick={() => handleAddToBasket(dealProduct)}
-                                        className="w-full bg-brand hover:bg-brand-dark text-white py-3 rounded-md font-semibold transition-colors"
+                                        className="w-full bg-brand hover:bg-brand-dark text-white py-3 rounded-lg font-semibold transition-colors"
                                     >
                                         Add To Basket
                                     </button>
                                 </div>
                             ) : (
-                                <div className="bg-white rounded-xl p-4 text-center text-gray-500">
+                                <div className="bg-surface rounded-xl p-4 text-center text-muted border border-border-light">
                                     No deals available
                                 </div>
                             )}
@@ -224,27 +206,29 @@ export default function Home({
                             { title: 'Recently Added', products: newProducts.slice(0, 3) },
                         ].map((column, colIndex) => (
                             <div key={colIndex}>
-                                <h3 className="text-xl font-bold text-heading mb-4 font-quicksand">{column.title}</h3>
-                                <div className="space-y-4">
+                                <h3 className="text-lg font-bold text-heading mb-4">{column.title}</h3>
+                                <div className="space-y-3">
                                     {column.products.length > 0 ? (
                                         column.products.slice(0, 3).map((product) => (
                                             <Link
                                                 key={product.id}
                                                 href={route('product.detail', product.slug)}
-                                                className="flex gap-4 items-center bg-white border border-gray-100 rounded-lg p-3 hover:shadow-md transition-shadow"
+                                                className="flex gap-4 items-center bg-surface border border-border-light rounded-xl p-3 hover:border-border hover:shadow-card transition-all group"
                                             >
-                                                <img
-                                                    src={product.primary_image || '/images/frontend/placeholder-product.png'}
-                                                    alt={product.name}
-                                                    className="w-20 h-20 object-contain"
-                                                />
+                                                <div className="w-20 h-20 bg-surface-raised rounded-lg overflow-hidden flex-shrink-0">
+                                                    <img
+                                                        src={product.primary_image || '/images/frontend/placeholder-product.png'}
+                                                        alt={product.name}
+                                                        className="w-full h-full object-contain p-1"
+                                                    />
+                                                </div>
                                                 <div className="flex-1 min-w-0">
-                                                    <h6 className="text-heading font-semibold text-sm mb-1 line-clamp-2">{product.name}</h6>
+                                                    <h6 className="text-heading font-semibold text-sm mb-1.5 line-clamp-2 group-hover:text-brand transition-colors">{product.name}</h6>
                                                     <div className="flex items-center gap-1 mb-1">
                                                         {[...Array(5)].map((_, i) => (
                                                             <svg
                                                                 key={i}
-                                                                className={`w-3 h-3 ${i < (product.rating || 0) ? 'text-brand-2' : 'text-gray-300'}`}
+                                                                className={`w-3 h-3 ${i < (product.rating || 0) ? 'text-warning' : 'text-border'}`}
                                                                 fill="currentColor"
                                                                 viewBox="0 0 20 20"
                                                             >
@@ -252,12 +236,12 @@ export default function Home({
                                                             </svg>
                                                         ))}
                                                     </div>
-                                                    <span className="text-brand font-bold">{formatPrice(product.price)}</span>
+                                                    <span className="text-heading font-bold">{formatPrice(product.price)}</span>
                                                 </div>
                                             </Link>
                                         ))
                                     ) : (
-                                        <div className="bg-gray-50 rounded-lg p-4 text-center text-gray-500 text-sm">
+                                        <div className="bg-surface-raised rounded-xl p-4 text-center text-muted text-sm">
                                             No products yet
                                         </div>
                                     )}
@@ -268,13 +252,15 @@ export default function Home({
                 </section>
 
                 {/* View All Products CTA */}
-                <section className="text-center">
+                <section className="text-center pb-10 lg:pb-14">
                     <Link
                         href="/shop"
-                        className="inline-flex items-center gap-2 px-8 py-4 bg-brand hover:bg-brand-dark text-white rounded-lg font-semibold transition-colors"
+                        className="inline-flex items-center gap-2 px-8 py-4 bg-brand hover:bg-brand-dark text-white rounded-lg font-semibold transition-all shadow-button hover:shadow-button-hover"
                     >
                         View All Products
-                        <i className="fi-rs-arrow-right"></i>
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                        </svg>
                     </Link>
                 </section>
             </div>
