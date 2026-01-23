@@ -268,6 +268,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 
     // Sellers
     Route::get('/sellers', [AdminSellerController::class, 'index'])->name('sellers.index');
+    Route::get('/sellers/create', [AdminSellerController::class, 'create'])->name('sellers.create');
+    Route::post('/sellers', [AdminSellerController::class, 'store'])->name('sellers.store');
     Route::get('/sellers/{seller}', [AdminSellerController::class, 'show'])->name('sellers.show');
     Route::put('/sellers/{seller}', [AdminSellerController::class, 'update'])->name('sellers.update');
     Route::patch('/sellers/{seller}/status', [AdminSellerController::class, 'updateStatus'])->name('sellers.update-status');

@@ -52,6 +52,13 @@ export default function SellersIndex({ sellers, filters, markupTemplates }) {
                     <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Sellers</h2>
                     <p className="text-gray-500 text-sm">Manage all seller accounts and their markup templates</p>
                 </div>
+                <Link
+                    href={route('admin.sellers.create')}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-brand hover:bg-brand-dark text-white rounded-lg font-medium text-sm transition-colors"
+                >
+                    <span className="material-icons text-lg">add</span>
+                    New Seller
+                </Link>
             </div>
 
             {/* Filters */}

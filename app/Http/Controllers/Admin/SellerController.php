@@ -3,10 +3,14 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Country;
+use App\Models\Currency;
 use App\Models\Seller;
 use App\Models\SellerMarkupTemplate;
 use App\Models\SellerPriceMarkup;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 
 class SellerController extends Controller
@@ -50,6 +54,70 @@ class SellerController extends Controller
     }
 
     /**
+     * Show the form for creating a new seller
+     */
+    public function create()
+    {
+        $currencies = Currency::active()->orderBy('code')->get(['id', 'name', 'code', 'symbol']);
+        $countries = Country::active()->orderBy('name')->get(['id', 'name', 'code']);
+        $markupTemplates = SellerMarkupTemplate::where('is_active', true)
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        // Get users who are not already sellers
+        $availableUsers = User::whereDoesntHave('seller')
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get(['id', 'name', 'email']);
+
+        return Inertia::render('Admin/Sellers/Create', [
+            'currencies' => $currencies,
+            'countries' => $countries,
+            'markupTemplates' => $markupTemplates,
+            'availableUsers' => $availableUsers,
+        ]);
+    }
+
+    /**
+     * Store a newly created seller
+     */
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'user_id' => ['required', 'exists:users,id', 'unique:sellers,user_id'],
+            'shop_name' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string', 'max:1000'],
+            'business_type' => ['required', 'in:individual,company'],
+            'business_name' => ['nullable', 'string', 'max:255'],
+            'business_registration_number' => ['nullable', 'string', 'max:255'],
+            'default_currency_id' => ['required', 'exists:currencies,id'],
+            'country_id' => ['required', 'exists:countries,id'],
+            'markup_template_id' => ['nullable', 'exists:seller_markup_templates,id'],
+            'commission_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'status' => ['required', 'in:pending,approved,suspended'],
+            'show_seller_name' => ['boolean'],
+            'has_storefront' => ['boolean'],
+            'is_featured' => ['boolean'],
+            'is_verified' => ['boolean'],
+        ]);
+
+        $validated['slug'] = Str::slug($validated['shop_name']);
+
+        // Ensure unique slug
+        $baseSlug = $validated['slug'];
+        $counter = 1;
+        while (Seller::where('slug', $validated['slug'])->exists()) {
+            $validated['slug'] = $baseSlug.'-'.$counter++;
+        }
+
+        $seller = Seller::create($validated);
+
+        return redirect()
+            ->route('admin.sellers.show', $seller)
+            ->with('success', 'Seller created successfully.');
+    }
+
+    /**
      * Display the specified seller
      */
     public function show(Seller $seller)
@@ -60,6 +128,8 @@ class SellerController extends Controller
             'bankAccounts',
             'priceMarkups',
             'markupTemplate.ranges',
+            'defaultCurrency',
+            'country',
         ]);
 
         $stats = [
@@ -74,10 +144,15 @@ class SellerController extends Controller
             ->orderBy('name')
             ->get();
 
+        $currencies = Currency::active()->orderBy('code')->get(['id', 'name', 'code', 'symbol']);
+        $countries = Country::active()->orderBy('name')->get(['id', 'name', 'code']);
+
         return Inertia::render('Admin/Sellers/Show', [
             'seller' => $seller,
             'stats' => $stats,
             'markupTemplates' => $markupTemplates,
+            'currencies' => $currencies,
+            'countries' => $countries,
         ]);
     }
 
@@ -89,8 +164,14 @@ class SellerController extends Controller
         $validated = $request->validate([
             'shop_name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:1000'],
+            'business_type' => ['nullable', 'in:individual,company'],
+            'business_name' => ['nullable', 'string', 'max:255'],
+            'business_registration_number' => ['nullable', 'string', 'max:255'],
+            'default_currency_id' => ['nullable', 'exists:currencies,id'],
+            'country_id' => ['nullable', 'exists:countries,id'],
             'commission_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'is_featured' => ['boolean'],
+            'is_verified' => ['boolean'],
             'show_seller_name' => ['boolean'],
             'has_storefront' => ['boolean'],
         ]);

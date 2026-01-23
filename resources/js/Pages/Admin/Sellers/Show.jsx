@@ -2,15 +2,21 @@ import { Head, Link, useForm, router } from '@inertiajs/react';
 import AdminLayout from '@/Layouts/AdminLayout';
 import { useState } from 'react';
 
-export default function Show({ seller, stats, markupTemplates }) {
+export default function Show({ seller, stats, markupTemplates, currencies, countries }) {
     const [activeTab, setActiveTab] = useState('overview');
     const [applyingTemplate, setApplyingTemplate] = useState(null);
 
-    const { data, setData, put, processing } = useForm({
+    const { data, setData, put, processing, errors } = useForm({
         shop_name: seller?.shop_name || '',
         description: seller?.description || '',
+        business_type: seller?.business_type || 'individual',
+        business_name: seller?.business_name || '',
+        business_registration_number: seller?.business_registration_number || '',
+        default_currency_id: seller?.default_currency_id || '',
+        country_id: seller?.country_id || '',
         commission_rate: seller?.commission_rate || 0,
         is_featured: seller?.is_featured || false,
+        is_verified: seller?.is_verified || false,
         show_seller_name: seller?.show_seller_name ?? true,
         has_storefront: seller?.has_storefront ?? true,
     });
@@ -201,6 +207,16 @@ export default function Show({ seller, stats, markupTemplates }) {
                                             <dd className="text-heading dark:text-white capitalize">{seller?.business_type || '-'}</dd>
                                         </div>
                                         <div className="flex justify-between">
+                                            <dt className="text-body">Country</dt>
+                                            <dd className="text-heading dark:text-white">{seller?.country?.name || '-'}</dd>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <dt className="text-body">Default Currency</dt>
+                                            <dd className="text-heading dark:text-white">
+                                                {seller?.default_currency ? `${seller.default_currency.code} (${seller.default_currency.symbol})` : '-'}
+                                            </dd>
+                                        </div>
+                                        <div className="flex justify-between">
                                             <dt className="text-body">Joined</dt>
                                             <dd className="text-heading dark:text-white">
                                                 {new Date(seller?.created_at).toLocaleDateString()}
@@ -261,47 +277,155 @@ export default function Show({ seller, stats, markupTemplates }) {
                         {/* Settings Tab */}
                         {activeTab === 'settings' && (
                             <form onSubmit={handleSubmit} className="max-w-2xl space-y-6">
-                                <div>
-                                    <label className="block text-sm font-medium text-heading dark:text-white mb-2">
-                                        Shop Name
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={data.shop_name}
-                                        onChange={(e) => setData('shop_name', e.target.value)}
-                                        className="w-full px-4 py-2.5 bg-gray-100 dark:bg-dark-body border-0 rounded-lg text-sm dark:text-white"
-                                    />
+                                {/* Basic Info Section */}
+                                <div className="space-y-4">
+                                    <h4 className="font-semibold text-heading dark:text-white">Basic Information</h4>
+
+                                    <div>
+                                        <label htmlFor="shop_name" className="block text-sm font-medium text-heading dark:text-white mb-2">
+                                            Shop Name *
+                                        </label>
+                                        <input
+                                            id="shop_name"
+                                            type="text"
+                                            value={data.shop_name}
+                                            onChange={(e) => setData('shop_name', e.target.value)}
+                                            className="w-full px-4 py-2.5 bg-gray-100 dark:bg-dark-body border-0 rounded-lg text-sm dark:text-white"
+                                        />
+                                        {errors.shop_name && <p className="mt-1 text-sm text-red-600">{errors.shop_name}</p>}
+                                    </div>
+
+                                    <div>
+                                        <label htmlFor="description" className="block text-sm font-medium text-heading dark:text-white mb-2">
+                                            Description
+                                        </label>
+                                        <textarea
+                                            id="description"
+                                            value={data.description}
+                                            onChange={(e) => setData('description', e.target.value)}
+                                            rows={4}
+                                            className="w-full px-4 py-2.5 bg-gray-100 dark:bg-dark-body border-0 rounded-lg text-sm dark:text-white"
+                                        />
+                                        {errors.description && <p className="mt-1 text-sm text-red-600">{errors.description}</p>}
+                                    </div>
                                 </div>
 
-                                <div>
-                                    <label className="block text-sm font-medium text-heading dark:text-white mb-2">
-                                        Description
-                                    </label>
-                                    <textarea
-                                        value={data.description}
-                                        onChange={(e) => setData('description', e.target.value)}
-                                        rows={4}
-                                        className="w-full px-4 py-2.5 bg-gray-100 dark:bg-dark-body border-0 rounded-lg text-sm dark:text-white"
-                                    />
+                                {/* Business Info Section */}
+                                <div className="border-t border-gray-200 dark:border-white/10 pt-6 space-y-4">
+                                    <h4 className="font-semibold text-heading dark:text-white">Business Information</h4>
+
+                                    <div className="grid md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label htmlFor="business_type" className="block text-sm font-medium text-heading dark:text-white mb-2">
+                                                Business Type
+                                            </label>
+                                            <select
+                                                id="business_type"
+                                                value={data.business_type}
+                                                onChange={(e) => setData('business_type', e.target.value)}
+                                                className="w-full px-4 py-2.5 bg-gray-100 dark:bg-dark-body border-0 rounded-lg text-sm dark:text-white"
+                                            >
+                                                <option value="individual">Individual</option>
+                                                <option value="company">Company</option>
+                                            </select>
+                                            {errors.business_type && <p className="mt-1 text-sm text-red-600">{errors.business_type}</p>}
+                                        </div>
+
+                                        <div>
+                                            <label htmlFor="business_name" className="block text-sm font-medium text-heading dark:text-white mb-2">
+                                                Business Name
+                                            </label>
+                                            <input
+                                                id="business_name"
+                                                type="text"
+                                                value={data.business_name}
+                                                onChange={(e) => setData('business_name', e.target.value)}
+                                                className="w-full px-4 py-2.5 bg-gray-100 dark:bg-dark-body border-0 rounded-lg text-sm dark:text-white"
+                                            />
+                                            {errors.business_name && <p className="mt-1 text-sm text-red-600">{errors.business_name}</p>}
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label htmlFor="business_registration_number" className="block text-sm font-medium text-heading dark:text-white mb-2">
+                                            Business Registration Number
+                                        </label>
+                                        <input
+                                            id="business_registration_number"
+                                            type="text"
+                                            value={data.business_registration_number}
+                                            onChange={(e) => setData('business_registration_number', e.target.value)}
+                                            className="w-full px-4 py-2.5 bg-gray-100 dark:bg-dark-body border-0 rounded-lg text-sm dark:text-white"
+                                        />
+                                        {errors.business_registration_number && <p className="mt-1 text-sm text-red-600">{errors.business_registration_number}</p>}
+                                    </div>
+
+                                    <div className="grid md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label htmlFor="default_currency_id" className="block text-sm font-medium text-heading dark:text-white mb-2">
+                                                Default Currency
+                                            </label>
+                                            <select
+                                                id="default_currency_id"
+                                                value={data.default_currency_id}
+                                                onChange={(e) => setData('default_currency_id', e.target.value)}
+                                                className="w-full px-4 py-2.5 bg-gray-100 dark:bg-dark-body border-0 rounded-lg text-sm dark:text-white"
+                                            >
+                                                <option value="">Select Currency</option>
+                                                {currencies?.map((currency) => (
+                                                    <option key={currency.id} value={currency.id}>
+                                                        {currency.code} - {currency.name} ({currency.symbol})
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            {errors.default_currency_id && <p className="mt-1 text-sm text-red-600">{errors.default_currency_id}</p>}
+                                        </div>
+
+                                        <div>
+                                            <label htmlFor="country_id" className="block text-sm font-medium text-heading dark:text-white mb-2">
+                                                Country
+                                            </label>
+                                            <select
+                                                id="country_id"
+                                                value={data.country_id}
+                                                onChange={(e) => setData('country_id', e.target.value)}
+                                                className="w-full px-4 py-2.5 bg-gray-100 dark:bg-dark-body border-0 rounded-lg text-sm dark:text-white"
+                                            >
+                                                <option value="">Select Country</option>
+                                                {countries?.map((country) => (
+                                                    <option key={country.id} value={country.id}>
+                                                        {country.name}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            {errors.country_id && <p className="mt-1 text-sm text-red-600">{errors.country_id}</p>}
+                                        </div>
+                                    </div>
                                 </div>
 
-                                <div>
-                                    <label className="block text-sm font-medium text-heading dark:text-white mb-2">
-                                        Commission Rate (%)
-                                    </label>
-                                    <input
-                                        type="number"
-                                        min="0"
-                                        max="100"
-                                        step="0.1"
-                                        value={data.commission_rate}
-                                        onChange={(e) => setData('commission_rate', e.target.value)}
-                                        className="w-full px-4 py-2.5 bg-gray-100 dark:bg-dark-body border-0 rounded-lg text-sm dark:text-white"
-                                    />
-                                </div>
-
+                                {/* Commission Section */}
                                 <div className="border-t border-gray-200 dark:border-white/10 pt-6">
-                                    <h4 className="font-semibold text-heading dark:text-white mb-4">Visibility Options</h4>
+                                    <div>
+                                        <label htmlFor="commission_rate" className="block text-sm font-medium text-heading dark:text-white mb-2">
+                                            Commission Rate (%)
+                                        </label>
+                                        <input
+                                            id="commission_rate"
+                                            type="number"
+                                            min="0"
+                                            max="100"
+                                            step="0.1"
+                                            value={data.commission_rate}
+                                            onChange={(e) => setData('commission_rate', e.target.value)}
+                                            className="w-full px-4 py-2.5 bg-gray-100 dark:bg-dark-body border-0 rounded-lg text-sm dark:text-white max-w-xs"
+                                        />
+                                        {errors.commission_rate && <p className="mt-1 text-sm text-red-600">{errors.commission_rate}</p>}
+                                    </div>
+                                </div>
+
+                                {/* Visibility Options */}
+                                <div className="border-t border-gray-200 dark:border-white/10 pt-6">
+                                    <h4 className="font-semibold text-heading dark:text-white mb-4">Visibility & Status Options</h4>
 
                                     <div className="space-y-4">
                                         <label className="flex items-center justify-between p-4 bg-gray-50 dark:bg-dark-body rounded-lg cursor-pointer">
@@ -365,6 +489,28 @@ export default function Show({ seller, stats, markupTemplates }) {
                                                 <span
                                                     className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
                                                         data.is_featured ? 'translate-x-6' : 'translate-x-1'
+                                                    }`}
+                                                />
+                                            </button>
+                                        </label>
+
+                                        <label className="flex items-center justify-between p-4 bg-gray-50 dark:bg-dark-body rounded-lg cursor-pointer">
+                                            <div>
+                                                <p className="font-medium text-heading dark:text-white">Verified Seller</p>
+                                                <p className="text-sm text-body">
+                                                    Verified sellers display a verification badge on their profile and products
+                                                </p>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => setData('is_verified', !data.is_verified)}
+                                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                                                    data.is_verified ? 'bg-brand' : 'bg-gray-300 dark:bg-gray-600'
+                                                }`}
+                                            >
+                                                <span
+                                                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                                                        data.is_verified ? 'translate-x-6' : 'translate-x-1'
                                                     }`}
                                                 />
                                             </button>
