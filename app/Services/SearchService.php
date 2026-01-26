@@ -284,7 +284,7 @@ class SearchService
                     'slug' => $brand->slug,
                     'logo' => $brand->logo,
                     'products_count' => $brand->products_count,
-                    'url' => route('shop', ['brand' => $brand->slug]),
+                    'url' => route('shop.brand', ['slug' => $brand->slug]),
                     'rank' => $result->rank,
                 ];
             }

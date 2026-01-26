@@ -46,6 +46,7 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::post('/currency/set', [CurrencyController::class, 'set'])->name('currency.set');
 
 Route::get('/shop', [ShopController::class, 'index'])->name('shop');
+Route::get('/brand/{slug}', [ShopController::class, 'index'])->name('shop.brand');
 Route::get('/product/{slug}', [ShopController::class, 'show'])->name('product.detail');
 
 // Search routes

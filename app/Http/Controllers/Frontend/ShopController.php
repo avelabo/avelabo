@@ -19,8 +19,13 @@ class ShopController extends Controller
     /**
      * Display the shop page with product listings
      */
-    public function index(Request $request)
+    public function index(Request $request, ?string $slug = null)
     {
+        // If accessed via /brand/{slug} route, merge slug into request as brand filter
+        if ($slug !== null && ! $request->filled('brand')) {
+            $request->merge(['brand' => $slug]);
+        }
+
         $query = Product::with(['category:id,name,slug', 'seller:id,shop_name', 'images'])
             ->active()
             ->inStock();
@@ -47,9 +52,14 @@ class ShopController extends Controller
             }
         }
 
-        // Brand filter
+        // Brand filter (accepts slug or ID)
         if ($request->filled('brand')) {
-            $query->where('brand_id', $request->brand);
+            $brand = Brand::where('slug', $request->brand)
+                ->orWhere('id', $request->brand)
+                ->first();
+            if ($brand) {
+                $query->where('brand_id', $brand->id);
+            }
         }
 
         // Seller filter
@@ -135,8 +145,8 @@ class ShopController extends Controller
 
         // Get categories for sidebar with active product counts
         $categories = Category::with(['children' => function ($query) {
-                $query->active()->ordered();
-            }])
+            $query->active()->ordered();
+        }])
             ->whereNull('parent_id')
             ->active()
             ->ordered()
@@ -213,11 +223,28 @@ class ShopController extends Controller
                     'id' => $cat->id,
                     'name' => $cat->name,
                     'slug' => $cat->slug,
-                    'breadcrumb' => collect($cat->getBreadcrumb())->map(fn($c) => [
+                    'breadcrumb' => collect($cat->getBreadcrumb())->map(fn ($c) => [
                         'id' => $c->id,
                         'name' => $c->name,
                         'slug' => $c->slug,
                     ]),
+                ];
+            }
+        }
+
+        // Current brand info
+        $currentBrand = null;
+        if ($request->filled('brand')) {
+            $brandModel = Brand::where('slug', $request->brand)
+                ->orWhere('id', $request->brand)
+                ->first();
+            if ($brandModel) {
+                $currentBrand = [
+                    'id' => $brandModel->id,
+                    'name' => $brandModel->name,
+                    'slug' => $brandModel->slug,
+                    'logo' => $brandModel->logo,
+                    'description' => $brandModel->description,
                 ];
             }
         }
@@ -229,6 +256,7 @@ class ShopController extends Controller
             'priceRange' => $priceRange,
             'featuredProducts' => $featuredProducts,
             'currentCategory' => $currentCategory,
+            'currentBrand' => $currentBrand,
             'filters' => [
                 'search' => $request->search,
                 'category' => $request->category,
@@ -287,7 +315,7 @@ class ShopController extends Controller
             'is_in_stock' => $product->isInStock(),
             'is_low_stock' => $product->isLowStock(),
             'sku' => $product->sku,
-            'images' => $product->images->map(fn($img) => [
+            'images' => $product->images->map(fn ($img) => [
                 'id' => $img->id,
                 'url' => $img->url,
                 'alt' => $img->alt_text,
@@ -297,7 +325,7 @@ class ShopController extends Controller
                 'id' => $product->category->id,
                 'name' => $product->category->name,
                 'slug' => $product->category->slug,
-                'breadcrumb' => collect($product->category->getBreadcrumb())->map(fn($c) => [
+                'breadcrumb' => collect($product->category->getBreadcrumb())->map(fn ($c) => [
                     'id' => $c->id,
                     'name' => $c->name,
                     'slug' => $c->slug,
@@ -325,14 +353,14 @@ class ShopController extends Controller
                     'stock_quantity' => $variant->stock_quantity,
                     'is_in_stock' => $variant->stock_quantity > 0 || $variant->product->allow_backorders,
                     'image' => $variant->image,
-                    'attributes' => $variant->attributes->map(fn($attr) => [
+                    'attributes' => $variant->attributes->map(fn ($attr) => [
                         'name' => $attr->attribute->name,
                         'value' => $attr->attributeValue->value,
                         'color_code' => $attr->attributeValue->color_code,
                     ]),
                 ];
             }),
-            'reviews' => $product->reviews->map(fn($review) => [
+            'reviews' => $product->reviews->map(fn ($review) => [
                 'id' => $review->id,
                 'rating' => $review->rating,
                 'title' => $review->title,
