@@ -7,11 +7,11 @@ export default function MarkupTemplateCreate() {
         name: '',
         description: '',
         is_active: true,
-        ranges: [{ min_price: '', max_price: '', markup_percentage: '' }],
+        ranges: [{ min_price: '', max_price: '', markup_amount: '' }],
     });
 
     const addRange = () => {
-        setData('ranges', [...data.ranges, { min_price: '', max_price: '', markup_percentage: '' }]);
+        setData('ranges', [...data.ranges, { min_price: '', max_price: '', markup_amount: '' }]);
     };
 
     const removeRange = (index) => {
@@ -91,7 +91,7 @@ export default function MarkupTemplateCreate() {
                             <div className="flex items-center justify-between mb-4">
                                 <div>
                                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Price Ranges</h3>
-                                    <p className="text-sm text-gray-500">Define markup percentages for different price tiers</p>
+                                    <p className="text-sm text-gray-500">Define fixed markup amounts for different price tiers</p>
                                 </div>
                                 <button
                                     type="button"
@@ -137,17 +137,16 @@ export default function MarkupTemplateCreate() {
                                             </div>
                                             <div>
                                                 <label className="block text-xs font-medium text-gray-500 mb-1">
-                                                    Markup %
+                                                    Markup Amount (MWK)
                                                 </label>
                                                 <input
                                                     type="number"
                                                     min="0"
-                                                    max="100"
                                                     step="0.01"
                                                     className="w-full px-3 py-2 bg-white dark:bg-gray-600 border border-gray-200 dark:border-gray-500 rounded-lg outline-none text-sm focus:ring-2 focus:ring-brand dark:text-white"
-                                                    placeholder="10"
-                                                    value={range.markup_percentage}
-                                                    onChange={(e) => updateRange(index, 'markup_percentage', e.target.value)}
+                                                    placeholder="5000"
+                                                    value={range.markup_amount}
+                                                    onChange={(e) => updateRange(index, 'markup_amount', e.target.value)}
                                                     required
                                                 />
                                             </div>
@@ -172,7 +171,7 @@ export default function MarkupTemplateCreate() {
                                     <span className="material-icons text-yellow-600 text-lg">lightbulb</span>
                                     <div className="text-sm text-yellow-700 dark:text-yellow-400">
                                         <p className="font-medium">Tip: Price Range Matching</p>
-                                        <p>If a product price is MWK 5,000 and you have a range 0-10,000 with 15% markup, the customer sees MWK 5,750. Leave Max Price empty for no upper limit.</p>
+                                        <p>If a product price is MWK 5,000 and you have a range 0-10,000 with MWK 1,000 markup, the customer sees MWK 6,000. Leave Max Price empty for no upper limit.</p>
                                     </div>
                                 </div>
                             </div>
@@ -204,10 +203,10 @@ export default function MarkupTemplateCreate() {
                             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Preview</h3>
                             <div className="space-y-3">
                                 <p className="text-sm text-gray-500">Example calculations:</p>
-                                {data.ranges.filter(r => r.markup_percentage).slice(0, 3).map((range, index) => {
-                                    const basePrice = range.min_price || 1000;
-                                    const markup = parseFloat(range.markup_percentage) || 0;
-                                    const finalPrice = basePrice * (1 + markup / 100);
+                                {data.ranges.filter(r => r.markup_amount).slice(0, 3).map((range, index) => {
+                                    const basePrice = parseFloat(range.min_price) || 1000;
+                                    const markupAmount = parseFloat(range.markup_amount) || 0;
+                                    const finalPrice = basePrice + markupAmount;
                                     return (
                                         <div key={index} className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                                             <div className="flex justify-between text-sm">
@@ -215,12 +214,12 @@ export default function MarkupTemplateCreate() {
                                                 <span className="text-gray-900 dark:text-white">MWK {Number(basePrice).toLocaleString()}</span>
                                             </div>
                                             <div className="flex justify-between text-sm">
-                                                <span className="text-gray-500">Markup ({markup}%)</span>
-                                                <span className="text-green-600">+MWK {(basePrice * markup / 100).toLocaleString()}</span>
+                                                <span className="text-gray-500">Markup</span>
+                                                <span className="text-green-600">+MWK {Number(markupAmount).toLocaleString()}</span>
                                             </div>
                                             <div className="flex justify-between text-sm font-medium pt-2 border-t border-gray-200 dark:border-gray-600 mt-2">
                                                 <span className="text-gray-700 dark:text-gray-300">Customer Sees</span>
-                                                <span className="text-brand">MWK {finalPrice.toLocaleString()}</span>
+                                                <span className="text-brand">MWK {Number(finalPrice).toLocaleString()}</span>
                                             </div>
                                         </div>
                                     );

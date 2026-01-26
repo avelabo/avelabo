@@ -33,7 +33,7 @@ export default function MarkupTemplatesIndex({ templates }) {
                     <span className="material-icons text-blue-600">info</span>
                     <div className="text-sm text-blue-700 dark:text-blue-400">
                         <p className="font-medium mb-1">How Markup Templates Work</p>
-                        <p>Markup templates define percentage increases applied to seller product prices. The markup is INVISIBLE to customers - they only see the final price. Templates can have multiple ranges based on product price tiers.</p>
+                        <p>Markup templates define fixed amounts added to seller product prices based on price ranges. The markup is INVISIBLE to customers - they only see the final price. Each template can have multiple ranges for different price tiers.</p>
                     </div>
                 </div>
             </div>
@@ -68,9 +68,9 @@ export default function MarkupTemplatesIndex({ templates }) {
                                             {template.ranges.slice(0, 3).map((range, index) => (
                                                 <div key={index} className="flex items-center justify-between text-sm">
                                                     <span className="text-gray-600 dark:text-gray-400">
-                                                        {range.min_price ? `MWK ${range.min_price.toLocaleString()}` : '0'} - {range.max_price ? `MWK ${range.max_price.toLocaleString()}` : 'Any'}
+                                                        {Number(range.min_price).toLocaleString()} - {range.max_price ? Number(range.max_price).toLocaleString() : '∞'}
                                                     </span>
-                                                    <span className="font-medium text-brand">+{range.markup_percentage}%</span>
+                                                    <span className="font-medium text-brand">+{Number(range.markup_amount).toLocaleString()}</span>
                                                 </div>
                                             ))}
                                             {template.ranges.length > 3 && (

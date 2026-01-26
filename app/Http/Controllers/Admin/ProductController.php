@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\CleanOrphanedProductImages;
+use App\Jobs\DeleteProductImages;
 use App\Models\Attribute;
 use App\Models\Brand;
 use App\Models\Category;
@@ -10,8 +12,10 @@ use App\Models\Product;
 use App\Models\ProductImage;
 use App\Models\Seller;
 use App\Services\PriceService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 
@@ -31,21 +35,23 @@ class ProductController extends Controller
                 $query->where(function ($q) use ($search) {
                     $q->where('name', 'like', "%{$search}%")
                         ->orWhere('sku', 'like', "%{$search}%")
-                        ->orWhereHas('seller', fn($s) => $s->where('shop_name', 'like', "%{$search}%"));
+                        ->orWhereHas('seller', fn ($s) => $s->where('shop_name', 'like', "%{$search}%"));
                 });
             })
-            ->when($request->status, fn($q, $status) => $q->where('status', $status))
-            ->when($request->category_id, fn($q, $catId) => $q->where('category_id', $catId))
-            ->when($request->seller_id, fn($q, $sellerId) => $q->where('seller_id', $sellerId))
-            ->when($request->stock === 'low', fn($q) => $q->whereRaw('stock_quantity <= low_stock_threshold'))
-            ->when($request->stock === 'out', fn($q) => $q->where('stock_quantity', 0))
+            ->when($request->status, fn ($q, $status) => $q->where('status', $status))
+            ->when($request->category_id, fn ($q, $catId) => $q->where('category_id', $catId))
+            ->when($request->seller_id, fn ($q, $sellerId) => $q->where('seller_id', $sellerId))
+            ->when($request->brand_id, fn ($q, $brandId) => $q->where('brand_id', $brandId))
+            ->when($request->stock === 'low', fn ($q) => $q->whereRaw('stock_quantity <= low_stock_threshold'))
+            ->when($request->stock === 'out', fn ($q) => $q->where('stock_quantity', 0))
             ->latest()
             ->paginate(15)
             ->withQueryString();
 
         // Transform to include primary image URL
         $products->through(function ($product) {
-            $product->primary_image = $product->primary_image_url;
+            $product->primary_image_url = Storage::disk('public')->url($product->primary_image->path);
+
             return $product;
         });
 
@@ -63,6 +69,7 @@ class ProductController extends Controller
             'filters' => $request->only(['search', 'status', 'category_id', 'seller_id', 'stock']),
             'categories' => Category::active()->get(['id', 'name']),
             'sellers' => Seller::where('status', 'active')->get(['id', 'shop_name']),
+            'brands' => Brand::active()->orderBy('name')->get(['id', 'name']),
             'stats' => $stats,
         ]);
     }
@@ -121,7 +128,7 @@ class ProductController extends Controller
                 'category_id' => $validated['category_id'],
                 'brand_id' => $validated['brand_id'] ?? null,
                 'name' => $validated['name'],
-                'slug' => Str::slug($validated['name']) . '-' . Str::random(5),
+                'slug' => Str::slug($validated['name']).'-'.Str::random(5),
                 'description' => $validated['description'] ?? null,
                 'short_description' => $validated['short_description'] ?? null,
                 'base_price' => $validated['base_price'],
@@ -235,12 +242,25 @@ class ProductController extends Controller
     /**
      * Remove the specified product
      */
-    public function destroy(Product $product)
+    public function destroy(Request $request, Product $product): RedirectResponse
     {
+        $deleteImages = $request->boolean('delete_images', false);
+        $productId = $product->id;
+
+        // Delete product (soft delete)
         $product->delete();
 
+        // Queue image deletion if requested
+        if ($deleteImages) {
+            DeleteProductImages::dispatch([$productId]);
+        }
+
+        $message = $deleteImages
+            ? 'Product deleted and images queued for removal!'
+            : 'Product deleted successfully!';
+
         return redirect()->route('admin.products.index')
-            ->with('success', 'Product deleted successfully!');
+            ->with('success', $message);
     }
 
     /**
@@ -256,22 +276,36 @@ class ProductController extends Controller
 
         Product::whereIn('id', $validated['ids'])->update(['status' => $validated['status']]);
 
-        return back()->with('success', count($validated['ids']) . ' products updated successfully!');
+        return back()->with('success', count($validated['ids']).' products updated successfully!');
     }
 
     /**
      * Bulk delete
      */
-    public function bulkDestroy(Request $request)
+    public function bulkDestroy(Request $request): RedirectResponse
     {
         $validated = $request->validate([
             'ids' => ['required', 'array'],
             'ids.*' => ['exists:products,id'],
+            'delete_images' => ['boolean'],
         ]);
 
-        Product::whereIn('id', $validated['ids'])->delete();
+        $deleteImages = $validated['delete_images'] ?? false;
+        $productIds = $validated['ids'];
 
-        return back()->with('success', count($validated['ids']) . ' products deleted successfully!');
+        Product::whereIn('id', $productIds)->delete();
+
+        // Queue image deletion if requested
+        if ($deleteImages) {
+            DeleteProductImages::dispatch($productIds);
+        }
+
+        $count = count($productIds);
+        $message = $deleteImages
+            ? "{$count} products deleted and images queued for removal!"
+            : "{$count} products deleted successfully!";
+
+        return back()->with('success', $message);
     }
 
     /**
@@ -287,6 +321,97 @@ class ProductController extends Controller
         $product->update(['stock_quantity' => $validated['stock_quantity']]);
 
         return back()->with('success', 'Stock updated successfully!');
+    }
+
+    /**
+     * Bulk clear products with password confirmation
+     */
+    public function bulkClear(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'password' => ['required', 'string'],
+            'clear_type' => ['required', 'in:all,category,brand,created_before,created_after,updated_before,updated_after'],
+            'category_id' => ['required_if:clear_type,category', 'nullable', 'exists:categories,id'],
+            'brand_id' => ['required_if:clear_type,brand', 'nullable', 'exists:brands,id'],
+            'date' => ['required_if:clear_type,created_before,created_after,updated_before,updated_after', 'nullable', 'date'],
+            'delete_images' => ['boolean'],
+        ]);
+
+        // Verify password
+        if (! auth()->validate(['email' => auth()->user()->email, 'password' => $validated['password']])) {
+            return back()->withErrors(['password' => 'Invalid password.']);
+        }
+
+        $deleteImages = $validated['delete_images'] ?? false;
+        $query = Product::query();
+
+        switch ($validated['clear_type']) {
+            case 'category':
+                $query->where('category_id', $validated['category_id']);
+                break;
+            case 'brand':
+                $query->where('brand_id', $validated['brand_id']);
+                break;
+            case 'created_before':
+                $query->where('created_at', '<', $validated['date']);
+                break;
+            case 'created_after':
+                $query->where('created_at', '>', $validated['date']);
+                break;
+            case 'updated_before':
+                $query->where('updated_at', '<', $validated['date']);
+                break;
+            case 'updated_after':
+                $query->where('updated_at', '>', $validated['date']);
+                break;
+            case 'all':
+            default:
+                // No additional filters - will delete all
+                break;
+        }
+
+        $count = $query->count();
+        $productIds = $query->pluck('id')->toArray();
+
+        // Delete images from database (they have foreign key constraints)
+        ProductImage::whereIn('product_id', $productIds)->delete();
+
+        // Delete the products
+        $query->delete();
+
+        // Queue image file deletion if requested
+        if ($deleteImages && count($productIds) > 0) {
+            DeleteProductImages::dispatch($productIds);
+        }
+
+        $message = $deleteImages
+            ? "{$count} products deleted and images queued for removal."
+            : "{$count} products have been deleted successfully.";
+
+        return back()->with('success', $message);
+    }
+
+    /**
+     * Clean orphaned product images from disk
+     */
+    public function cleanOrphanedImages(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'password' => ['required', 'string'],
+            'force' => ['boolean'],
+        ]);
+
+        // Verify password
+        if (! auth()->validate(['email' => auth()->user()->email, 'password' => $validated['password']])) {
+            return back()->withErrors(['password' => 'Invalid password.']);
+        }
+
+        $force = $validated['force'] ?? false;
+        CleanOrphanedProductImages::dispatch($force);
+
+        $mode = $force ? 'force' : 'safe';
+
+        return back()->with('success', "Orphaned image cleanup ({$mode} mode) has been queued. Check logs for results.");
     }
 
     /**

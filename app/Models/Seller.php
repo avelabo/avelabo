@@ -26,6 +26,7 @@ class Seller extends Model
         'business_registration_number',
         'default_currency_id',
         'country_id',
+        'markup_template_id',
         'status',
         'rating',
         'total_reviews',

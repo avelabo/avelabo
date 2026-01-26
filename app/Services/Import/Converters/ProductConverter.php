@@ -66,20 +66,23 @@ class ProductConverter
                 'source_url' => $data['source_url'] ?? null,
             ];
 
+            // Get the base URL for resolving relative image paths
+            $baseUrl = $dataSource->base_url;
+
             if ($existingProduct) {
                 $existingProduct->update($productData);
                 $product = $existingProduct->fresh();
                 $action = 'updated';
 
                 // Update images and variants
-                $this->syncImages($product, $data['images'] ?? [], $source);
+                $this->syncImages($product, $data['images'] ?? [], $source, $baseUrl);
                 $this->syncVariants($product, $data['variants'] ?? []);
             } else {
                 $product = Product::create($productData);
                 $action = 'created';
 
                 // Create images and variants
-                $this->createImages($product, $data['images'] ?? [], $source);
+                $this->createImages($product, $data['images'] ?? [], $source, $baseUrl);
                 $this->createVariants($product, $data['variants'] ?? []);
             }
 
@@ -118,10 +121,10 @@ class ProductConverter
         return ['brand' => $brand, 'action' => 'created'];
     }
 
-    protected function createImages(Product $product, array $images, string $source): void
+    protected function createImages(Product $product, array $images, string $source, ?string $baseUrl = null): void
     {
         foreach ($images as $index => $imageData) {
-            $path = $this->downloadImage($imageData['path'] ?? $imageData['url'] ?? null, $product, $source);
+            $path = $this->downloadImage($imageData['path'] ?? $imageData['url'] ?? null, $product, $source, $baseUrl);
 
             if ($path) {
                 ProductImage::create([
@@ -135,7 +138,7 @@ class ProductConverter
         }
     }
 
-    protected function syncImages(Product $product, array $images, string $source): void
+    protected function syncImages(Product $product, array $images, string $source, ?string $baseUrl = null): void
     {
         // Delete existing images
         foreach ($product->images as $image) {
@@ -144,20 +147,40 @@ class ProductConverter
         $product->images()->delete();
 
         // Create new images
-        $this->createImages($product, $images, $source);
+        $this->createImages($product, $images, $source, $baseUrl);
     }
 
-    protected function downloadImage(?string $imagePath, Product $product, string $source): ?string
+    protected function downloadImage(?string $imagePath, Product $product, string $source, ?string $baseUrl = null): ?string
     {
         if (! $imagePath) {
             return null;
         }
 
         try {
-            // If the path is already a local path, just use it
-            if (! str_starts_with($imagePath, 'http')) {
-                return $imagePath;
+            // If the path is a relative URL (starts with /), prepend the base URL
+            if (! str_starts_with($imagePath, 'http') && str_starts_with($imagePath, '/') && $baseUrl) {
+                $imagePath = rtrim($baseUrl, '/').$imagePath;
+            } elseif (! str_starts_with($imagePath, 'http') && $baseUrl) {
+                $imagePath = rtrim($baseUrl ?? '', '/').'/'.ltrim($imagePath, '/');
+            } else {
+                // If it's still not an absolute URL, we can't download it
+                \Log::warning('No base URL provided', [
+                    'image_path' => $imagePath,
+                    'product_id' => $product->id,
+                ]);
+
+                return null;
             }
+
+            // If it's still not an absolute URL, we can't download it
+            // if (! str_starts_with($imagePath, 'http')) {
+            //     \Log::warning('Cannot download image: not an absolute URL or no base URL provided', [
+            //         'image_path' => $imagePath,
+            //         'product_id' => $product->id,
+            //     ]);
+
+            //     return null;
+            // }
 
             // Download the image
             $response = Http::timeout(30)->get($imagePath);
