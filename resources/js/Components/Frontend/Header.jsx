@@ -1,12 +1,26 @@
 import { Link, usePage, router } from '@inertiajs/react';
 import { useState, useRef, useEffect } from 'react';
+import { useSearch } from '@/hooks/useSearch';
+import SearchDropdown from '@/Components/Frontend/SearchDropdown';
 
 export default function Header({ isSticky, onMobileMenuToggle }) {
     const { currencies, counts, headerCategories, siteSettings } = usePage().props;
     const [categoriesOpen, setCategoriesOpen] = useState(false);
-    const [searchFocused, setSearchFocused] = useState(false);
     const [hoveredCategory, setHoveredCategory] = useState(null);
     const categoriesRef = useRef(null);
+    const searchRef = useRef(null);
+    const mobileSearchRef = useRef(null);
+
+    // Search functionality
+    const {
+        query: searchQuery,
+        setQuery: setSearchQuery,
+        results: searchResults,
+        isLoading: searchLoading,
+        isOpen: searchOpen,
+        setIsOpen: setSearchOpen,
+        handleSubmit: handleSearchSubmit,
+    } = useSearch();
 
     const selectedCurrency = currencies?.selected || currencies?.default;
     const activeCurrencies = currencies?.active || [];
@@ -27,10 +41,28 @@ export default function Header({ isSticky, onMobileMenuToggle }) {
                 setCategoriesOpen(false);
                 setHoveredCategory(null);
             }
+            // Close search dropdown when clicking outside
+            if (searchRef.current && !searchRef.current.contains(event.target)) {
+                setSearchOpen(false);
+            }
+            if (mobileSearchRef.current && !mobileSearchRef.current.contains(event.target)) {
+                setSearchOpen(false);
+            }
         };
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
+    }, [setSearchOpen]);
+
+    // Handle escape key to close search dropdown
+    useEffect(() => {
+        const handleEscape = (e) => {
+            if (e.key === 'Escape') {
+                setSearchOpen(false);
+            }
+        };
+        document.addEventListener('keydown', handleEscape);
+        return () => document.removeEventListener('keydown', handleEscape);
+    }, [setSearchOpen]);
 
     return (
         <>
@@ -57,12 +89,13 @@ export default function Header({ isSticky, onMobileMenuToggle }) {
                         </Link>
 
                         {/* Search Bar - Elegant floating design */}
-                        <div className="hidden lg:flex flex-1 max-w-xl xl:max-w-2xl">
-                            <div
+                        <div className="hidden lg:flex flex-1 max-w-xl xl:max-w-2xl relative" ref={searchRef}>
+                            <form
+                                onSubmit={handleSearchSubmit}
                                 className={`
                                     flex w-full rounded-lg overflow-hidden
                                     transition-all duration-300 ease-out
-                                    ${searchFocused
+                                    ${searchOpen
                                         ? 'ring-2 ring-[#f1b945]/50 shadow-lg shadow-[#f1b945]/10'
                                         : 'ring-1 ring-white/10'
                                     }
@@ -72,8 +105,9 @@ export default function Header({ isSticky, onMobileMenuToggle }) {
                                     <input
                                         type="text"
                                         placeholder="Search products, brands, categories..."
-                                        onFocus={() => setSearchFocused(true)}
-                                        onBlur={() => setSearchFocused(false)}
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        onFocus={() => searchQuery.length >= 2 && setSearchOpen(true)}
                                         className="
                                             w-full px-5 py-3 bg-white/95 text-[#2a2a2a] text-sm
                                             placeholder:text-gray-400 border-none
@@ -82,6 +116,7 @@ export default function Header({ isSticky, onMobileMenuToggle }) {
                                     />
                                 </div>
                                 <button
+                                    type="submit"
                                     className="
                                         bg-[#f1b945] hover:bg-[#e5ad3a] active:bg-[#d9a32f]
                                         text-[#2a2a2a] font-semibold px-6
@@ -94,7 +129,16 @@ export default function Header({ isSticky, onMobileMenuToggle }) {
                                     </svg>
                                     <span className="hidden xl:inline">Search</span>
                                 </button>
-                            </div>
+                            </form>
+
+                            {/* Search Dropdown */}
+                            <SearchDropdown
+                                results={searchResults}
+                                isLoading={searchLoading}
+                                isOpen={searchOpen}
+                                onClose={() => setSearchOpen(false)}
+                                query={searchQuery}
+                            />
                         </div>
 
                         {/* Header Actions */}
@@ -433,23 +477,35 @@ export default function Header({ isSticky, onMobileMenuToggle }) {
                     </div>
 
                     {/* Mobile Search Bar */}
-                    <div className="lg:hidden py-3">
-                        <div className="flex rounded-lg overflow-hidden ring-1 ring-gray-200">
+                    <div className="lg:hidden py-3 relative" ref={mobileSearchRef}>
+                        <form onSubmit={handleSearchSubmit} className="flex rounded-lg overflow-hidden ring-1 ring-gray-200">
                             <input
                                 type="text"
                                 placeholder="Search products..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                onFocus={() => searchQuery.length >= 2 && setSearchOpen(true)}
                                 className="
                                     flex-1 px-4 py-2.5 bg-white text-[#2a2a2a] text-sm
                                     placeholder:text-gray-400 border-none
                                     focus:outline-none focus:ring-0
                                 "
                             />
-                            <button className="bg-[#f1b945] text-[#2a2a2a] px-4">
+                            <button type="submit" className="bg-[#f1b945] text-[#2a2a2a] px-4">
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
                                 </svg>
                             </button>
-                        </div>
+                        </form>
+
+                        {/* Mobile Search Dropdown */}
+                        <SearchDropdown
+                            results={searchResults}
+                            isLoading={searchLoading}
+                            isOpen={searchOpen}
+                            onClose={() => setSearchOpen(false)}
+                            query={searchQuery}
+                        />
                     </div>
                 </div>
             </nav>

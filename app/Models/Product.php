@@ -7,10 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Laravel\Scout\Searchable;
 
 class Product extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, Searchable, SoftDeletes;
 
     protected $fillable = [
         'seller_id',
@@ -146,9 +147,10 @@ class Product extends Model
 
     public function isInStock(): bool
     {
-        if (!$this->track_inventory) {
+        if (! $this->track_inventory) {
             return true;
         }
+
         return $this->stock_quantity > 0 || $this->allow_backorders;
     }
 
@@ -173,7 +175,7 @@ class Product extends Model
      */
     public function getDisplayComparePriceAttribute(): ?float
     {
-        if (!$this->compare_at_price) {
+        if (! $this->compare_at_price) {
             return null;
         }
 
@@ -197,6 +199,7 @@ class Product extends Model
     public function getIsOnSaleAttribute(): bool
     {
         $comparePrice = $this->display_compare_price;
+
         return $comparePrice && $comparePrice > $this->display_price;
     }
 
@@ -205,7 +208,7 @@ class Product extends Model
      */
     public function getDiscountPercentageAttribute(): int
     {
-        if (!$this->is_on_sale) {
+        if (! $this->is_on_sale) {
             return 0;
         }
 
@@ -213,5 +216,27 @@ class Product extends Model
         $displayPrice = $this->display_price;
 
         return (int) round((($comparePrice - $displayPrice) / $comparePrice) * 100);
+    }
+
+    /**
+     * Get the indexable data array for the model.
+     *
+     * @return array<string, mixed>
+     */
+    public function toSearchableArray(): array
+    {
+        return [
+            'name' => $this->name,
+            'short_description' => $this->short_description,
+            'description' => $this->description,
+        ];
+    }
+
+    /**
+     * Determine if the model should be searchable.
+     */
+    public function shouldBeSearchable(): bool
+    {
+        return $this->status === 'active';
     }
 }

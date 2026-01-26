@@ -26,6 +26,7 @@ use App\Http\Controllers\Frontend\HomeController;
 use App\Http\Controllers\Frontend\OrderController as CustomerOrderController;
 use App\Http\Controllers\Frontend\PageController;
 use App\Http\Controllers\Frontend\PaymentController;
+use App\Http\Controllers\Frontend\SearchController;
 use App\Http\Controllers\Frontend\ShopController;
 use App\Http\Controllers\Frontend\VendorController;
 use App\Http\Controllers\Seller\DashboardController as SellerDashboardController;
@@ -46,6 +47,10 @@ Route::post('/currency/set', [CurrencyController::class, 'set'])->name('currency
 
 Route::get('/shop', [ShopController::class, 'index'])->name('shop');
 Route::get('/product/{slug}', [ShopController::class, 'show'])->name('product.detail');
+
+// Search routes
+Route::get('/search', [SearchController::class, 'index'])->name('search');
+Route::get('/search/instant', [SearchController::class, 'instant'])->name('search.instant');
 
 /*
 |--------------------------------------------------------------------------
