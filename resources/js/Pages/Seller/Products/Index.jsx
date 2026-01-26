@@ -98,9 +98,13 @@ export default function ProductsIndex({ products, filters }) {
                                                     <div className="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden flex-shrink-0">
                                                         {product.primary_image ? (
                                                             <img
-                                                                src={product.primary_image}
+                                                                src={`/storage/${product.primary_image}`}
                                                                 alt={product.name}
                                                                 className="w-full h-full object-cover"
+                                                                onError={(e) => {
+                                                                    e.target.onerror = null;
+                                                                    e.target.src = '/images/frontend/shop/product-placeholder.png';
+                                                                }}
                                                             />
                                                         ) : (
                                                             <div className="w-full h-full flex items-center justify-center">

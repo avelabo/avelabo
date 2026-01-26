@@ -30,8 +30,17 @@ export default function Sidebar({ isOpen, isMobileOpen, onClose }) {
             children: [
                 { name: 'Product List', href: '/admin/products' },
                 { name: 'Add Product', href: '/admin/products/create' },
-                { name: 'Categories', href: '/admin/categories' },
             ],
+        },
+        {
+            name: 'Categories',
+            icon: 'category',
+            href: '/admin/categories',
+        },
+        {
+            name: 'Tags',
+            icon: 'label',
+            href: '/admin/tags',
         },
         {
             name: 'Data Import',

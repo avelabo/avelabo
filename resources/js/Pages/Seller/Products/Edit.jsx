@@ -191,6 +191,10 @@ export default function ProductEdit({ product, categories }) {
                                             src={image.url}
                                             alt={`Product ${index + 1}`}
                                             className="w-full h-full object-cover"
+                                            onError={(e) => {
+                                                e.target.onerror = null;
+                                                e.target.src = '/images/frontend/shop/product-placeholder.png';
+                                            }}
                                         />
                                         <button
                                             type="button"

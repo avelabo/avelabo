@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\BrandController as AdminBrandController;
 use App\Http\Controllers\Admin\CategoryController as AdminCategoryController;
 use App\Http\Controllers\Admin\ContactMessageController;
 use App\Http\Controllers\Admin\ImportDataSourceController;
@@ -12,6 +13,7 @@ use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Admin\SellerController as AdminSellerController;
 use App\Http\Controllers\Admin\SettingsController as AdminSettingsController;
 use App\Http\Controllers\Admin\SliderController;
+use App\Http\Controllers\Admin\TagController as AdminTagController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\EmailVerificationPromptController;
 use App\Http\Controllers\Auth\NewPasswordController;
@@ -284,6 +286,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::resource('products', AdminProductController::class);
     Route::post('/products/bulk-status', [AdminProductController::class, 'bulkUpdateStatus'])->name('products.bulk-status');
     Route::post('/products/bulk-delete', [AdminProductController::class, 'bulkDestroy'])->name('products.bulk-delete');
+    Route::post('/products/bulk-clear', [AdminProductController::class, 'bulkClear'])->name('products.bulk-clear');
     Route::patch('/products/{product}/stock', [AdminProductController::class, 'updateStock'])->name('products.update-stock');
 
     // Categories
@@ -308,9 +311,18 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     })->name('transactions.show');
 
     // Brands
-    Route::get('/brands', function () {
-        return Inertia::render('Admin/Brands/Index');
-    })->name('brands.index');
+    Route::get('/brands', [AdminBrandController::class, 'index'])->name('brands.index');
+    Route::get('/brands/create', [AdminBrandController::class, 'create'])->name('brands.create');
+    Route::post('/brands', [AdminBrandController::class, 'store'])->name('brands.store');
+    Route::get('/brands/{brand}/edit', [AdminBrandController::class, 'edit'])->name('brands.edit');
+    Route::put('/brands/{brand}', [AdminBrandController::class, 'update'])->name('brands.update');
+    Route::delete('/brands/{brand}', [AdminBrandController::class, 'destroy'])->name('brands.destroy');
+    Route::patch('/brands/{brand}/toggle-status', [AdminBrandController::class, 'toggleStatus'])->name('brands.toggle-status');
+    Route::patch('/brands/{brand}/toggle-featured', [AdminBrandController::class, 'toggleFeatured'])->name('brands.toggle-featured');
+
+    // Tags
+    Route::resource('tags', AdminTagController::class)->except(['show']);
+    Route::patch('/tags/{tag}/toggle-status', [AdminTagController::class, 'toggleStatus'])->name('tags.toggle-status');
 
     // Reviews
     Route::get('/reviews', function () {

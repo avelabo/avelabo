@@ -160,17 +160,27 @@ class ProductConverter
             // If the path is a relative URL (starts with /), prepend the base URL
             if (! str_starts_with($imagePath, 'http') && str_starts_with($imagePath, '/') && $baseUrl) {
                 $imagePath = rtrim($baseUrl, '/').$imagePath;
-            }
-
-            // If it's still not an absolute URL, we can't download it
-            if (! str_starts_with($imagePath, 'http')) {
-                \Log::warning('Cannot download image: not an absolute URL and no base URL provided', [
+            } elseif (! str_starts_with($imagePath, 'http') && $baseUrl) {
+                $imagePath = rtrim($baseUrl ?? '', '/').'/'.ltrim($imagePath, '/');
+            } else {
+                // If it's still not an absolute URL, we can't download it
+                \Log::warning('No base URL provided', [
                     'image_path' => $imagePath,
                     'product_id' => $product->id,
                 ]);
 
                 return null;
             }
+
+            // If it's still not an absolute URL, we can't download it
+            // if (! str_starts_with($imagePath, 'http')) {
+            //     \Log::warning('Cannot download image: not an absolute URL or no base URL provided', [
+            //         'image_path' => $imagePath,
+            //         'product_id' => $product->id,
+            //     ]);
+
+            //     return null;
+            // }
 
             // Download the image
             $response = Http::timeout(30)->get($imagePath);

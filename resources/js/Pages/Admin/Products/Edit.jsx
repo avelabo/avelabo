@@ -340,27 +340,62 @@ export default function Edit({ product, categories, brands, sellers, attributes 
                     </div>
 
                     {/* Existing Images */}
-                    {existingImages.length > 0 && (
-                        <div className="bg-white dark:bg-dark-card rounded-xl shadow-card p-6">
-                            <h3 className="text-lg font-semibold text-heading dark:text-white mb-4">Current Images</h3>
-                            <div className="grid grid-cols-4 md:grid-cols-6 gap-4">
+                    <div className="bg-white dark:bg-dark-card rounded-xl shadow-card p-6">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-semibold text-heading dark:text-white">Product Images</h3>
+                            <span className="text-sm text-body">{existingImages.length} image{existingImages.length !== 1 ? 's' : ''}</span>
+                        </div>
+                        {existingImages.length > 0 ? (
+                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                                 {existingImages.map((image, index) => (
-                                    <div key={image.id} className="relative group">
-                                        <img
-                                            src={`/storage/${image.path}`}
-                                            alt={image.alt_text || product.name}
-                                            className="w-full aspect-square object-cover rounded-lg"
-                                        />
-                                        {image.is_primary && (
-                                            <span className="absolute bottom-1 left-1 px-2 py-0.5 bg-brand text-white text-xs rounded">
-                                                Primary
+                                    <div key={image.id} className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                                        <div className="relative aspect-square bg-gray-100 dark:bg-gray-800">
+                                            <img
+                                                src={`/storage/${image.path}`}
+                                                alt={image.alt_text || product.name}
+                                                className="w-full h-full object-cover"
+                                                onError={(e) => {
+                                                    e.target.onerror = null;
+                                                    e.target.src = '/images/frontend/shop/product-placeholder.png';
+                                                }}
+                                            />
+                                            {image.is_primary && (
+                                                <span className="absolute top-2 left-2 px-2 py-0.5 bg-brand text-white text-xs rounded font-medium">
+                                                    Primary
+                                                </span>
+                                            )}
+                                            <span className="absolute top-2 right-2 px-2 py-0.5 bg-black/50 text-white text-xs rounded">
+                                                #{index + 1}
                                             </span>
-                                        )}
+                                        </div>
+                                        <div className="p-3 bg-gray-50 dark:bg-gray-800">
+                                            <p className="text-xs text-body mb-1">Path:</p>
+                                            <code className="block text-xs text-heading dark:text-white bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded break-all font-mono">
+                                                {image.path}
+                                            </code>
+                                            <p className="text-xs text-body mt-2 mb-1">URL:</p>
+                                            <code className="block text-xs text-heading dark:text-white bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded break-all font-mono">
+                                                /storage/{image.path}
+                                            </code>
+                                            {image.url && (
+                                                <>
+                                                    <p className="text-xs text-body mt-2 mb-1">Full URL:</p>
+                                                    <code className="block text-xs text-heading dark:text-white bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded break-all font-mono">
+                                                        {image.url}
+                                                    </code>
+                                                </>
+                                            )}
+                                        </div>
                                     </div>
                                 ))}
                             </div>
-                        </div>
-                    )}
+                        ) : (
+                            <div className="text-center py-8 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-lg">
+                                <span className="material-icons text-4xl text-gray-300 dark:text-gray-600 mb-2">image</span>
+                                <p className="text-body">No images uploaded for this product</p>
+                            </div>
+                        )}
+                    </div>
 
                     {/* Status & Visibility */}
                     <div className="bg-white dark:bg-dark-card rounded-xl shadow-card p-6">

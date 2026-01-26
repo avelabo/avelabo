@@ -31,14 +31,15 @@ class ProductController extends Controller
                 $query->where(function ($q) use ($search) {
                     $q->where('name', 'like', "%{$search}%")
                         ->orWhere('sku', 'like', "%{$search}%")
-                        ->orWhereHas('seller', fn($s) => $s->where('shop_name', 'like', "%{$search}%"));
+                        ->orWhereHas('seller', fn ($s) => $s->where('shop_name', 'like', "%{$search}%"));
                 });
             })
-            ->when($request->status, fn($q, $status) => $q->where('status', $status))
-            ->when($request->category_id, fn($q, $catId) => $q->where('category_id', $catId))
-            ->when($request->seller_id, fn($q, $sellerId) => $q->where('seller_id', $sellerId))
-            ->when($request->stock === 'low', fn($q) => $q->whereRaw('stock_quantity <= low_stock_threshold'))
-            ->when($request->stock === 'out', fn($q) => $q->where('stock_quantity', 0))
+            ->when($request->status, fn ($q, $status) => $q->where('status', $status))
+            ->when($request->category_id, fn ($q, $catId) => $q->where('category_id', $catId))
+            ->when($request->seller_id, fn ($q, $sellerId) => $q->where('seller_id', $sellerId))
+            ->when($request->brand_id, fn ($q, $brandId) => $q->where('brand_id', $brandId))
+            ->when($request->stock === 'low', fn ($q) => $q->whereRaw('stock_quantity <= low_stock_threshold'))
+            ->when($request->stock === 'out', fn ($q) => $q->where('stock_quantity', 0))
             ->latest()
             ->paginate(15)
             ->withQueryString();
@@ -46,6 +47,7 @@ class ProductController extends Controller
         // Transform to include primary image URL
         $products->through(function ($product) {
             $product->primary_image = $product->primary_image_url;
+
             return $product;
         });
 
@@ -63,6 +65,7 @@ class ProductController extends Controller
             'filters' => $request->only(['search', 'status', 'category_id', 'seller_id', 'stock']),
             'categories' => Category::active()->get(['id', 'name']),
             'sellers' => Seller::where('status', 'active')->get(['id', 'shop_name']),
+            'brands' => Brand::active()->orderBy('name')->get(['id', 'name']),
             'stats' => $stats,
         ]);
     }
@@ -121,7 +124,7 @@ class ProductController extends Controller
                 'category_id' => $validated['category_id'],
                 'brand_id' => $validated['brand_id'] ?? null,
                 'name' => $validated['name'],
-                'slug' => Str::slug($validated['name']) . '-' . Str::random(5),
+                'slug' => Str::slug($validated['name']).'-'.Str::random(5),
                 'description' => $validated['description'] ?? null,
                 'short_description' => $validated['short_description'] ?? null,
                 'base_price' => $validated['base_price'],
@@ -256,7 +259,7 @@ class ProductController extends Controller
 
         Product::whereIn('id', $validated['ids'])->update(['status' => $validated['status']]);
 
-        return back()->with('success', count($validated['ids']) . ' products updated successfully!');
+        return back()->with('success', count($validated['ids']).' products updated successfully!');
     }
 
     /**
@@ -271,7 +274,7 @@ class ProductController extends Controller
 
         Product::whereIn('id', $validated['ids'])->delete();
 
-        return back()->with('success', count($validated['ids']) . ' products deleted successfully!');
+        return back()->with('success', count($validated['ids']).' products deleted successfully!');
     }
 
     /**
@@ -287,6 +290,63 @@ class ProductController extends Controller
         $product->update(['stock_quantity' => $validated['stock_quantity']]);
 
         return back()->with('success', 'Stock updated successfully!');
+    }
+
+    /**
+     * Bulk clear products with password confirmation
+     */
+    public function bulkClear(Request $request)
+    {
+        $validated = $request->validate([
+            'password' => ['required', 'string'],
+            'clear_type' => ['required', 'in:all,category,brand,created_before,created_after,updated_before,updated_after'],
+            'category_id' => ['required_if:clear_type,category', 'nullable', 'exists:categories,id'],
+            'brand_id' => ['required_if:clear_type,brand', 'nullable', 'exists:brands,id'],
+            'date' => ['required_if:clear_type,created_before,created_after,updated_before,updated_after', 'nullable', 'date'],
+        ]);
+
+        // Verify password
+        if (! auth()->validate(['email' => auth()->user()->email, 'password' => $validated['password']])) {
+            return back()->withErrors(['password' => 'Invalid password.']);
+        }
+
+        $query = Product::query();
+
+        switch ($validated['clear_type']) {
+            case 'category':
+                $query->where('category_id', $validated['category_id']);
+                break;
+            case 'brand':
+                $query->where('brand_id', $validated['brand_id']);
+                break;
+            case 'created_before':
+                $query->where('created_at', '<', $validated['date']);
+                break;
+            case 'created_after':
+                $query->where('created_at', '>', $validated['date']);
+                break;
+            case 'updated_before':
+                $query->where('updated_at', '<', $validated['date']);
+                break;
+            case 'updated_after':
+                $query->where('updated_at', '>', $validated['date']);
+                break;
+            case 'all':
+            default:
+                // No additional filters - will delete all
+                break;
+        }
+
+        $count = $query->count();
+
+        // Delete images first (they have foreign key constraints)
+        $productIds = $query->pluck('id');
+        ProductImage::whereIn('product_id', $productIds)->delete();
+
+        // Delete the products
+        $query->delete();
+
+        return back()->with('success', "{$count} products have been deleted successfully.");
     }
 
     /**

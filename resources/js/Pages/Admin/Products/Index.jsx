@@ -1,11 +1,20 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, useForm } from '@inertiajs/react';
 import AdminLayout from '@/Layouts/AdminLayout';
 import { useState } from 'react';
 
-export default function Index({ products, filters, categories, sellers, stats }) {
+export default function Index({ products, filters, categories, sellers, brands, stats }) {
     const [selectAll, setSelectAll] = useState(false);
     const [selectedItems, setSelectedItems] = useState([]);
     const [search, setSearch] = useState(filters?.search || '');
+    const [showClearModal, setShowClearModal] = useState(false);
+
+    const clearForm = useForm({
+        clear_type: 'all',
+        category_id: '',
+        brand_id: '',
+        date: '',
+        password: '',
+    });
 
     const getStatusBadge = (status) => {
         const styles = {
@@ -67,6 +76,29 @@ export default function Index({ products, filters, categories, sellers, stats })
         }
     };
 
+    const handleClearSubmit = (e) => {
+        e.preventDefault();
+        clearForm.post(route('admin.products.bulk-clear'), {
+            onSuccess: () => {
+                setShowClearModal(false);
+                clearForm.reset();
+            },
+        });
+    };
+
+    const getClearTypeLabel = () => {
+        switch (clearForm.data.clear_type) {
+            case 'all': return 'ALL products';
+            case 'category': return `products in selected category`;
+            case 'brand': return `products of selected brand`;
+            case 'created_before': return `products created before the selected date`;
+            case 'created_after': return `products created after the selected date`;
+            case 'updated_before': return `products updated before the selected date`;
+            case 'updated_after': return `products updated after the selected date`;
+            default: return 'products';
+        }
+    };
+
     const formatCurrency = (amount) => {
         return new Intl.NumberFormat('en-MW', {
             style: 'currency',
@@ -87,6 +119,13 @@ export default function Index({ products, filters, categories, sellers, stats })
                         <p className="text-body">Manage all products across sellers</p>
                     </div>
                     <div className="flex gap-3 mt-4 md:mt-0">
+                        <button
+                            onClick={() => setShowClearModal(true)}
+                            className="px-4 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg font-medium text-sm transition-colors inline-flex items-center gap-2"
+                        >
+                            <span className="material-icons text-lg">delete_sweep</span>
+                            Clear Products
+                        </button>
                         <Link
                             href={route('admin.products.create')}
                             className="px-4 py-2 bg-brand hover:bg-brand-dark text-white rounded-lg font-medium text-sm transition-colors inline-flex items-center gap-2"
@@ -271,6 +310,10 @@ export default function Index({ products, filters, categories, sellers, stats })
                                                                 src={`/storage/${product.primary_image}`}
                                                                 alt={product.name}
                                                                 className="w-full h-full object-cover"
+                                                                onError={(e) => {
+                                                                    e.target.onerror = null;
+                                                                    e.target.src = '/images/frontend/shop/product-placeholder.png';
+                                                                }}
                                                             />
                                                         ) : (
                                                             <div className="w-full h-full flex items-center justify-center">
@@ -382,6 +425,162 @@ export default function Index({ products, filters, categories, sellers, stats })
                     )}
                 </div>
             </div>
+
+            {/* Clear Products Modal */}
+            {showClearModal && (
+                <div className="fixed inset-0 z-50 overflow-y-auto">
+                    <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0">
+                        <div className="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" onClick={() => setShowClearModal(false)} />
+
+                        <div className="relative inline-block w-full max-w-lg p-6 overflow-hidden text-left align-middle transition-all transform bg-white dark:bg-dark-card rounded-xl shadow-xl">
+                            <div className="flex items-center justify-between mb-6">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                                        <span className="material-icons text-red-600">warning</span>
+                                    </div>
+                                    <h3 className="text-lg font-semibold text-heading dark:text-white">Clear Products</h3>
+                                </div>
+                                <button
+                                    onClick={() => setShowClearModal(false)}
+                                    className="text-gray-400 hover:text-gray-600"
+                                >
+                                    <span className="material-icons">close</span>
+                                </button>
+                            </div>
+
+                            <form onSubmit={handleClearSubmit}>
+                                <div className="space-y-4">
+                                    {/* Clear Type Selection */}
+                                    <div>
+                                        <label className="block text-sm font-medium text-heading dark:text-white mb-2">
+                                            Clear Type
+                                        </label>
+                                        <select
+                                            value={clearForm.data.clear_type}
+                                            onChange={(e) => clearForm.setData('clear_type', e.target.value)}
+                                            className="w-full px-4 py-2.5 bg-gray-100 dark:bg-dark-body border-0 rounded-lg text-sm focus:ring-2 focus:ring-brand"
+                                        >
+                                            <option value="all">All Products</option>
+                                            <option value="category">By Category</option>
+                                            <option value="brand">By Brand</option>
+                                            <option value="created_before">Created Before Date</option>
+                                            <option value="created_after">Created After Date</option>
+                                            <option value="updated_before">Updated Before Date</option>
+                                            <option value="updated_after">Updated After Date</option>
+                                        </select>
+                                    </div>
+
+                                    {/* Category Selection */}
+                                    {clearForm.data.clear_type === 'category' && (
+                                        <div>
+                                            <label className="block text-sm font-medium text-heading dark:text-white mb-2">
+                                                Select Category
+                                            </label>
+                                            <select
+                                                value={clearForm.data.category_id}
+                                                onChange={(e) => clearForm.setData('category_id', e.target.value)}
+                                                className="w-full px-4 py-2.5 bg-gray-100 dark:bg-dark-body border-0 rounded-lg text-sm focus:ring-2 focus:ring-brand"
+                                            >
+                                                <option value="">Select a category</option>
+                                                {categories?.map((category) => (
+                                                    <option key={category.id} value={category.id}>{category.name}</option>
+                                                ))}
+                                            </select>
+                                            {clearForm.errors.category_id && (
+                                                <p className="mt-1 text-sm text-red-500">{clearForm.errors.category_id}</p>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {/* Brand Selection */}
+                                    {clearForm.data.clear_type === 'brand' && (
+                                        <div>
+                                            <label className="block text-sm font-medium text-heading dark:text-white mb-2">
+                                                Select Brand
+                                            </label>
+                                            <select
+                                                value={clearForm.data.brand_id}
+                                                onChange={(e) => clearForm.setData('brand_id', e.target.value)}
+                                                className="w-full px-4 py-2.5 bg-gray-100 dark:bg-dark-body border-0 rounded-lg text-sm focus:ring-2 focus:ring-brand"
+                                            >
+                                                <option value="">Select a brand</option>
+                                                {brands?.map((brand) => (
+                                                    <option key={brand.id} value={brand.id}>{brand.name}</option>
+                                                ))}
+                                            </select>
+                                            {clearForm.errors.brand_id && (
+                                                <p className="mt-1 text-sm text-red-500">{clearForm.errors.brand_id}</p>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {/* Date Selection */}
+                                    {['created_before', 'created_after', 'updated_before', 'updated_after'].includes(clearForm.data.clear_type) && (
+                                        <div>
+                                            <label className="block text-sm font-medium text-heading dark:text-white mb-2">
+                                                Select Date
+                                            </label>
+                                            <input
+                                                type="date"
+                                                value={clearForm.data.date}
+                                                onChange={(e) => clearForm.setData('date', e.target.value)}
+                                                className="w-full px-4 py-2.5 bg-gray-100 dark:bg-dark-body border-0 rounded-lg text-sm focus:ring-2 focus:ring-brand"
+                                            />
+                                            {clearForm.errors.date && (
+                                                <p className="mt-1 text-sm text-red-500">{clearForm.errors.date}</p>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {/* Warning Message */}
+                                    <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
+                                        <p className="text-sm text-red-700 dark:text-red-400">
+                                            <strong>Warning:</strong> This will permanently delete {getClearTypeLabel()}.
+                                            This action cannot be undone.
+                                        </p>
+                                    </div>
+
+                                    {/* Password Confirmation */}
+                                    <div>
+                                        <label className="block text-sm font-medium text-heading dark:text-white mb-2">
+                                            Enter your password to confirm
+                                        </label>
+                                        <input
+                                            type="password"
+                                            value={clearForm.data.password}
+                                            onChange={(e) => clearForm.setData('password', e.target.value)}
+                                            className={`w-full px-4 py-2.5 bg-gray-100 dark:bg-dark-body border-0 rounded-lg text-sm focus:ring-2 focus:ring-brand ${clearForm.errors.password ? 'ring-2 ring-red-500' : ''}`}
+                                            placeholder="Enter your password"
+                                        />
+                                        {clearForm.errors.password && (
+                                            <p className="mt-1 text-sm text-red-500">{clearForm.errors.password}</p>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Actions */}
+                                <div className="flex items-center justify-end gap-3 mt-6">
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowClearModal(false)}
+                                        className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-heading rounded-lg font-medium text-sm transition-colors"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={clearForm.processing}
+                                        className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium text-sm transition-colors disabled:opacity-50 inline-flex items-center gap-2"
+                                    >
+                                        {clearForm.processing && <span className="material-icons animate-spin text-lg">sync</span>}
+                                        Delete Products
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            )}
         </AdminLayout>
     );
 }

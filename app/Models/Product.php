@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -84,6 +85,11 @@ class Product extends Model
         return $this->belongsTo(Brand::class);
     }
 
+    public function tags(): BelongsToMany
+    {
+        return $this->belongsToMany(Tag::class)->withTimestamps();
+    }
+
     public function currency(): BelongsTo
     {
         return $this->belongsTo(Currency::class);
@@ -146,9 +152,10 @@ class Product extends Model
 
     public function isInStock(): bool
     {
-        if (!$this->track_inventory) {
+        if (! $this->track_inventory) {
             return true;
         }
+
         return $this->stock_quantity > 0 || $this->allow_backorders;
     }
 
@@ -173,7 +180,7 @@ class Product extends Model
      */
     public function getDisplayComparePriceAttribute(): ?float
     {
-        if (!$this->compare_at_price) {
+        if (! $this->compare_at_price) {
             return null;
         }
 
@@ -197,6 +204,7 @@ class Product extends Model
     public function getIsOnSaleAttribute(): bool
     {
         $comparePrice = $this->display_compare_price;
+
         return $comparePrice && $comparePrice > $this->display_price;
     }
 
@@ -205,7 +213,7 @@ class Product extends Model
      */
     public function getDiscountPercentageAttribute(): int
     {
-        if (!$this->is_on_sale) {
+        if (! $this->is_on_sale) {
             return 0;
         }
 
