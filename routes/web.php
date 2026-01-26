@@ -287,6 +287,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::post('/products/bulk-status', [AdminProductController::class, 'bulkUpdateStatus'])->name('products.bulk-status');
     Route::post('/products/bulk-delete', [AdminProductController::class, 'bulkDestroy'])->name('products.bulk-delete');
     Route::post('/products/bulk-clear', [AdminProductController::class, 'bulkClear'])->name('products.bulk-clear');
+    Route::post('/products/clean-orphaned-images', [AdminProductController::class, 'cleanOrphanedImages'])->name('products.clean-orphaned-images');
     Route::patch('/products/{product}/stock', [AdminProductController::class, 'updateStock'])->name('products.update-stock');
 
     // Categories

@@ -190,7 +190,7 @@ class Product extends Model
     /**
      * Get primary image URL (returns the path for storage, not full URL)
      */
-    public function getPrimaryImageUrlAttribute(): ?string
+    public function getPrimaryImagePathAttribute(): ?string
     {
         $primaryImage = $this->images->where('is_primary', true)->first()
             ?? $this->images->first();

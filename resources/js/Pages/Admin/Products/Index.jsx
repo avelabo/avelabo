@@ -7,6 +7,10 @@ export default function Index({ products, filters, categories, sellers, brands, 
     const [selectedItems, setSelectedItems] = useState([]);
     const [search, setSearch] = useState(filters?.search || '');
     const [showClearModal, setShowClearModal] = useState(false);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [deleteTarget, setDeleteTarget] = useState(null); // { type: 'single' | 'bulk', product?: object, ids?: array }
+    const [deleteImages, setDeleteImages] = useState(false);
+    const [showOrphanModal, setShowOrphanModal] = useState(false);
 
     const clearForm = useForm({
         clear_type: 'all',
@@ -14,6 +18,12 @@ export default function Index({ products, filters, categories, sellers, brands, 
         brand_id: '',
         date: '',
         password: '',
+        delete_images: false,
+    });
+
+    const orphanForm = useForm({
+        password: '',
+        force: false,
     });
 
     const getStatusBadge = (status) => {
@@ -52,9 +62,9 @@ export default function Index({ products, filters, categories, sellers, brands, 
     };
 
     const handleDelete = (product) => {
-        if (confirm(`Are you sure you want to delete "${product.name}"?`)) {
-            router.delete(route('admin.products.destroy', product.id));
-        }
+        setDeleteTarget({ type: 'single', product });
+        setDeleteImages(false);
+        setShowDeleteModal(true);
     };
 
     const handleBulkAction = (action) => {
@@ -64,16 +74,48 @@ export default function Index({ products, filters, categories, sellers, brands, 
         }
 
         if (action === 'delete') {
-            if (confirm(`Are you sure you want to delete ${selectedItems.length} products?`)) {
-                router.post(route('admin.products.bulk-delete'), { ids: selectedItems });
-                setSelectedItems([]);
-                setSelectAll(false);
-            }
+            setDeleteTarget({ type: 'bulk', ids: [...selectedItems] });
+            setDeleteImages(false);
+            setShowDeleteModal(true);
         } else if (['active', 'inactive', 'draft'].includes(action)) {
             router.post(route('admin.products.bulk-status'), { ids: selectedItems, status: action });
             setSelectedItems([]);
             setSelectAll(false);
         }
+    };
+
+    const confirmDelete = () => {
+        if (deleteTarget.type === 'single') {
+            router.delete(route('admin.products.destroy', deleteTarget.product.id), {
+                data: { delete_images: deleteImages },
+                onSuccess: () => {
+                    setShowDeleteModal(false);
+                    setDeleteTarget(null);
+                },
+            });
+        } else if (deleteTarget.type === 'bulk') {
+            router.post(route('admin.products.bulk-delete'), {
+                ids: deleteTarget.ids,
+                delete_images: deleteImages,
+            }, {
+                onSuccess: () => {
+                    setShowDeleteModal(false);
+                    setDeleteTarget(null);
+                    setSelectedItems([]);
+                    setSelectAll(false);
+                },
+            });
+        }
+    };
+
+    const handleOrphanCleanup = (e) => {
+        e.preventDefault();
+        orphanForm.post(route('admin.products.clean-orphaned-images'), {
+            onSuccess: () => {
+                setShowOrphanModal(false);
+                orphanForm.reset();
+            },
+        });
     };
 
     const handleClearSubmit = (e) => {
@@ -119,6 +161,14 @@ export default function Index({ products, filters, categories, sellers, brands, 
                         <p className="text-body">Manage all products across sellers</p>
                     </div>
                     <div className="flex gap-3 mt-4 md:mt-0">
+                        <button
+                            onClick={() => setShowOrphanModal(true)}
+                            className="px-4 py-2 bg-orange-100 hover:bg-orange-200 text-orange-700 rounded-lg font-medium text-sm transition-colors inline-flex items-center gap-2"
+                            title="Remove image files from disk that are no longer linked to products"
+                        >
+                            <span className="material-icons text-lg">cleaning_services</span>
+                            Clean Orphans
+                        </button>
                         <button
                             onClick={() => setShowClearModal(true)}
                             className="px-4 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg font-medium text-sm transition-colors inline-flex items-center gap-2"
@@ -305,9 +355,9 @@ export default function Index({ products, filters, categories, sellers, brands, 
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-3">
                                                     <div className="w-12 h-12 bg-gray-100 dark:bg-dark-body rounded-lg overflow-hidden flex-shrink-0">
-                                                        {product.primary_image ? (
+                                                        {product.primary_image_url ? (
                                                             <img
-                                                                src={`/storage/${product.primary_image}`}
+                                                                src={`${product.primary_image_url}`}
                                                                 alt={product.name}
                                                                 className="w-full h-full object-cover"
                                                                 onError={(e) => {
@@ -532,6 +582,20 @@ export default function Index({ products, filters, categories, sellers, brands, 
                                         </div>
                                     )}
 
+                                    {/* Delete Images Option */}
+                                    <div className="flex items-center gap-3 p-4 bg-gray-50 dark:bg-dark-body rounded-lg">
+                                        <input
+                                            type="checkbox"
+                                            id="clear_delete_images"
+                                            checked={clearForm.data.delete_images}
+                                            onChange={(e) => clearForm.setData('delete_images', e.target.checked)}
+                                            className="w-4 h-4 text-brand bg-gray-100 border-gray-300 rounded focus:ring-brand"
+                                        />
+                                        <label htmlFor="clear_delete_images" className="text-sm text-heading dark:text-white">
+                                            Also delete image files from disk (runs in background)
+                                        </label>
+                                    </div>
+
                                     {/* Warning Message */}
                                     <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
                                         <p className="text-sm text-red-700 dark:text-red-400">
@@ -574,6 +638,169 @@ export default function Index({ products, filters, categories, sellers, brands, 
                                     >
                                         {clearForm.processing && <span className="material-icons animate-spin text-lg">sync</span>}
                                         Delete Products
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Delete Confirmation Modal */}
+            {showDeleteModal && deleteTarget && (
+                <div className="fixed inset-0 z-50 overflow-y-auto">
+                    <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0">
+                        <div className="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" onClick={() => setShowDeleteModal(false)} />
+
+                        <div className="relative inline-block w-full max-w-md p-6 overflow-hidden text-left align-middle transition-all transform bg-white dark:bg-dark-card rounded-xl shadow-xl">
+                            <div className="flex items-center justify-between mb-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                                        <span className="material-icons text-red-600">delete</span>
+                                    </div>
+                                    <h3 className="text-lg font-semibold text-heading dark:text-white">
+                                        Delete {deleteTarget.type === 'single' ? 'Product' : 'Products'}
+                                    </h3>
+                                </div>
+                                <button
+                                    onClick={() => setShowDeleteModal(false)}
+                                    className="text-gray-400 hover:text-gray-600"
+                                >
+                                    <span className="material-icons">close</span>
+                                </button>
+                            </div>
+
+                            <p className="text-body mb-4">
+                                {deleteTarget.type === 'single'
+                                    ? `Are you sure you want to delete "${deleteTarget.product.name}"?`
+                                    : `Are you sure you want to delete ${deleteTarget.ids.length} products?`
+                                }
+                            </p>
+
+                            {/* Delete Images Option */}
+                            <div className="flex items-center gap-3 p-4 bg-gray-50 dark:bg-dark-body rounded-lg mb-4">
+                                <input
+                                    type="checkbox"
+                                    id="delete_images_checkbox"
+                                    checked={deleteImages}
+                                    onChange={(e) => setDeleteImages(e.target.checked)}
+                                    className="w-4 h-4 text-brand bg-gray-100 border-gray-300 rounded focus:ring-brand"
+                                />
+                                <label htmlFor="delete_images_checkbox" className="text-sm text-heading dark:text-white">
+                                    Also delete image files from disk (runs in background)
+                                </label>
+                            </div>
+
+                            <div className="flex items-center justify-end gap-3">
+                                <button
+                                    onClick={() => setShowDeleteModal(false)}
+                                    className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-heading rounded-lg font-medium text-sm transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={confirmDelete}
+                                    className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium text-sm transition-colors"
+                                >
+                                    Delete
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Clean Orphaned Images Modal */}
+            {showOrphanModal && (
+                <div className="fixed inset-0 z-50 overflow-y-auto">
+                    <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0">
+                        <div className="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" onClick={() => setShowOrphanModal(false)} />
+
+                        <div className="relative inline-block w-full max-w-md p-6 overflow-hidden text-left align-middle transition-all transform bg-white dark:bg-dark-card rounded-xl shadow-xl">
+                            <div className="flex items-center justify-between mb-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
+                                        <span className="material-icons text-orange-600">cleaning_services</span>
+                                    </div>
+                                    <h3 className="text-lg font-semibold text-heading dark:text-white">Clean Orphaned Images</h3>
+                                </div>
+                                <button
+                                    onClick={() => setShowOrphanModal(false)}
+                                    className="text-gray-400 hover:text-gray-600"
+                                >
+                                    <span className="material-icons">close</span>
+                                </button>
+                            </div>
+
+                            <form onSubmit={handleOrphanCleanup}>
+                                <div className="space-y-4">
+                                    <p className="text-body">
+                                        This will scan the storage for image files that are no longer associated with any product
+                                        and delete them to free up disk space. This runs as a background task.
+                                    </p>
+
+                                    <div className="p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
+                                        <p className="text-sm text-orange-700 dark:text-orange-400">
+                                            <strong>What gets cleaned:</strong>
+                                        </p>
+                                        <ul className="text-sm text-orange-700 dark:text-orange-400 list-disc ml-5 mt-1">
+                                            <li>Product directories for deleted products</li>
+                                            <li>Image files not referenced in the database</li>
+                                        </ul>
+                                    </div>
+
+                                    {/* Force Mode Option */}
+                                    <div className="flex items-start gap-3 p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
+                                        <input
+                                            type="checkbox"
+                                            id="force_cleanup"
+                                            checked={orphanForm.data.force}
+                                            onChange={(e) => orphanForm.setData('force', e.target.checked)}
+                                            className="w-4 h-4 mt-0.5 text-red-600 bg-gray-100 border-gray-300 rounded focus:ring-red-500"
+                                        />
+                                        <div>
+                                            <label htmlFor="force_cleanup" className="text-sm font-medium text-red-700 dark:text-red-400">
+                                                Force mode (aggressive)
+                                            </label>
+                                            <p className="text-xs text-red-600 dark:text-red-400 mt-1">
+                                                Also delete images for soft-deleted products. Use this if you've permanently cleared products and want to reclaim disk space.
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* Password Confirmation */}
+                                    <div>
+                                        <label className="block text-sm font-medium text-heading dark:text-white mb-2">
+                                            Enter your password to confirm
+                                        </label>
+                                        <input
+                                            type="password"
+                                            value={orphanForm.data.password}
+                                            onChange={(e) => orphanForm.setData('password', e.target.value)}
+                                            className={`w-full px-4 py-2.5 bg-gray-100 dark:bg-dark-body border-0 rounded-lg text-sm focus:ring-2 focus:ring-brand ${orphanForm.errors.password ? 'ring-2 ring-red-500' : ''}`}
+                                            placeholder="Enter your password"
+                                        />
+                                        {orphanForm.errors.password && (
+                                            <p className="mt-1 text-sm text-red-500">{orphanForm.errors.password}</p>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center justify-end gap-3 mt-6">
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowOrphanModal(false)}
+                                        className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-heading rounded-lg font-medium text-sm transition-colors"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={orphanForm.processing}
+                                        className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-medium text-sm transition-colors disabled:opacity-50 inline-flex items-center gap-2"
+                                    >
+                                        {orphanForm.processing && <span className="material-icons animate-spin text-lg">sync</span>}
+                                        Start Cleanup
                                     </button>
                                 </div>
                             </form>
