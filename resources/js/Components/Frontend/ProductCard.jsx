@@ -51,20 +51,16 @@ export default function ProductCard({ product, variant = 'default', className = 
     };
 
     const {
-        id = 1,
-        name = 'Product Name',
-        slug = 'product-name',
+        id,
+        name = '',
+        slug = '',
         primary_image,
-        image = '/images/frontend/shop/product-1-1.jpg',
         category,
         seller,
         rating = 0,
         reviews_count = 0,
-        reviews = 0,
-        price,
-        currentPrice = 28.85,
+        price = 0,
         compare_price,
-        oldPrice = null,
         is_in_stock = true,
         is_new = false,
         is_featured = false,
@@ -79,19 +75,12 @@ export default function ProductCard({ product, variant = 'default', className = 
 
     // Handle image - use SVG data URI as final fallback to prevent infinite loops
     const placeholderSvg = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"%3E%3Crect fill="%23f5f5f5" width="200" height="200"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" fill="%23999" font-family="sans-serif" font-size="12"%3ENo Image%3C/text%3E%3C/svg%3E';
-    const productImage = imageError ? placeholderSvg : (primary_image || image || placeholderSvg);
-
-    // Handle price
-    const displayPrice = price || currentPrice || 0;
-    const displayOldPrice = compare_price || oldPrice;
-
-    // Handle reviews count
-    const reviewCount = reviews_count || reviews || 0;
+    const productImage = imageError ? placeholderSvg : (primary_image || placeholderSvg);
 
     // Calculate discount
-    const hasDiscount = displayOldPrice && displayOldPrice > displayPrice;
+    const hasDiscount = compare_price && compare_price > price;
     const discountPercent = hasDiscount
-        ? Math.round(((displayOldPrice - displayPrice) / displayOldPrice) * 100)
+        ? Math.round(((compare_price - price) / compare_price) * 100)
         : 0;
 
     return (
@@ -180,7 +169,7 @@ export default function ProductCard({ product, variant = 'default', className = 
                     <div className="flex items-center gap-1.5 mb-2">
                         <StarRating rating={rating} size="sm" showCount={false} />
                         <span className="text-[11px] text-muted">
-                            ({reviewCount})
+                            ({reviews_count})
                         </span>
                     </div>
                 )}
@@ -196,11 +185,11 @@ export default function ProductCard({ product, variant = 'default', className = 
                 <div className="flex items-center justify-between gap-2 mt-auto">
                     <div className="flex flex-col">
                         <span className="text-base font-bold text-heading">
-                            {format(displayPrice)}
+                            {format(price)}
                         </span>
                         {hasDiscount && (
                             <span className="text-xs text-muted line-through">
-                                {format(displayOldPrice)}
+                                {format(compare_price)}
                             </span>
                         )}
                     </div>

@@ -18,14 +18,14 @@ class VendorController extends Controller
     {
         $query = Seller::with(['country:id,name', 'user:id,name'])
             ->active()
-            ->withCount(['products' => fn($q) => $q->active()->inStock()]);
+            ->withCount(['products' => fn ($q) => $q->active()->inStock()]);
 
         // Search
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('shop_name', 'ilike', "%{$search}%")
-                  ->orWhere('description', 'ilike', "%{$search}%");
+                    ->orWhere('description', 'ilike', "%{$search}%");
             });
         }
 
@@ -47,16 +47,16 @@ class VendorController extends Controller
                 break;
         }
 
-        $vendors = $query->paginate(12)->through(fn($seller) => $this->transformSeller($seller));
+        $vendors = $query->paginate(12)->through(fn ($seller) => $this->transformSeller($seller));
 
         // Featured vendors for sidebar
         $featuredVendors = Seller::active()
             ->featured()
-            ->withCount(['products' => fn($q) => $q->active()->inStock()])
+            ->withCount(['products' => fn ($q) => $q->active()->inStock()])
             ->orderBy('rating', 'desc')
             ->take(5)
             ->get()
-            ->map(fn($seller) => $this->transformSeller($seller));
+            ->map(fn ($seller) => $this->transformSeller($seller));
 
         return Inertia::render('Frontend/Vendors', [
             'vendors' => $vendors,
@@ -124,19 +124,19 @@ class VendorController extends Controller
         }
 
         $products = $query->paginate($request->get('per_page', 12))
-            ->through(fn($product) => $this->transformProduct($product));
+            ->through(fn ($product) => $product->toCardArray());
 
         // Categories for this seller
         $categories = Category::whereHas('products', function ($q) use ($seller) {
-                $q->where('seller_id', $seller->id)->active()->inStock();
-            })
+            $q->where('seller_id', $seller->id)->active()->inStock();
+        })
             ->withCount(['products' => function ($q) use ($seller) {
                 $q->where('seller_id', $seller->id)->active()->inStock();
             }])
             ->active()
             ->orderBy('name')
             ->get()
-            ->map(fn($cat) => [
+            ->map(fn ($cat) => [
                 'id' => $cat->id,
                 'name' => $cat->name,
                 'slug' => $cat->slug,
@@ -154,7 +154,7 @@ class VendorController extends Controller
             ->inRandomOrder()
             ->take(4)
             ->get()
-            ->map(fn($product) => $this->transformProduct($product));
+            ->map->toCardArray();
 
         return Inertia::render('Frontend/VendorDetails', [
             'vendor' => $this->transformSeller($seller, true),
@@ -199,32 +199,5 @@ class VendorController extends Controller
         }
 
         return $data;
-    }
-
-    /**
-     * Transform product for frontend display
-     */
-    protected function transformProduct(Product $product): array
-    {
-        return [
-            'id' => $product->id,
-            'name' => $product->name,
-            'slug' => $product->slug,
-            'short_description' => $product->short_description,
-            'price' => $product->display_price,
-            'compare_price' => $product->display_compare_price,
-            'is_on_sale' => $product->is_on_sale,
-            'discount_percentage' => $product->discount_percentage,
-            'is_featured' => $product->is_featured,
-            'is_new' => $product->is_new,
-            'rating' => $product->rating ?? 0,
-            'reviews_count' => $product->reviews_count ?? 0,
-            'primary_image' => $product->primary_image_url,
-            'category' => $product->category ? [
-                'id' => $product->category->id,
-                'name' => $product->category->name,
-                'slug' => $product->category->slug,
-            ] : null,
-        ];
     }
 }

@@ -168,7 +168,7 @@ export default function Cart({ cart }) {
 
                     <div className="flex flex-col lg:flex-row gap-8">
                         {/* Cart Items */}
-                        <div className="flex-1">
+                        <div className="flex-1 min-w-0">
                             {cartItems.length === 0 ? (
                                 <EmptyState
                                     icon="cart"
@@ -184,116 +184,143 @@ export default function Cart({ cart }) {
                                     {cartItems.map((item) => (
                                         <div
                                             key={item.id}
-                                            className={`bg-surface rounded-xl border border-border-light p-4 lg:p-6 transition-opacity ${
+                                            className={`bg-surface rounded-xl border border-border-light p-4 lg:p-6 transition-opacity overflow-hidden ${
                                                 updatingItems[item.id] ? 'opacity-60' : ''
                                             }`}
                                         >
-                                            <div className="flex gap-4 lg:gap-6">
-                                                {/* Product Image */}
-                                                <div className="w-24 h-24 lg:w-28 lg:h-28 flex-shrink-0 bg-surface-raised rounded-lg overflow-hidden">
-                                                    {item.image ? (
-                                                        <img
-                                                            src={`/storage/${item.image}`}
-                                                            alt={item.name}
-                                                            className="w-full h-full object-cover"
-                                                        />
-                                                    ) : (
-                                                        <div className="w-full h-full flex items-center justify-center">
-                                                            <svg className="w-8 h-8 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                                            </svg>
-                                                        </div>
-                                                    )}
+                                            {item.unavailable ? (
+                                                /* Unavailable Product */
+                                                <div className="flex gap-4 lg:gap-6 items-center">
+                                                    <div className="w-24 h-24 lg:w-28 lg:h-28 flex-shrink-0 bg-surface-raised rounded-lg overflow-hidden flex items-center justify-center">
+                                                        <svg className="w-8 h-8 text-muted/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                                                        </svg>
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-muted/60 italic text-sm lg:text-base">
+                                                            Product data not available
+                                                        </p>
+                                                    </div>
+                                                    <button
+                                                        onClick={() => removeItem(item.id)}
+                                                        disabled={updatingItems[item.id]}
+                                                        className="text-muted hover:text-danger transition-colors disabled:opacity-50 p-2"
+                                                        title="Remove item"
+                                                    >
+                                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                        </svg>
+                                                    </button>
                                                 </div>
-
-                                                {/* Product Details */}
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
-                                                        <div className="flex-1 min-w-0">
-                                                            <h3 className="font-semibold text-heading text-base lg:text-lg mb-1 truncate">
-                                                                {item.name}
-                                                            </h3>
-                                                            {item.variant_name && (
-                                                                <p className="text-sm text-muted mb-1">
-                                                                    {item.variant_name}
-                                                                </p>
-                                                            )}
-                                                            {item.seller_name && (
-                                                                <p className="text-sm text-muted">
-                                                                    Sold by: <span className="text-brand">{item.seller_name}</span>
-                                                                </p>
-                                                            )}
-                                                            {!item.in_stock && (
-                                                                <p className="text-sm text-danger mt-1 font-medium">Out of stock</p>
-                                                            )}
-                                                        </div>
-
-                                                        {/* Price - Desktop */}
-                                                        <div className="hidden lg:block text-right">
-                                                            <p className="text-lg font-bold text-heading">
-                                                                {format(item.line_total)}
-                                                            </p>
-                                                            <p className="text-sm text-muted">
-                                                                {format(item.unit_price)} each
-                                                            </p>
-                                                        </div>
+                                            ) : (
+                                                /* Available Product */
+                                                <div className="flex gap-4 lg:gap-6">
+                                                    {/* Product Image */}
+                                                    <div className="w-24 h-24 lg:w-28 lg:h-28 flex-shrink-0 bg-surface-raised rounded-lg overflow-hidden">
+                                                        {item.image ? (
+                                                            <img
+                                                                src={`/storage/${item.image}`}
+                                                                alt={item.name}
+                                                                className="w-full h-full object-cover"
+                                                            />
+                                                        ) : (
+                                                            <div className="w-full h-full flex items-center justify-center">
+                                                                <svg className="w-8 h-8 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                                </svg>
+                                                            </div>
+                                                        )}
                                                     </div>
 
-                                                    {/* Quantity & Actions */}
-                                                    <div className="flex items-center justify-between mt-4">
-                                                        <div className="flex items-center gap-4">
-                                                            {/* Quantity Selector */}
-                                                            <div className="flex items-center border border-border rounded-lg overflow-hidden">
+                                                    {/* Product Details */}
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+                                                            <div className="flex-1 min-w-0">
+                                                                <h3 className="font-semibold text-heading text-base lg:text-lg mb-1 truncate">
+                                                                    {item.name}
+                                                                </h3>
+                                                                {item.variant_name && (
+                                                                    <p className="text-sm text-muted mb-1">
+                                                                        {item.variant_name}
+                                                                    </p>
+                                                                )}
+                                                                {item.seller_name && (
+                                                                    <p className="text-sm text-muted">
+                                                                        Sold by: <span className="text-brand">{item.seller_name}</span>
+                                                                    </p>
+                                                                )}
+                                                                {!item.in_stock && (
+                                                                    <p className="text-sm text-danger mt-1 font-medium">Out of stock</p>
+                                                                )}
+                                                            </div>
+
+                                                            {/* Price - Desktop */}
+                                                            <div className="hidden lg:block text-right">
+                                                                <p className="text-lg font-bold text-heading">
+                                                                    {format(item.line_total)}
+                                                                </p>
+                                                                <p className="text-sm text-muted">
+                                                                    {format(item.unit_price)} each
+                                                                </p>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Quantity & Actions */}
+                                                        <div className="flex items-center justify-between mt-4">
+                                                            <div className="flex items-center gap-4">
+                                                                {/* Quantity Selector */}
+                                                                <div className="flex items-center border border-border rounded-lg overflow-hidden">
+                                                                    <button
+                                                                        onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                                                                        disabled={updatingItems[item.id] || item.quantity <= 1}
+                                                                        className="w-9 h-9 flex items-center justify-center text-heading hover:bg-surface-raised transition-colors disabled:opacity-40"
+                                                                    >
+                                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                                                                        </svg>
+                                                                    </button>
+                                                                    <span className="w-10 h-9 flex items-center justify-center text-heading font-semibold text-sm border-x border-border">
+                                                                        {item.quantity}
+                                                                    </span>
+                                                                    <button
+                                                                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                                                                        disabled={updatingItems[item.id]}
+                                                                        className="w-9 h-9 flex items-center justify-center text-heading hover:bg-surface-raised transition-colors disabled:opacity-40"
+                                                                    >
+                                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                                                        </svg>
+                                                                    </button>
+                                                                </div>
+
+                                                                {/* Remove Button */}
                                                                 <button
-                                                                    onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                                                                    disabled={updatingItems[item.id] || item.quantity <= 1}
-                                                                    className="w-9 h-9 flex items-center justify-center text-heading hover:bg-surface-raised transition-colors disabled:opacity-40"
+                                                                    onClick={() => removeItem(item.id)}
+                                                                    disabled={updatingItems[item.id]}
+                                                                    className="text-muted hover:text-danger transition-colors disabled:opacity-50 p-2"
+                                                                    title="Remove item"
                                                                 >
-                                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                                                     </svg>
                                                                 </button>
-                                                                <span className="w-10 h-9 flex items-center justify-center text-heading font-semibold text-sm border-x border-border">
-                                                                    {item.quantity}
-                                                                </span>
-                                                                <button
-                                                                    onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                                                                    disabled={updatingItems[item.id]}
-                                                                    className="w-9 h-9 flex items-center justify-center text-heading hover:bg-surface-raised transition-colors disabled:opacity-40"
-                                                                >
-                                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                                                                    </svg>
+
+                                                                {/* Save for Later */}
+                                                                <button className="text-sm text-muted hover:text-brand transition-colors underline hidden sm:block">
+                                                                    Save for Later
                                                                 </button>
                                                             </div>
 
-                                                            {/* Remove Button */}
-                                                            <button
-                                                                onClick={() => removeItem(item.id)}
-                                                                disabled={updatingItems[item.id]}
-                                                                className="text-muted hover:text-danger transition-colors disabled:opacity-50 p-2"
-                                                                title="Remove item"
-                                                            >
-                                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                                </svg>
-                                                            </button>
-
-                                                            {/* Save for Later */}
-                                                            <button className="text-sm text-muted hover:text-brand transition-colors underline hidden sm:block">
-                                                                Save for Later
-                                                            </button>
-                                                        </div>
-
-                                                        {/* Price - Mobile */}
-                                                        <div className="lg:hidden text-right">
-                                                            <p className="font-bold text-heading">
-                                                                {format(item.line_total)}
-                                                            </p>
+                                                            {/* Price - Mobile */}
+                                                            <div className="lg:hidden text-right">
+                                                                <p className="font-bold text-heading">
+                                                                    {format(item.line_total)}
+                                                                </p>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
-                                            </div>
+                                            )}
                                         </div>
                                     ))}
                                 </div>

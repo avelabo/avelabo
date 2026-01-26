@@ -113,35 +113,8 @@ class ShopController extends Controller
         $perPage = min($request->get('per_page', 12), 48);
         $products = $query->paginate($perPage)->withQueryString();
 
-        // Transform products to include display prices
-        $products->through(function ($product) {
-            return [
-                'id' => $product->id,
-                'name' => $product->name,
-                'slug' => $product->slug,
-                'short_description' => $product->short_description,
-                'price' => $product->display_price,
-                'compare_price' => $product->display_compare_price,
-                'is_on_sale' => $product->is_on_sale,
-                'discount_percentage' => $product->discount_percentage,
-                'is_featured' => $product->is_featured,
-                'rating' => $product->rating,
-                'reviews_count' => $product->reviews_count,
-                'stock_quantity' => $product->stock_quantity,
-                'is_in_stock' => $product->isInStock(),
-                'primary_image' => $product->primary_image_url,
-                'category' => $product->category ? [
-                    'id' => $product->category->id,
-                    'name' => $product->category->name,
-                    'slug' => $product->category->slug,
-                ] : null,
-                'seller' => $product->seller ? [
-                    'id' => $product->seller->id,
-                    'name' => $product->seller->display_name,
-                    'has_storefront' => $product->seller->has_storefront,
-                ] : null,
-            ];
-        });
+        // Transform products for card display
+        $products->through(fn ($product) => $product->toCardArray());
 
         // Get categories for sidebar with active product counts
         $categories = Category::with(['children' => function ($query) {
@@ -203,16 +176,7 @@ class ShopController extends Controller
             ->featured()
             ->take(3)
             ->get()
-            ->map(function ($product) {
-                return [
-                    'id' => $product->id,
-                    'name' => $product->name,
-                    'slug' => $product->slug,
-                    'price' => $product->display_price,
-                    'rating' => $product->rating,
-                    'primary_image' => $product->primary_image_url,
-                ];
-            });
+            ->map->toCardArray();
 
         // Current category info
         $currentCategory = null;
@@ -378,17 +342,7 @@ class ShopController extends Controller
             ->inStock()
             ->take(4)
             ->get()
-            ->map(function ($p) {
-                return [
-                    'id' => $p->id,
-                    'name' => $p->name,
-                    'slug' => $p->slug,
-                    'price' => $p->display_price,
-                    'compare_price' => $p->display_compare_price,
-                    'rating' => $p->rating,
-                    'primary_image' => $p->primary_image_url,
-                ];
-            });
+            ->map->toCardArray();
 
         // Increment view count
         $product->increment('views_count');

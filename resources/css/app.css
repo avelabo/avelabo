@@ -1004,27 +1004,9 @@ label {
 }
 
 .slick-dots li.slick-active button {
-  background: #3bb77e;
+  background: var(--color-brand);
   width: 30px;
   border-radius: 6px;
-}
-
-/* Custom Scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: #f1f1f1;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #3bb77e;
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #29a56c;
 }
 
 /* News Flash Ticker */
@@ -1102,7 +1084,7 @@ label {
 
 .deal-progress .progress-bar {
   height: 100%;
-  background: linear-gradient(90deg, #3bb77e, #29a56c);
+  background: linear-gradient(90deg, var(--color-brand-2), var(--color-brand));
   border-radius: 4px;
   transition: width 0.3s ease;
 }
@@ -1118,8 +1100,8 @@ label {
 .countdown-amount {
   font-size: 24px;
   font-weight: 700;
-  color: #3bb77e;
-  background: #def9ec;
+  color: var(--color-brand);
+  background: var(--color-brand-2-light);
   padding: 10px 15px;
   border-radius: 5px;
   min-width: 60px;
@@ -1167,7 +1149,7 @@ label {
 }
 
 .quantity-selector button:hover {
-  background: #3bb77e;
+  background: var(--color-brand);
   color: #fff;
 }
 

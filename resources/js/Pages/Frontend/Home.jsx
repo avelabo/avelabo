@@ -1,7 +1,7 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import FrontendLayout from '@/Layouts/FrontendLayout';
 import HeroSlider from '@/Components/Frontend/HeroSlider';
-import CategorySlider from '@/Components/Frontend/CategorySlider';
+import BrandSlider from '@/Components/Frontend/BrandSlider';
 import ProductCard from '@/Components/Frontend/ProductCard';
 import { formatCurrency } from '@/utils/currency';
 import { useState, useEffect } from 'react';
@@ -12,7 +12,7 @@ export default function Home({
     popularProducts = [],
     newProducts = [],
     saleProducts = [],
-    categories = [],
+    featuredBrands = [],
     bestSellers = [],
     dailyDeals = [],
 }) {
@@ -85,11 +85,11 @@ export default function Home({
                 <section className="mb-8 lg:mb-10 pt-4">
                     <HeroSlider sliders={sliders} />
                 </section>
-                {/* Featured Categories */}
-                {categories.length > 0 && (
+                {/* Featured Brands */}
+                {featuredBrands.length > 0 && (
                     <section className="mb-10 lg:mb-14">
                         <div className="flex items-center justify-between mb-6">
-                            <h2 className="text-xl lg:text-2xl font-bold text-heading">Featured Categories</h2>
+                            <h2 className="text-xl lg:text-2xl font-bold text-heading">Featured Brands</h2>
                             <Link
                                 href={route('shop')}
                                 className="text-sm font-medium text-brand hover:text-brand-dark transition-colors flex items-center gap-1"
@@ -100,7 +100,7 @@ export default function Home({
                                 </svg>
                             </Link>
                         </div>
-                        <CategorySlider categories={categories} />
+                        <BrandSlider brands={featuredBrands} />
                     </section>
                 )}
 

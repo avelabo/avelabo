@@ -39,13 +39,13 @@ class PageController extends Controller
         $content = $page?->content ?? $this->getDefaultPurchaseGuideContent();
 
         // Get sidebar categories
-        $categories = Category::withCount(['products' => fn($q) => $q->active()->inStock()])
+        $categories = Category::withCount(['products' => fn ($q) => $q->active()->inStock()])
             ->whereNull('parent_id')
             ->active()
             ->ordered()
             ->take(5)
             ->get()
-            ->map(fn($cat) => [
+            ->map(fn ($cat) => [
                 'id' => $cat->id,
                 'name' => $cat->name,
                 'slug' => $cat->slug,
@@ -60,14 +60,7 @@ class PageController extends Controller
             ->orderBy('views_count', 'desc')
             ->take(4)
             ->get()
-            ->map(fn($product) => [
-                'id' => $product->id,
-                'name' => $product->name,
-                'slug' => $product->slug,
-                'price' => $product->display_price,
-                'image' => $product->primary_image_url,
-                'rating' => $product->rating ?? 0,
-            ]);
+            ->map->toCardArray();
 
         return Inertia::render('Frontend/PurchaseGuide', [
             'pageContent' => [
@@ -91,13 +84,13 @@ class PageController extends Controller
         $content = $page?->content ?? $this->getDefaultPrivacyPolicyContent();
 
         // Get sidebar categories
-        $categories = Category::withCount(['products' => fn($q) => $q->active()->inStock()])
+        $categories = Category::withCount(['products' => fn ($q) => $q->active()->inStock()])
             ->whereNull('parent_id')
             ->active()
             ->ordered()
             ->take(5)
             ->get()
-            ->map(fn($cat) => [
+            ->map(fn ($cat) => [
                 'id' => $cat->id,
                 'name' => $cat->name,
                 'slug' => $cat->slug,

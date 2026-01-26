@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Observers\ProductObserver;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -10,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Laravel\Scout\Searchable;
 
+#[ObservedBy(ProductObserver::class)]
 class Product extends Model
 {
     use HasFactory, Searchable, SoftDeletes;
@@ -189,14 +192,18 @@ class Product extends Model
     }
 
     /**
-     * Get primary image URL (returns the path for storage, not full URL)
+     * Get primary image URL (full URL for frontend display)
      */
-    public function getPrimaryImagePathAttribute(): ?string
+    public function getPrimaryImageUrlAttribute(): ?string
     {
         $primaryImage = $this->images->where('is_primary', true)->first()
             ?? $this->images->first();
 
-        return $primaryImage?->path;
+        if (! $primaryImage?->path) {
+            return null;
+        }
+
+        return \Illuminate\Support\Facades\Storage::url($primaryImage->path);
     }
 
     /**
@@ -222,6 +229,43 @@ class Product extends Model
         $displayPrice = $this->display_price;
 
         return (int) round((($comparePrice - $displayPrice) / $comparePrice) * 100);
+    }
+
+    /**
+     * Transform product to array for ProductCard component display.
+     * This is the single source of truth for product card data.
+     *
+     * @return array<string, mixed>
+     */
+    public function toCardArray(): array
+    {
+        return [
+            'id' => $this->id,
+            'name' => $this->name,
+            'slug' => $this->slug,
+            'short_description' => $this->short_description,
+            'price' => $this->display_price,
+            'compare_price' => $this->display_compare_price,
+            'is_on_sale' => $this->is_on_sale,
+            'discount_percentage' => $this->discount_percentage,
+            'is_featured' => $this->is_featured,
+            'is_new' => $this->is_new ?? false,
+            'rating' => $this->rating ?? 0,
+            'reviews_count' => $this->reviews_count ?? 0,
+            'stock_quantity' => $this->stock_quantity,
+            'is_in_stock' => $this->isInStock(),
+            'primary_image' => $this->primary_image_url,
+            'category' => $this->relationLoaded('category') && $this->category ? [
+                'id' => $this->category->id,
+                'name' => $this->category->name,
+                'slug' => $this->category->slug,
+            ] : null,
+            'seller' => $this->relationLoaded('seller') && $this->seller ? [
+                'id' => $this->seller->id,
+                'name' => $this->seller->display_name,
+                'has_storefront' => $this->seller->has_storefront,
+            ] : null,
+        ];
     }
 
     /**

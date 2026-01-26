@@ -125,6 +125,12 @@ class CartService
         $product = $cartItem->product;
         $variant = $cartItem->variant;
 
+        // Handle unavailable products
+        if (! $product) {
+            $cartItem->delete();
+            throw new \Exception('Product is no longer available');
+        }
+
         $this->validateStock($product, $variant, $quantity);
 
         // Update price in case it changed
@@ -209,6 +215,27 @@ class CartService
             $product = $item->product;
             $variant = $item->variant;
 
+            // Handle unavailable products (deleted or missing)
+            if (! $product) {
+                $itemsData[] = [
+                    'id' => $item->id,
+                    'product_id' => $item->product_id,
+                    'variant_id' => $item->variant_id,
+                    'name' => null,
+                    'variant_name' => null,
+                    'image' => null,
+                    'unit_price' => 0,
+                    'quantity' => $item->quantity,
+                    'line_total' => 0,
+                    'seller_id' => null,
+                    'seller_name' => null,
+                    'in_stock' => false,
+                    'unavailable' => true,
+                ];
+
+                continue;
+            }
+
             // Get current display price
             $unitPrice = $variant
                 ? $this->priceService->getVariantPrice($variant)['amount']
@@ -230,6 +257,7 @@ class CartService
                 'seller_id' => $product->seller_id,
                 'seller_name' => $product->seller?->business_name,
                 'in_stock' => $this->isInStock($product, $variant, $item->quantity),
+                'unavailable' => false,
             ];
         }
 
@@ -257,6 +285,19 @@ class CartService
         $errors = [];
 
         foreach ($cart->items as $item) {
+            // Handle unavailable products
+            if (! $item->product) {
+                $errors[] = [
+                    'item_id' => $item->id,
+                    'product_name' => 'Unavailable Product',
+                    'requested' => $item->quantity,
+                    'available' => 0,
+                    'unavailable' => true,
+                ];
+
+                continue;
+            }
+
             if (! $this->isInStock($item->product, $item->variant, $item->quantity)) {
                 $errors[] = [
                     'item_id' => $item->id,
@@ -331,6 +372,11 @@ class CartService
         foreach ($cart->items as $item) {
             $product = $item->product;
             $variant = $item->variant;
+
+            // Skip unavailable products
+            if (! $product) {
+                continue;
+            }
 
             $unitPrice = $variant
                 ? $this->priceService->getVariantPrice($variant)['amount']

@@ -3,10 +3,9 @@
 namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
-use App\Models\Category;
+use App\Models\Brand;
 use App\Models\Product;
 use App\Models\Slider;
-use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class HomeController extends Controller
@@ -29,7 +28,7 @@ class HomeController extends Controller
             ->latest()
             ->take(10)
             ->get()
-            ->map(fn($product) => $this->transformProduct($product));
+            ->map->toCardArray();
 
         // Popular products (most viewed or sold)
         $popularProducts = Product::with(['category:id,name,slug', 'images'])
@@ -38,7 +37,7 @@ class HomeController extends Controller
             ->orderBy('views_count', 'desc')
             ->take(10)
             ->get()
-            ->map(fn($product) => $this->transformProduct($product));
+            ->map->toCardArray();
 
         // New arrivals
         $newProducts = Product::with(['category:id,name,slug', 'images'])
@@ -47,7 +46,7 @@ class HomeController extends Controller
             ->latest()
             ->take(10)
             ->get()
-            ->map(fn($product) => $this->transformProduct($product));
+            ->map->toCardArray();
 
         // On sale products
         $saleProducts = Product::with(['category:id,name,slug', 'images'])
@@ -58,32 +57,23 @@ class HomeController extends Controller
             ->orderBy('views_count', 'desc')
             ->take(10)
             ->get()
-            ->map(fn($product) => $this->transformProduct($product));
+            ->map->toCardArray();
 
-        // Featured categories with product count
-        $categories = Category::with(['children' => function ($query) {
-                $query->active()->ordered()->take(6);
-            }])
-            ->withCount(['products' => function ($query) {
-                $query->active()->inStock();
-            }])
-            ->whereNull('parent_id')
+        // Featured brands with product count
+        $featuredBrands = Brand::withCount(['products as active_products_count' => function ($query) {
+            $query->active()->inStock();
+        }])
             ->active()
-            ->ordered()
-            ->take(10)
+            ->featured()
+            ->orderByDesc('active_products_count')
+            ->take(12)
             ->get()
-            ->map(fn($category) => [
-                'id' => $category->id,
-                'name' => $category->name,
-                'slug' => $category->slug,
-                'icon' => $category->icon,
-                'image' => $category->image,
-                'products_count' => $category->products_count,
-                'children' => $category->children->map(fn($child) => [
-                    'id' => $child->id,
-                    'name' => $child->name,
-                    'slug' => $child->slug,
-                ]),
+            ->map(fn ($brand) => [
+                'id' => $brand->id,
+                'name' => $brand->name,
+                'slug' => $brand->slug,
+                'logo' => $brand->logo,
+                'products_count' => $brand->active_products_count,
             ]);
 
         // Best selling products
@@ -93,7 +83,7 @@ class HomeController extends Controller
             ->orderBy('sales_count', 'desc')
             ->take(6)
             ->get()
-            ->map(fn($product) => $this->transformProduct($product));
+            ->map->toCardArray();
 
         // Daily deals (random featured on-sale products)
         $dailyDeals = Product::with(['category:id,name,slug', 'images'])
@@ -104,7 +94,10 @@ class HomeController extends Controller
             ->inRandomOrder()
             ->take(4)
             ->get()
-            ->map(fn($product) => $this->transformProduct($product, true));
+            ->map(fn ($product) => [
+                ...$product->toCardArray(),
+                'sale_ends_at' => $product->sale_ends_at?->toIso8601String(),
+            ]);
 
         return Inertia::render('Frontend/Home', [
             'sliders' => $sliders,
@@ -112,44 +105,9 @@ class HomeController extends Controller
             'popularProducts' => $popularProducts,
             'newProducts' => $newProducts,
             'saleProducts' => $saleProducts,
-            'categories' => $categories,
+            'featuredBrands' => $featuredBrands,
             'bestSellers' => $bestSellers,
             'dailyDeals' => $dailyDeals,
         ]);
-    }
-
-    /**
-     * Transform product data for frontend display
-     */
-    protected function transformProduct(Product $product, bool $includeDeadline = false): array
-    {
-        $data = [
-            'id' => $product->id,
-            'name' => $product->name,
-            'slug' => $product->slug,
-            'short_description' => $product->short_description,
-            'price' => $product->display_price,
-            'compare_price' => $product->display_compare_price,
-            'is_on_sale' => $product->is_on_sale,
-            'discount_percentage' => $product->discount_percentage,
-            'is_featured' => $product->is_featured,
-            'is_new' => $product->is_new,
-            'rating' => $product->rating ?? 0,
-            'reviews_count' => $product->reviews_count ?? 0,
-            'is_in_stock' => $product->isInStock(),
-            'primary_image' => $product->primary_image_url,
-            'category' => $product->category ? [
-                'id' => $product->category->id,
-                'name' => $product->category->name,
-                'slug' => $product->category->slug,
-            ] : null,
-        ];
-
-        // Add deadline for daily deals
-        if ($includeDeadline && $product->sale_ends_at) {
-            $data['sale_ends_at'] = $product->sale_ends_at->toIso8601String();
-        }
-
-        return $data;
     }
 }
