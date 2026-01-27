@@ -32,8 +32,8 @@ export default function ProductDetail({ product, relatedProducts }) {
         return product.price;
     };
 
-    const getComparePrice = () => {
-        return product.compare_price;
+    const getOriginalPrice = () => {
+        return product.has_discount ? product.original_price : null;
     };
 
     const isInStock = () => {
@@ -131,7 +131,7 @@ export default function ProductDetail({ product, relatedProducts }) {
                                 <div className="relative bg-surface-raised rounded-xl overflow-hidden mb-4 aspect-square">
                                     {/* Badges */}
                                     <div className="absolute top-4 left-4 z-10 flex flex-col gap-2">
-                                        {product.is_on_sale && (
+                                        {product.has_discount && (
                                             <span className="bg-danger text-white text-xs font-semibold px-3 py-1.5 rounded-md">
                                                 -{product.discount_percentage}%
                                             </span>
@@ -225,9 +225,9 @@ export default function ProductDetail({ product, relatedProducts }) {
                                 <span className="text-3xl font-bold text-heading">
                                     {format(getCurrentPrice())}
                                 </span>
-                                {getComparePrice() && getComparePrice() > getCurrentPrice() && (
+                                {getOriginalPrice() && (
                                     <span className="text-lg text-muted line-through">
-                                        {format(getComparePrice())}
+                                        {format(getOriginalPrice())}
                                     </span>
                                 )}
                             </div>

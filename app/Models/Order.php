@@ -34,6 +34,9 @@ class Order extends Model
         'delivered_at',
         'cancelled_at',
         'cancellation_reason',
+        'coupon_id',
+        'coupon_code',
+        'promotion_discount_amount',
     ];
 
     protected $casts = [
@@ -46,6 +49,7 @@ class Order extends Model
         'shipped_at' => 'datetime',
         'delivered_at' => 'datetime',
         'cancelled_at' => 'datetime',
+        'promotion_discount_amount' => 'decimal:2',
     ];
 
     public function user(): BelongsTo
@@ -61,6 +65,11 @@ class Order extends Model
     public function currency(): BelongsTo
     {
         return $this->belongsTo(Currency::class);
+    }
+
+    public function coupon(): BelongsTo
+    {
+        return $this->belongsTo(Coupon::class);
     }
 
     public function shippingAddress(): BelongsTo
@@ -150,7 +159,7 @@ class Order extends Model
 
     public function canBeCancelled(): bool
     {
-        return !$this->isCancelled() && !$this->isShipped();
+        return ! $this->isCancelled() && ! $this->isShipped();
     }
 
     protected static function boot()
@@ -159,7 +168,7 @@ class Order extends Model
 
         static::creating(function ($order) {
             if (empty($order->order_number)) {
-                $order->order_number = 'ORD-' . strtoupper(uniqid());
+                $order->order_number = 'ORD-'.strtoupper(uniqid());
             }
         });
     }

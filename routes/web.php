@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\BrandController as AdminBrandController;
 use App\Http\Controllers\Admin\CategoryController as AdminCategoryController;
 use App\Http\Controllers\Admin\ContactMessageController;
+use App\Http\Controllers\Admin\CouponController as AdminCouponController;
 use App\Http\Controllers\Admin\ImportDataSourceController;
 use App\Http\Controllers\Admin\ImportTaskController;
 use App\Http\Controllers\Admin\KycController;
@@ -10,6 +11,7 @@ use App\Http\Controllers\Admin\MarkupTemplateController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\PageContentController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
+use App\Http\Controllers\Admin\PromotionController as AdminPromotionController;
 use App\Http\Controllers\Admin\SellerController as AdminSellerController;
 use App\Http\Controllers\Admin\SettingsController as AdminSettingsController;
 use App\Http\Controllers\Admin\SliderController;
@@ -24,6 +26,7 @@ use App\Http\Controllers\Frontend\AccountController;
 use App\Http\Controllers\Frontend\CartController;
 use App\Http\Controllers\Frontend\CheckoutController;
 use App\Http\Controllers\Frontend\ContactController;
+use App\Http\Controllers\Frontend\CouponController as FrontendCouponController;
 use App\Http\Controllers\Frontend\HomeController;
 use App\Http\Controllers\Frontend\OrderController as CustomerOrderController;
 use App\Http\Controllers\Frontend\PageController;
@@ -34,6 +37,7 @@ use App\Http\Controllers\Frontend\VendorController;
 use App\Http\Controllers\Seller\DashboardController as SellerDashboardController;
 use App\Http\Controllers\Seller\OrderController as SellerOrderController;
 use App\Http\Controllers\Seller\ProductController as SellerProductController;
+use App\Http\Controllers\Seller\PromotionController as SellerPromotionController;
 use App\Http\Controllers\Seller\SellerRegistrationController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -68,6 +72,8 @@ Route::prefix('cart')->group(function () {
     Route::delete('/', [CartController::class, 'clear'])->name('cart.clear');
     Route::get('/count', [CartController::class, 'count'])->name('cart.count');
     Route::get('/data', [CartController::class, 'getCart'])->name('cart.data');
+    Route::post('/coupon', [FrontendCouponController::class, 'apply'])->name('cart.coupon.apply');
+    Route::delete('/coupon', [FrontendCouponController::class, 'remove'])->name('cart.coupon.remove');
 });
 
 Route::get('/wishlist', function () {
@@ -208,6 +214,10 @@ Route::prefix('seller')->name('seller.')->group(function () {
         // Products
         Route::resource('products', SellerProductController::class);
 
+        // Promotions
+        Route::resource('promotions', SellerPromotionController::class)->except(['show']);
+        Route::patch('/promotions/{promotion}/toggle-status', [SellerPromotionController::class, 'toggleStatus'])->name('promotions.toggle-status');
+
         // Orders
         Route::get('/orders', [SellerOrderController::class, 'index'])->name('orders.index');
         Route::get('/orders/{order}', [SellerOrderController::class, 'show'])->name('orders.show');
@@ -330,6 +340,14 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     // Tags
     Route::resource('tags', AdminTagController::class)->except(['show']);
     Route::patch('/tags/{tag}/toggle-status', [AdminTagController::class, 'toggleStatus'])->name('tags.toggle-status');
+
+    // Promotions
+    Route::resource('promotions', AdminPromotionController::class)->except(['show']);
+    Route::patch('/promotions/{promotion}/toggle-status', [AdminPromotionController::class, 'toggleStatus'])->name('promotions.toggle-status');
+
+    // Coupons
+    Route::resource('coupons', AdminCouponController::class)->except(['show']);
+    Route::patch('/coupons/{coupon}/toggle-status', [AdminCouponController::class, 'toggleStatus'])->name('coupons.toggle-status');
 
     // Reviews
     Route::get('/reviews', function () {

@@ -13,7 +13,7 @@ export default function Cart({ cart }) {
     const [loading, setLoading] = useState(false);
     const [updatingItems, setUpdatingItems] = useState({});
     const [couponCode, setCouponCode] = useState('');
-    const [appliedCoupon, setAppliedCoupon] = useState(null);
+    const [applyingCoupon, setApplyingCoupon] = useState(false);
 
     const updateQuantity = (itemId, newQuantity) => {
         if (newQuantity < 0 || updatingItems[itemId]) return;
@@ -73,10 +73,34 @@ export default function Cart({ cart }) {
 
     const applyCoupon = (e) => {
         e.preventDefault();
-        if (couponCode.trim()) {
-            setAppliedCoupon(couponCode);
-            toast.success(`Coupon "${couponCode}" applied!`);
-        }
+        if (!couponCode.trim() || applyingCoupon) return;
+
+        setApplyingCoupon(true);
+        router.post(route('cart.coupon.apply'), {
+            code: couponCode.trim(),
+        }, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setCouponCode('');
+                toast.success('Coupon applied!');
+            },
+            onError: (errors) => {
+                toast.error(errors?.error || errors?.code || 'Invalid coupon code');
+            },
+            onFinish: () => setApplyingCoupon(false),
+        });
+    };
+
+    const removeCoupon = () => {
+        router.delete(route('cart.coupon.remove'), {
+            preserveScroll: true,
+            onSuccess: () => {
+                toast.success('Coupon removed');
+            },
+            onError: () => {
+                toast.error('Failed to remove coupon');
+            },
+        });
     };
 
     const cartItems = cart?.items || [];
@@ -84,6 +108,10 @@ export default function Cart({ cart }) {
     const shipping = cart?.shipping || 0;
     const total = cart?.total || 0;
     const itemCount = cart?.item_count || 0;
+    const promotionDiscount = cart?.promotion_discount || 0;
+    const couponDiscount = cart?.coupon_discount || 0;
+    const discountTotal = cart?.discount_total || 0;
+    const appliedCoupon = cart?.coupon || null;
 
     // Calculate free shipping progress (example: free shipping over 50000 MWK)
     const freeShippingThreshold = 50000;
@@ -322,31 +350,45 @@ export default function Cart({ cart }) {
                                     <h2 className="text-lg font-bold text-heading mb-6">Order Summary</h2>
 
                                     {/* Coupon Code */}
-                                    <form onSubmit={applyCoupon} className="mb-6">
-                                        <div className="flex gap-2">
-                                            <input
-                                                type="text"
-                                                placeholder="Enter discount code"
-                                                value={couponCode}
-                                                onChange={(e) => setCouponCode(e.target.value)}
-                                                className="flex-1 px-4 py-3 border border-border rounded-lg text-sm outline-none focus:border-brand transition-colors"
-                                            />
-                                            <button
-                                                type="submit"
-                                                className="px-5 py-3 bg-brand-dark text-white text-sm font-semibold rounded-lg hover:bg-brand transition-colors"
-                                            >
-                                                Apply
-                                            </button>
-                                        </div>
-                                        {appliedCoupon && (
-                                            <p className="mt-2 text-sm text-success flex items-center gap-1">
-                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    {appliedCoupon ? (
+                                        <div className="mb-6 flex items-center justify-between bg-surface-raised rounded-lg px-4 py-3">
+                                            <div className="flex items-center gap-2 text-sm">
+                                                <svg className="w-4 h-4 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                                 </svg>
-                                                Coupon "{appliedCoupon}" applied
-                                            </p>
-                                        )}
-                                    </form>
+                                                <span className="font-medium text-heading">{appliedCoupon.code}</span>
+                                                <span className="text-success">-{format(appliedCoupon.discount_amount)}</span>
+                                            </div>
+                                            <button
+                                                onClick={removeCoupon}
+                                                className="text-muted hover:text-danger transition-colors"
+                                                title="Remove coupon"
+                                            >
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <form onSubmit={applyCoupon} className="mb-6">
+                                            <div className="flex gap-2">
+                                                <input
+                                                    type="text"
+                                                    placeholder="Enter discount code"
+                                                    value={couponCode}
+                                                    onChange={(e) => setCouponCode(e.target.value)}
+                                                    className="flex-1 px-4 py-3 border border-border rounded-lg text-sm outline-none focus:border-brand transition-colors"
+                                                />
+                                                <button
+                                                    type="submit"
+                                                    disabled={applyingCoupon}
+                                                    className="px-5 py-3 bg-brand-dark text-white text-sm font-semibold rounded-lg hover:bg-brand transition-colors disabled:opacity-50"
+                                                >
+                                                    {applyingCoupon ? 'Applying...' : 'Apply'}
+                                                </button>
+                                            </div>
+                                        </form>
+                                    )}
 
                                     {/* Summary Details */}
                                     <div className="space-y-4 pb-6 border-b border-border-light">
@@ -354,6 +396,18 @@ export default function Cart({ cart }) {
                                             <span className="text-body">Subtotal</span>
                                             <span className="font-semibold text-heading">{format(subtotal)}</span>
                                         </div>
+                                        {promotionDiscount > 0 && (
+                                            <div className="flex justify-between text-sm">
+                                                <span className="text-body">Promotion Discount</span>
+                                                <span className="font-semibold text-success">-{format(promotionDiscount)}</span>
+                                            </div>
+                                        )}
+                                        {couponDiscount > 0 && (
+                                            <div className="flex justify-between text-sm">
+                                                <span className="text-body">Coupon Discount</span>
+                                                <span className="font-semibold text-success">-{format(couponDiscount)}</span>
+                                            </div>
+                                        )}
                                         <div className="flex justify-between text-sm">
                                             <span className="text-body">Shipping</span>
                                             <span className="font-semibold text-heading">

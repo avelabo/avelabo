@@ -13,7 +13,8 @@ use Illuminate\Support\Facades\DB;
 class CartService
 {
     public function __construct(
-        protected PriceService $priceService
+        protected PriceService $priceService,
+        protected DiscountService $discountService
     ) {}
 
     /**
@@ -196,30 +197,63 @@ class CartService
     }
 
     /**
-     * Calculate cart totals with display prices
+     * Apply a coupon to the cart.
+     *
+     * @throws \Exception
+     */
+    public function applyCoupon(Cart $cart, string $code, ?\App\Models\User $user = null): array
+    {
+        $coupon = $this->discountService->validateCoupon($code, $cart, $user);
+
+        $cart->update(['coupon_id' => $coupon->id]);
+        $cart->load('coupon');
+
+        return $this->calculateTotals($cart);
+    }
+
+    /**
+     * Remove coupon from the cart.
+     */
+    public function removeCoupon(Cart $cart): void
+    {
+        $cart->update(['coupon_id' => null]);
+        $cart->unsetRelation('coupon');
+    }
+
+    /**
+     * Calculate cart totals with display prices, promotion discounts, and coupon discounts.
      */
     public function calculateTotals(Cart $cart): array
     {
-        $cart->load(['items.product.seller', 'items.variant']);
+        $cart->load(['items.product.seller', 'items.product.tags', 'items.variant', 'coupon']);
 
         $subtotal = 0;
+        $totalPromotionDiscount = 0;
         $itemsData = [];
 
         foreach ($cart->items as $item) {
             $product = $item->product;
             $variant = $item->variant;
 
-            // Get current display price
+            // Get current display price (with markup)
             $unitPrice = $variant
                 ? $this->priceService->getVariantPrice($variant)['amount']
                 : $this->priceService->getDisplayPrice($product);
 
-            $lineTotal = $unitPrice * $item->quantity;
-            $subtotal += $lineTotal;
+            // Get promotion discount for this product
+            $discount = $this->discountService->getProductDiscount($product, $unitPrice);
+
+            $effectivePrice = $discount['has_discount'] ? $discount['discounted_price'] : $unitPrice;
+            $promoDiscount = $discount['discount_amount'] * $item->quantity;
+            $lineTotal = $effectivePrice * $item->quantity;
+
+            $subtotal += $unitPrice * $item->quantity;
+            $totalPromotionDiscount += $promoDiscount;
 
             $itemsData[] = [
                 'id' => $item->id,
                 'product_id' => $product->id,
+                'product' => $product,
                 'variant_id' => $variant?->id,
                 'name' => $product->name,
                 'variant_name' => $variant?->name,
@@ -227,24 +261,64 @@ class CartService
                 'unit_price' => $unitPrice,
                 'quantity' => $item->quantity,
                 'line_total' => $lineTotal,
+                'promotion_discount' => $promoDiscount,
+                'has_discount' => $discount['has_discount'],
+                'discount_percentage' => $discount['discount_percentage'],
+                'promotion_name' => $discount['promotion_name'],
+                'original_price' => $discount['original_price'],
+                'discounted_price' => $discount['discounted_price'],
                 'seller_id' => $product->seller_id,
                 'seller_name' => $product->seller?->business_name,
                 'in_stock' => $this->isInStock($product, $variant, $item->quantity),
             ];
         }
 
-        // For now, no shipping calculation or tax
+        // Calculate coupon discount
+        $couponDiscount = 0;
+        $couponData = null;
+        $couponItemDiscounts = [];
+
+        if ($cart->coupon) {
+            $couponResult = $this->discountService->calculateCouponDiscount($cart->coupon, $itemsData);
+            $couponDiscount = $couponResult['discount_amount'];
+            $couponItemDiscounts = $couponResult['item_discounts'];
+            $couponData = [
+                'id' => $cart->coupon->id,
+                'code' => $cart->coupon->code,
+                'name' => $cart->coupon->name,
+                'discount_amount' => $couponDiscount,
+            ];
+
+            // Add per-item coupon discount to items data
+            foreach ($itemsData as &$itemData) {
+                $itemData['coupon_discount'] = $couponItemDiscounts[$itemData['id']] ?? 0;
+            }
+            unset($itemData);
+        }
+
+        // Remove product model from items (not needed in frontend)
+        $cleanItems = array_map(function ($item) {
+            unset($item['product']);
+
+            return $item;
+        }, $itemsData);
+
         $shipping = 0;
         $tax = 0;
-        $total = $subtotal + $shipping + $tax;
+        $discountTotal = $totalPromotionDiscount + $couponDiscount;
+        $total = $subtotal - $discountTotal + $shipping + $tax;
 
         return [
-            'items' => $itemsData,
+            'items' => $cleanItems,
             'item_count' => $cart->items->sum('quantity'),
             'subtotal' => $subtotal,
+            'promotion_discount' => $totalPromotionDiscount,
+            'coupon_discount' => $couponDiscount,
+            'discount_total' => $discountTotal,
+            'coupon' => $couponData,
             'shipping' => $shipping,
             'tax' => $tax,
-            'total' => $total,
+            'total' => max(0, $total),
             'currency' => 'MWK',
         ];
     }

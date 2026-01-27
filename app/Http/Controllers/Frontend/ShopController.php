@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\Promotion;
+use App\Services\DiscountService;
 use App\Services\PriceService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -13,7 +15,8 @@ use Inertia\Inertia;
 class ShopController extends Controller
 {
     public function __construct(
-        protected PriceService $priceService
+        protected PriceService $priceService,
+        protected DiscountService $discountService
     ) {}
 
     /**
@@ -80,10 +83,46 @@ class ShopController extends Controller
             $query->featured();
         }
 
-        // On sale filter
+        // On sale filter - products with active promotions
         if ($request->boolean('on_sale')) {
-            $query->whereNotNull('compare_at_price')
-                ->whereRaw('compare_at_price > base_price');
+            $query->where(function ($q) {
+                $activePromotionIds = Promotion::active()->pluck('id');
+                if ($activePromotionIds->isNotEmpty()) {
+                    $q->whereHas('seller', function ($sq) {
+                        $sq->whereHas('promotions', fn ($pq) => $pq->active()->where('scope_type', 'all'));
+                    })
+                        ->orWhereHas('category', function ($cq) {
+                            $cq->whereExists(function ($eq) {
+                                $eq->from('promotions')
+                                    ->whereColumn('promotions.scope_id', 'categories.id')
+                                    ->where('promotions.scope_type', 'category')
+                                    ->where('promotions.is_active', true)
+                                    ->where('promotions.start_date', '<=', now())
+                                    ->where('promotions.end_date', '>=', now());
+                            });
+                        })
+                        ->orWhereHas('brand', function ($bq) {
+                            $bq->whereExists(function ($eq) {
+                                $eq->from('promotions')
+                                    ->whereColumn('promotions.scope_id', 'brands.id')
+                                    ->where('promotions.scope_type', 'brand')
+                                    ->where('promotions.is_active', true)
+                                    ->where('promotions.start_date', '<=', now())
+                                    ->where('promotions.end_date', '>=', now());
+                            });
+                        })
+                        ->orWhereHas('tags', function ($tq) {
+                            $tq->whereExists(function ($eq) {
+                                $eq->from('promotions')
+                                    ->whereColumn('promotions.scope_id', 'tags.id')
+                                    ->where('promotions.scope_type', 'tag')
+                                    ->where('promotions.is_active', true)
+                                    ->where('promotions.start_date', '<=', now())
+                                    ->where('promotions.end_date', '>=', now());
+                            });
+                        });
+                }
+            });
         }
 
         // Sorting
@@ -113,17 +152,20 @@ class ShopController extends Controller
         $perPage = min($request->get('per_page', 12), 48);
         $products = $query->paginate($perPage)->withQueryString();
 
-        // Transform products to include display prices
+        // Transform products to include display prices and discount info
         $products->through(function ($product) {
+            $discount = $this->discountService->getProductDiscount($product, $product->display_price);
+
             return [
                 'id' => $product->id,
                 'name' => $product->name,
                 'slug' => $product->slug,
                 'short_description' => $product->short_description,
-                'price' => $product->display_price,
-                'compare_price' => $product->display_compare_price,
-                'is_on_sale' => $product->is_on_sale,
-                'discount_percentage' => $product->discount_percentage,
+                'price' => $discount['discounted_price'],
+                'original_price' => $discount['has_discount'] ? $discount['original_price'] : null,
+                'has_discount' => $discount['has_discount'],
+                'discount_percentage' => $discount['discount_percentage'],
+                'promotion_name' => $discount['promotion_name'],
                 'is_featured' => $product->is_featured,
                 'rating' => $product->rating,
                 'reviews_count' => $product->reviews_count,
@@ -291,9 +333,9 @@ class ShopController extends Controller
             ->active()
             ->firstOrFail();
 
-        // Get price data
+        // Get price and discount data
         $priceData = $this->priceService->getPrice($product);
-        $compareAtPrice = $this->priceService->getCompareAtPrice($product);
+        $discount = $this->discountService->getProductDiscount($product, $priceData['amount']);
 
         // Transform product data
         $productData = [
@@ -304,9 +346,11 @@ class ShopController extends Controller
             'short_description' => $product->short_description,
             'specifications' => $product->specifications,
             'price' => $priceData,
-            'compare_price' => $compareAtPrice,
-            'is_on_sale' => $product->is_on_sale,
-            'discount_percentage' => $product->discount_percentage,
+            'has_discount' => $discount['has_discount'],
+            'original_price' => $discount['original_price'],
+            'discounted_price' => $discount['discounted_price'],
+            'discount_percentage' => $discount['discount_percentage'],
+            'promotion_name' => $discount['promotion_name'],
             'is_featured' => $product->is_featured,
             'is_new' => $product->is_new,
             'rating' => $product->rating,
@@ -379,12 +423,16 @@ class ShopController extends Controller
             ->take(4)
             ->get()
             ->map(function ($p) {
+                $relDiscount = $this->discountService->getProductDiscount($p, $p->display_price);
+
                 return [
                     'id' => $p->id,
                     'name' => $p->name,
                     'slug' => $p->slug,
-                    'price' => $p->display_price,
-                    'compare_price' => $p->display_compare_price,
+                    'price' => $relDiscount['discounted_price'],
+                    'original_price' => $relDiscount['has_discount'] ? $relDiscount['original_price'] : null,
+                    'has_discount' => $relDiscount['has_discount'],
+                    'discount_percentage' => $relDiscount['discount_percentage'],
                     'rating' => $p->rating,
                     'primary_image' => $p->primary_image_url,
                 ];

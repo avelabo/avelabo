@@ -24,7 +24,6 @@ class Product extends Model
         'short_description',
         'specifications',
         'base_price',
-        'compare_at_price',
         'currency_id',
         'sku',
         'barcode',
@@ -35,7 +34,6 @@ class Product extends Model
         'status',
         'is_featured',
         'is_new',
-        'is_on_sale',
         'meta_title',
         'meta_description',
         'source',
@@ -53,14 +51,12 @@ class Product extends Model
 
     protected $casts = [
         'base_price' => 'decimal:2',
-        'compare_at_price' => 'decimal:2',
         'stock_quantity' => 'integer',
         'low_stock_threshold' => 'integer',
         'track_inventory' => 'boolean',
         'allow_backorders' => 'boolean',
         'is_featured' => 'boolean',
         'is_new' => 'boolean',
-        'is_on_sale' => 'boolean',
         'views_count' => 'integer',
         'sales_count' => 'integer',
         'rating' => 'decimal:2',
@@ -177,18 +173,6 @@ class Product extends Model
     }
 
     /**
-     * Get the customer-facing compare price (with markup applied)
-     */
-    public function getDisplayComparePriceAttribute(): ?float
-    {
-        if (! $this->compare_at_price) {
-            return null;
-        }
-
-        return app(\App\Services\PriceService::class)->getDisplayComparePrice($this);
-    }
-
-    /**
      * Get primary image URL (returns the path for storage, not full URL)
      */
     public function getPrimaryImagePathAttribute(): ?string
@@ -197,31 +181,6 @@ class Product extends Model
             ?? $this->images->first();
 
         return $primaryImage?->path;
-    }
-
-    /**
-     * Check if product is on sale (has compare price higher than display price)
-     */
-    public function getIsOnSaleAttribute(): bool
-    {
-        $comparePrice = $this->display_compare_price;
-
-        return $comparePrice && $comparePrice > $this->display_price;
-    }
-
-    /**
-     * Get discount percentage
-     */
-    public function getDiscountPercentageAttribute(): int
-    {
-        if (! $this->is_on_sale) {
-            return 0;
-        }
-
-        $comparePrice = $this->display_compare_price;
-        $displayPrice = $this->display_price;
-
-        return (int) round((($comparePrice - $displayPrice) / $comparePrice) * 100);
     }
 
     /**

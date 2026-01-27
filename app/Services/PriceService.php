@@ -2,10 +2,10 @@
 
 namespace App\Services;
 
+use App\Models\Currency;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\Seller;
-use App\Models\Currency;
 use Illuminate\Support\Facades\Auth;
 
 /**
@@ -26,7 +26,8 @@ class PriceService
 {
     public function __construct(
         protected CurrencyService $currencyService,
-        protected MarkupService $markupService
+        protected MarkupService $markupService,
+        protected DiscountService $discountService
     ) {}
 
     /**
@@ -52,35 +53,6 @@ class PriceService
             'formatted' => $this->currencyService->format($convertedPrice, $targetCurrency),
             'original_amount' => $finalPrice,
             'original_currency' => $productCurrency,
-        ];
-    }
-
-    /**
-     * Get compare-at price (for showing discounts)
-     */
-    public function getCompareAtPrice(Product $product, ?string $currencyCode = null): ?array
-    {
-        if (!$product->compare_at_price || $product->compare_at_price <= $product->base_price) {
-            return null;
-        }
-
-        $productCurrency = $product->currency?->code ?? 'MWK';
-        $targetCurrency = $currencyCode ?? $this->getCustomerCurrency();
-
-        // Apply same markup ratio to compare_at_price
-        $markupRatio = $this->markupService->getFinalPrice($product) / $product->base_price;
-        $compareAtWithMarkup = round($product->compare_at_price * $markupRatio, 2);
-
-        $convertedPrice = $this->currencyService->convert(
-            $compareAtWithMarkup,
-            $productCurrency,
-            $targetCurrency
-        );
-
-        return [
-            'amount' => $convertedPrice,
-            'currency' => $targetCurrency,
-            'formatted' => $this->currencyService->format($convertedPrice, $targetCurrency),
         ];
     }
 
@@ -115,20 +87,13 @@ class PriceService
     }
 
     /**
-     * Calculate discount percentage between current and compare-at price
+     * Get price with promotion discount info for frontend display.
      */
-    public function getDiscountPercentage(Product $product): ?int
+    public function getPriceWithDiscount(Product $product): array
     {
-        $compareAt = $this->getCompareAtPrice($product);
-        $current = $this->getPrice($product);
+        $displayPrice = $this->getDisplayPrice($product);
 
-        if (!$compareAt || $compareAt['amount'] <= $current['amount']) {
-            return null;
-        }
-
-        return (int) round(
-            (($compareAt['amount'] - $current['amount']) / $compareAt['amount']) * 100
-        );
+        return $this->discountService->getProductDiscount($product, $displayPrice);
     }
 
     /**
@@ -139,10 +104,10 @@ class PriceService
         $prices = [];
 
         foreach ($products as $product) {
+            $discount = $this->discountService->getProductDiscount($product, $this->getDisplayPrice($product));
             $prices[$product->id] = [
                 'price' => $this->getPrice($product, $currencyCode),
-                'compare_at_price' => $this->getCompareAtPrice($product, $currencyCode),
-                'discount_percentage' => $this->getDiscountPercentage($product),
+                'discount' => $discount,
             ];
         }
 
@@ -193,7 +158,7 @@ class PriceService
             return $sessionCurrency['code'];
         }
 
-        if (is_string($sessionCurrency) && !empty($sessionCurrency)) {
+        if (is_string($sessionCurrency) && ! empty($sessionCurrency)) {
             return $sessionCurrency;
         }
 
@@ -233,6 +198,7 @@ class PriceService
     public function format(float $amount, ?string $currencyCode = null): string
     {
         $currency = $currencyCode ?? $this->getCustomerCurrency();
+
         return $this->currencyService->format($amount, $currency);
     }
 
@@ -242,25 +208,5 @@ class PriceService
     public function getDisplayPrice(Product $product): float
     {
         return $this->markupService->getFinalPrice($product);
-    }
-
-    /**
-     * Get display compare price (compare_at_price + markup) - simple float for model attribute
-     */
-    public function getDisplayComparePrice(Product $product): ?float
-    {
-        if (!$product->compare_at_price) {
-            return null;
-        }
-
-        $basePrice = $product->base_price;
-        if ($basePrice <= 0) {
-            return $product->compare_at_price;
-        }
-
-        $finalPrice = $this->markupService->getFinalPrice($product);
-        $markupRatio = $finalPrice / $basePrice;
-
-        return round($product->compare_at_price * $markupRatio, 2);
     }
 }

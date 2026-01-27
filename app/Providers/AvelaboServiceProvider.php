@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Services\CurrencyService;
+use App\Services\DiscountService;
 use App\Services\MarkupService;
 use App\Services\PriceService;
 use Illuminate\Support\ServiceProvider;
@@ -23,10 +24,15 @@ class AvelaboServiceProvider extends ServiceProvider
             return new MarkupService();
         });
 
+        $this->app->singleton(DiscountService::class, function ($app) {
+            return new DiscountService();
+        });
+
         $this->app->singleton(PriceService::class, function ($app) {
             return new PriceService(
                 $app->make(CurrencyService::class),
-                $app->make(MarkupService::class)
+                $app->make(MarkupService::class),
+                $app->make(DiscountService::class)
             );
         });
     }

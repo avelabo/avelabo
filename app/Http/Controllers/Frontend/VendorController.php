@@ -6,11 +6,15 @@ use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\Seller;
+use App\Services\DiscountService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class VendorController extends Controller
 {
+    public function __construct(
+        protected DiscountService $discountService
+    ) {}
     /**
      * Display list of all vendors
      */
@@ -144,13 +148,12 @@ class VendorController extends Controller
                 'products_count' => $cat->products_count,
             ]);
 
-        // Deal products from this seller
+        // Deal products from this seller (featured products)
         $dealProducts = Product::with(['category:id,name,slug', 'images'])
             ->where('seller_id', $seller->id)
             ->active()
             ->inStock()
-            ->whereNotNull('compare_at_price')
-            ->whereRaw('compare_at_price > base_price')
+            ->featured()
             ->inRandomOrder()
             ->take(4)
             ->get()
@@ -206,15 +209,18 @@ class VendorController extends Controller
      */
     protected function transformProduct(Product $product): array
     {
+        $discount = $this->discountService->getProductDiscount($product, $product->display_price);
+
         return [
             'id' => $product->id,
             'name' => $product->name,
             'slug' => $product->slug,
             'short_description' => $product->short_description,
-            'price' => $product->display_price,
-            'compare_price' => $product->display_compare_price,
-            'is_on_sale' => $product->is_on_sale,
-            'discount_percentage' => $product->discount_percentage,
+            'price' => $discount['discounted_price'],
+            'original_price' => $discount['has_discount'] ? $discount['original_price'] : null,
+            'has_discount' => $discount['has_discount'],
+            'discount_percentage' => $discount['discount_percentage'],
+            'promotion_name' => $discount['promotion_name'],
             'is_featured' => $product->is_featured,
             'is_new' => $product->is_new,
             'rating' => $product->rating ?? 0,

@@ -5,12 +5,17 @@ namespace App\Http\Controllers\Frontend;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\Promotion;
 use App\Models\Slider;
+use App\Services\DiscountService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class HomeController extends Controller
 {
+    public function __construct(
+        protected DiscountService $discountService
+    ) {}
     /**
      * Display the homepage
      */
@@ -49,12 +54,18 @@ class HomeController extends Controller
             ->get()
             ->map(fn($product) => $this->transformProduct($product));
 
-        // On sale products
+        // On sale products (products with active promotions)
         $saleProducts = Product::with(['category:id,name,slug', 'images'])
             ->active()
             ->inStock()
-            ->whereNotNull('compare_at_price')
-            ->whereRaw('compare_at_price > base_price')
+            ->where(function ($q) {
+                if (Promotion::active()->exists()) {
+                    $q->whereHas('seller', fn ($sq) => $sq->whereHas('promotions', fn ($pq) => $pq->active()->where('scope_type', 'all')))
+                        ->orWhereHas('category', fn ($cq) => $cq->whereExists(fn ($eq) => $eq->from('promotions')->whereColumn('promotions.scope_id', 'categories.id')->where('promotions.scope_type', 'category')->where('promotions.is_active', true)->where('promotions.start_date', '<=', now())->where('promotions.end_date', '>=', now())))
+                        ->orWhereHas('brand', fn ($bq) => $bq->whereExists(fn ($eq) => $eq->from('promotions')->whereColumn('promotions.scope_id', 'brands.id')->where('promotions.scope_type', 'brand')->where('promotions.is_active', true)->where('promotions.start_date', '<=', now())->where('promotions.end_date', '>=', now())))
+                        ->orWhereHas('tags', fn ($tq) => $tq->whereExists(fn ($eq) => $eq->from('promotions')->whereColumn('promotions.scope_id', 'tags.id')->where('promotions.scope_type', 'tag')->where('promotions.is_active', true)->where('promotions.start_date', '<=', now())->where('promotions.end_date', '>=', now())));
+                }
+            })
             ->orderBy('views_count', 'desc')
             ->take(10)
             ->get()
@@ -95,12 +106,11 @@ class HomeController extends Controller
             ->get()
             ->map(fn($product) => $this->transformProduct($product));
 
-        // Daily deals (random featured on-sale products)
+        // Daily deals (random featured products with active promotions)
         $dailyDeals = Product::with(['category:id,name,slug', 'images'])
             ->active()
             ->inStock()
             ->featured()
-            ->whereNotNull('compare_at_price')
             ->inRandomOrder()
             ->take(4)
             ->get()
@@ -123,15 +133,18 @@ class HomeController extends Controller
      */
     protected function transformProduct(Product $product, bool $includeDeadline = false): array
     {
+        $discount = $this->discountService->getProductDiscount($product, $product->display_price);
+
         $data = [
             'id' => $product->id,
             'name' => $product->name,
             'slug' => $product->slug,
             'short_description' => $product->short_description,
-            'price' => $product->display_price,
-            'compare_price' => $product->display_compare_price,
-            'is_on_sale' => $product->is_on_sale,
-            'discount_percentage' => $product->discount_percentage,
+            'price' => $discount['discounted_price'],
+            'original_price' => $discount['has_discount'] ? $discount['original_price'] : null,
+            'has_discount' => $discount['has_discount'],
+            'discount_percentage' => $discount['discount_percentage'],
+            'promotion_name' => $discount['promotion_name'],
             'is_featured' => $product->is_featured,
             'is_new' => $product->is_new,
             'rating' => $product->rating ?? 0,

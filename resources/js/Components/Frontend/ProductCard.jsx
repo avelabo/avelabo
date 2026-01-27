@@ -63,8 +63,9 @@ export default function ProductCard({ product, variant = 'default', className = 
         reviews = 0,
         price,
         currentPrice = 28.85,
-        compare_price,
-        oldPrice = null,
+        original_price,
+        has_discount = false,
+        discount_percentage = 0,
         is_in_stock = true,
         is_new = false,
         is_featured = false,
@@ -83,16 +84,13 @@ export default function ProductCard({ product, variant = 'default', className = 
 
     // Handle price
     const displayPrice = price || currentPrice || 0;
-    const displayOldPrice = compare_price || oldPrice;
 
     // Handle reviews count
     const reviewCount = reviews_count || reviews || 0;
 
-    // Calculate discount
-    const hasDiscount = displayOldPrice && displayOldPrice > displayPrice;
-    const discountPercent = hasDiscount
-        ? Math.round(((displayOldPrice - displayPrice) / displayOldPrice) * 100)
-        : 0;
+    // Discount from promotions
+    const hasDiscount = has_discount && original_price > displayPrice;
+    const discountPercent = discount_percentage || 0;
 
     return (
         <div
@@ -200,7 +198,7 @@ export default function ProductCard({ product, variant = 'default', className = 
                         </span>
                         {hasDiscount && (
                             <span className="text-xs text-muted line-through">
-                                {format(displayOldPrice)}
+                                {format(original_price)}
                             </span>
                         )}
                     </div>
