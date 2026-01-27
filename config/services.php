@@ -48,6 +48,7 @@ return [
     ],
 
     'onekhusa' => [
+        'captured_by_email' => env('ONEKHUSA_CAPTURED_BY_EMAIL'),
         'api_key' => env('ONEKHUSA_API_KEY'),
         'api_secret' => env('ONEKHUSA_API_SECRET'),
         'organization_id' => env('ONEKHUSA_ORGANIZATION_ID'),

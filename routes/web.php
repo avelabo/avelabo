@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\KycController;
 use App\Http\Controllers\Admin\MarkupTemplateController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\PageContentController;
+use App\Http\Controllers\Admin\PaymentGatewayController as AdminPaymentGatewayController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Admin\SellerController as AdminSellerController;
 use App\Http\Controllers\Admin\SettingsController as AdminSettingsController;
@@ -143,6 +144,8 @@ Route::prefix('payment')->group(function () {
     Route::get('/callback', [PaymentController::class, 'callback'])->name('payment.callback');
     Route::post('/webhook/{gateway}', [PaymentController::class, 'webhook'])->name('payment.webhook')->withoutMiddleware(['web', 'csrf']);
     Route::get('/verify/{reference}', [PaymentController::class, 'verify'])->name('payment.verify');
+    Route::get('/pending/{order}', [PaymentController::class, 'showPending'])->name('payment.pending');
+    Route::post('/simulate/{order}', [PaymentController::class, 'simulate'])->name('payment.simulate');
     Route::get('/cancel', [PaymentController::class, 'cancel'])->name('payment.cancel');
 });
 
@@ -339,6 +342,16 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::get('/reviews/{id}', function ($id) {
         return Inertia::render('Admin/Reviews/Show', ['id' => $id]);
     })->name('reviews.show');
+
+    // Payment Gateways
+    Route::get('/payment-gateways', [AdminPaymentGatewayController::class, 'index'])->name('payment-gateways.index');
+    Route::get('/payment-gateways/create', [AdminPaymentGatewayController::class, 'create'])->name('payment-gateways.create');
+    Route::post('/payment-gateways', [AdminPaymentGatewayController::class, 'store'])->name('payment-gateways.store');
+    Route::get('/payment-gateways/{paymentGateway}/edit', [AdminPaymentGatewayController::class, 'edit'])->name('payment-gateways.edit');
+    Route::put('/payment-gateways/{paymentGateway}', [AdminPaymentGatewayController::class, 'update'])->name('payment-gateways.update');
+    Route::delete('/payment-gateways/{paymentGateway}', [AdminPaymentGatewayController::class, 'destroy'])->name('payment-gateways.destroy');
+    Route::patch('/payment-gateways/{paymentGateway}/toggle-status', [AdminPaymentGatewayController::class, 'toggleStatus'])->name('payment-gateways.toggle-status');
+    Route::patch('/payment-gateways/{paymentGateway}/toggle-test-mode', [AdminPaymentGatewayController::class, 'toggleTestMode'])->name('payment-gateways.toggle-test-mode');
 
     // Settings
     Route::get('/settings', [AdminSettingsController::class, 'index'])->name('settings');

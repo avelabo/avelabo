@@ -486,6 +486,7 @@ export default function Checkout({ cart, paymentGateways = [], countries = [], s
                                         {paymentGateways.map((gateway, index) => {
                                             const isSelected = data.payment_gateway_id === gateway.id;
                                             const isPayChangu = gateway.code === 'paychangu' || (gateway.display_name || gateway.name).toLowerCase().includes('paychangu');
+                                            const isOneKhusa = gateway.code === 'onekhusa' || gateway.slug === 'onekhusa' || (gateway.display_name || gateway.name).toLowerCase().includes('onekhusa');
 
                                             return (
                                                 <label
@@ -542,6 +543,14 @@ export default function Checkout({ cart, paymentGateways = [], countries = [], s
                                                                     )}
                                                                 </div>
 
+                                                                {/* Selected Indicator Badge */}
+                                                                {isSelected && (
+                                                                    <div className="bg-success text-white text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
+                                                                        <i className="fi-rs-check text-xs"></i>
+                                                                        Selected
+                                                                    </div>
+                                                                )}
+
                                                                 {/* Payment Gateway Logo/Icon */}
                                                                 {isPayChangu && (
                                                                     <div className="flex-shrink-0 ml-4">
@@ -552,18 +561,17 @@ export default function Checkout({ cart, paymentGateways = [], countries = [], s
                                                                         />
                                                                     </div>
                                                                 )}
+                                                                {isOneKhusa && (
+                                                                    <div className="flex-shrink-0 ml-4">
+                                                                        <img
+                                                                            src="/images/frontend/checkout/onekhusa_icon.png"
+                                                                            alt="OneKhusa"
+                                                                            className="h-7 object-contain"
+                                                                        />
+                                                                    </div>
+                                                                )}
                                                             </div>
                                                         </div>
-
-                                                        {/* Selected Indicator Badge */}
-                                                        {isSelected && (
-                                                            <div className="absolute top-3 right-3">
-                                                                <div className="bg-success text-white text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
-                                                                    <i className="fi-rs-check text-xs"></i>
-                                                                    Selected
-                                                                </div>
-                                                            </div>
-                                                        )}
                                                     </div>
                                                 </label>
                                             );

@@ -34,6 +34,7 @@ class Order extends Model
         'delivered_at',
         'cancelled_at',
         'cancellation_reason',
+        'payment_request_reference',
     ];
 
     protected $casts = [
@@ -150,7 +151,7 @@ class Order extends Model
 
     public function canBeCancelled(): bool
     {
-        return !$this->isCancelled() && !$this->isShipped();
+        return ! $this->isCancelled() && ! $this->isShipped();
     }
 
     protected static function boot()
@@ -159,7 +160,7 @@ class Order extends Model
 
         static::creating(function ($order) {
             if (empty($order->order_number)) {
-                $order->order_number = 'ORD-' . strtoupper(uniqid());
+                $order->order_number = 'ORD-'.strtoupper(uniqid());
             }
         });
     }

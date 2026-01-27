@@ -99,6 +99,11 @@ export default function Sidebar({ isOpen, isMobileOpen, onClose }) {
             href: '/admin/reviews',
         },
         {
+            name: 'Payment Gateways',
+            icon: 'payments',
+            href: '/admin/payment-gateways',
+        },
+        {
             name: 'Settings',
             icon: 'settings',
             href: '/admin/settings',

@@ -6,66 +6,85 @@ use App\Models\Order;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class OneKhusaGateway implements PaymentGatewayInterface
 {
     private string $apiKey;
+
     private string $apiSecret;
+
+    private string $organisationId;
+
+    private int $merchantAccountNumber;
+
     private string $baseUrl;
+
     private ?string $accessToken = null;
 
     public function __construct()
     {
         $this->apiKey = config('services.onekhusa.api_key');
         $this->apiSecret = config('services.onekhusa.api_secret');
-        $this->organizationId = config('services.onekhusa.organization_id');
-        $this->merchantAccountNumber = config('services.onekhusa.merchant_account_no');
-        $this->baseUrl = config('services.onekhusa.base_url', 'https://api.onekhusa.com');
+        $this->organisationId = config('services.onekhusa.organization_id');
+        $this->merchantAccountNumber = (int) config('services.onekhusa.merchant_account_no');
+        $this->baseUrl = rtrim(config('services.onekhusa.base_url', 'https://api.onekhusa.com'), '/');
     }
 
+    /**
+     * Initialize a Request to Pay — returns a Timed Account Number (TAN)
+     * that the customer pays to within the expiry window.
+     */
     public function initializePayment(Order $order, array $options = []): PaymentResponse
     {
         try {
             $this->authenticate();
 
+            // Generate a unique alphanumeric reference (5-25 chars)
+            $referenceNumber = strtoupper(Str::random(12));
+
+            // The capturedBy email should be a user under the merchant account
+            $capturedBy = $options['captured_by'] ?? config('services.onekhusa.captured_by_email', '');
+
             $payload = [
-                'amount' => $order->total,
-                'currency' => 'MWK',
-                'reference' => $order->order_number,
-                'description' => 'Payment for Order #' . $order->order_number,
-                'customer' => [
-                    'email' => $order->user->email,
-                    'phone' => $order->user->phone ?? $order->billingAddress?->phone,
-                    'name' => $order->user->name,
-                ],
-                'callback_url' => $options['callback_url'] ?? route('payment.webhook', 'onekhusa'),
-                'redirect_url' => $options['return_url'] ?? route('checkout.success', ['order' => $order->order_number]),
-                'metadata' => [
-                    'order_id' => $order->id,
-                    'user_id' => $order->user_id,
-                ],
+                'merchantAccountNumber' => $this->merchantAccountNumber,
+                'transactionAmount' => number_format($order->total, 2, '.', ''),
+                'transactionDescription' => 'Payment for Order #'.$order->order_number,
+                'referenceNumber' => $referenceNumber,
+                'capturedBy' => 'haranoble@gmail.com',
             ];
 
-            $response = $this->makeRequest('POST', '/collections/initiate', $payload);
+            $response = $this->makeRequest('POST', '/collections/requestToPay/initiate', $payload, [
+                'X-Idempotency-Key' => (string) Str::uuid(),
+            ]);
 
-            if (isset($response['success']) && $response['success']) {
+            // OneKhusa returns timedAccountNumber on success
+            if (isset($response['timedAccountNumber'])) {
                 return new PaymentResponse(
                     success: true,
-                    message: 'Payment initialized successfully',
-                    transactionId: $response['data']['transaction_id'] ?? $order->order_number,
-                    redirectUrl: $response['data']['payment_url'] ?? null,
-                    data: $response['data'] ?? []
+                    message: 'Payment initialized — pay to the timed account number',
+                    transactionId: $referenceNumber,
+                    redirectUrl: null,
+                    data: [
+                        'timed_account_number' => $response['timedAccountNumber'],
+                        'expiry_date' => $response['expiryDate'] ?? null,
+                        'expiry_in_minutes' => $response['expiryInMinutes'] ?? 15,
+                        'merchant_account_number' => $response['merchantAccountNumber'] ?? $this->merchantAccountNumber,
+                        'reference_number' => $referenceNumber,
+                        'order_number' => $order->order_number,
+                        'amount' => $order->total,
+                    ]
                 );
             }
 
             return new PaymentResponse(
                 success: false,
-                message: $response['message'] ?? 'Failed to initialize payment',
+                message: $response['message'] ?? 'Failed to initialize payment with OneKhusa',
                 errors: $response['errors'] ?? []
             );
 
         } catch (\Exception $e) {
-            Log::error('OneKhusa initialization error: ' . $e->getMessage());
+            Log::error('OneKhusa initialization error: '.$e->getMessage());
 
             return new PaymentResponse(
                 success: false,
@@ -75,74 +94,55 @@ class OneKhusaGateway implements PaymentGatewayInterface
         }
     }
 
+    /**
+     * Process payment — not used in TAN flow (customer pays externally).
+     */
     public function processPayment(string $transactionReference, array $data): PaymentResponse
     {
-        try {
-            $this->authenticate();
-
-            $payload = array_merge([
-                'reference' => $transactionReference,
-            ], $data);
-
-            $response = $this->makeRequest('POST', '/collections/process', $payload);
-
-            if (isset($response['success']) && $response['success']) {
-                return new PaymentResponse(
-                    success: true,
-                    message: 'Payment processed',
-                    transactionId: $response['data']['transaction_id'] ?? $transactionReference,
-                    data: $response['data'] ?? []
-                );
-            }
-
-            return new PaymentResponse(
-                success: false,
-                message: $response['message'] ?? 'Payment processing failed',
-                errors: $response['errors'] ?? []
-            );
-
-        } catch (\Exception $e) {
-            return new PaymentResponse(
-                success: false,
-                message: 'Payment processing error',
-                errors: ['exception' => $e->getMessage()]
-            );
-        }
+        return $this->verifyPayment($transactionReference);
     }
 
+    /**
+     * Verify payment by fetching the transaction status from OneKhusa.
+     */
     public function verifyPayment(string $transactionReference): PaymentResponse
     {
         try {
             $this->authenticate();
+            Log::info('Verifying payment: ', [
+                'url' => '/collections/getTransaction',
+                'payload' => [
+                    'merchantAccountNumber' => $this->merchantAccountNumber,
+                    'transactionReferenceNumber' => $transactionReference,
+                ],
+            ]);
+            $response = $this->makeRequest('POST', '/collections/getTransaction', [
+                'merchantAccountNumber' => $this->merchantAccountNumber,
+                'transactionReferenceNumber' => $transactionReference,
+            ]);
 
-            $response = $this->makeRequest('GET', "/collections/status/{$transactionReference}");
+            $statusCode = $response['transactionStatusCode'] ?? null;
+            $statusName = $response['transactionStatusName'] ?? 'Unknown';
 
-            if (isset($response['success']) && $response['success']) {
-                $status = $response['data']['status'] ?? 'unknown';
-
-                if (in_array($status, ['completed', 'successful', 'paid'])) {
-                    return new PaymentResponse(
-                        success: true,
-                        message: 'Payment verified successfully',
-                        transactionId: $transactionReference,
-                        data: $response['data'] ?? []
-                    );
-                }
-
+            if ($statusCode === 'S') {
                 return new PaymentResponse(
-                    success: false,
-                    message: "Payment status: {$status}",
-                    data: $response['data'] ?? []
+                    success: true,
+                    message: 'Payment verified successfully',
+                    transactionId: $response['transactionReferenceNumber'] ?? $transactionReference,
+                    data: $response
                 );
             }
 
             return new PaymentResponse(
                 success: false,
-                message: 'Payment verification failed',
+                message: "Payment status: {$statusName}",
+                transactionId: $response['transactionReferenceNumber'] ?? $transactionReference,
                 data: $response
             );
 
         } catch (\Exception $e) {
+            Log::error('OneKhusa verification error: '.$e->getMessage());
+
             return new PaymentResponse(
                 success: false,
                 message: 'Payment verification error',
@@ -151,30 +151,40 @@ class OneKhusaGateway implements PaymentGatewayInterface
         }
     }
 
+    /**
+     * Handle incoming webhook from OneKhusa.
+     * Verifies signature via OneKhusa API, then maps the payload.
+     */
     public function handleWebhook(array $payload): PaymentResponse
     {
         try {
-            // Verify webhook authenticity
-            if (!$this->verifyWebhookSignature($payload)) {
+            // Verify webhook authenticity via OneKhusa API
+            if (! $this->verifyWebhookViaApi()) {
                 Log::warning('OneKhusa: Invalid webhook signature');
+
                 return new PaymentResponse(
                     success: false,
                     message: 'Invalid webhook signature'
                 );
             }
 
-            $reference = $payload['reference'] ?? $payload['transaction_reference'] ?? null;
-            $status = $payload['status'] ?? null;
+            // Map OneKhusa webhook field names (PascalCase in docs, camelCase in examples)
+            $reference = $payload['transactionReferenceNumber']
+                ?? $payload['TransactionReferenceNumber']
+                ?? null;
+            $statusCode = $payload['transactionStatusCode']
+                ?? $payload['TransactionStatusCode']
+                ?? null;
 
-            if (!$reference) {
+            if (! $reference) {
                 return new PaymentResponse(
                     success: false,
                     message: 'No transaction reference in webhook'
                 );
             }
 
-            // Check if payment was successful
-            if (in_array($status, ['completed', 'successful', 'paid'])) {
+            // S = Successful
+            if ($statusCode === 'S') {
                 return new PaymentResponse(
                     success: true,
                     message: 'Payment confirmed via webhook',
@@ -183,15 +193,17 @@ class OneKhusaGateway implements PaymentGatewayInterface
                 );
             }
 
+            // R = Reversed, F = Failed
             return new PaymentResponse(
                 success: false,
-                message: "Payment status: {$status}",
+                message: "Payment status code: {$statusCode}",
                 transactionId: $reference,
                 data: $payload
             );
 
         } catch (\Exception $e) {
-            Log::error('OneKhusa webhook error: ' . $e->getMessage());
+            Log::error('OneKhusa webhook error: '.$e->getMessage());
+
             return new PaymentResponse(
                 success: false,
                 message: 'Webhook processing error',
@@ -200,36 +212,70 @@ class OneKhusaGateway implements PaymentGatewayInterface
         }
     }
 
+    /**
+     * Refund is not supported via OneKhusa collections API.
+     */
     public function refundPayment(string $transactionReference, float $amount): PaymentResponse
+    {
+        return new PaymentResponse(
+            success: false,
+            message: 'Refunds are not supported via OneKhusa. Please process refunds manually through the OneKhusa portal.'
+        );
+    }
+
+    /**
+     * Simulate a payment in sandbox/test mode.
+     * Triggers the addFakeTransaction endpoint so the TAN gets "paid".
+     */
+    public function simulatePayment(string $timedAccountNumber, float $amount, string $capturedBy): PaymentResponse
     {
         try {
             $this->authenticate();
-
-            $response = $this->makeRequest('POST', '/refunds/initiate', [
-                'transaction_reference' => $transactionReference,
-                'amount' => $amount,
-                'reason' => 'Customer refund request',
+            Log::info('Simulating payment: ', [
+                'url' => '/collections/requestToPay/addFakeTransaction',
+                'payload' => [
+                    'merchantAccountNumber' => $this->merchantAccountNumber,
+                    'transactionAmount' => number_format($amount, 2, '.', ''),
+                    'connectorId' => 112400,
+                    'timedAccountNumber' => $timedAccountNumber,
+                    'currencyCode' => 'MWK',
+                    'capturedBy' => $capturedBy,
+                ],
             ]);
 
-            if (isset($response['success']) && $response['success']) {
+            $response = $this->makeRequest('POST', '/collections/requestToPay/addFakeTransaction', [
+                'merchantAccountNumber' => $this->merchantAccountNumber,
+                'transactionAmount' => number_format($amount, 2, '.', ''),
+                'connectorId' => 112400,
+                'timedAccountNumber' => $timedAccountNumber,
+                'currencyCode' => 'MWK',
+                'capturedBy' => $capturedBy,
+            ], [
+                'X-Idempotency-Key' => (string) Str::uuid(),
+            ]);
+
+            // The API returns a plain text success string, but makeRequest parses JSON.
+            // A successful call won't have 'success' => false.
+            if (isset($response['success']) && $response['success'] === false) {
                 return new PaymentResponse(
-                    success: true,
-                    message: 'Refund initiated successfully',
-                    transactionId: $response['data']['refund_id'] ?? null,
-                    data: $response['data'] ?? []
+                    success: false,
+                    message: $response['message'] ?? 'Failed to simulate payment',
+                    errors: $response['errors'] ?? []
                 );
             }
 
             return new PaymentResponse(
-                success: false,
-                message: $response['message'] ?? 'Refund failed',
-                errors: $response['errors'] ?? []
+                success: true,
+                message: 'Fake payment simulated successfully',
+                data: ['message' => $response] //The response comes back as string so we need to convert to array
             );
 
         } catch (\Exception $e) {
+            Log::error('OneKhusa simulate payment error: '.$e->getMessage());
+
             return new PaymentResponse(
                 success: false,
-                message: 'Refund processing error',
+                message: 'Failed to simulate payment',
                 errors: ['exception' => $e->getMessage()]
             );
         }
@@ -252,7 +298,8 @@ class OneKhusaGateway implements PaymentGatewayInterface
     }
 
     /**
-     * Authenticate with OneKhusa API to get access token
+     * Authenticate with OneKhusa API to get a JWT access token.
+     * Tokens expire in 5 minutes; we cache for 4 minutes.
      */
     private function authenticate(): void
     {
@@ -260,35 +307,35 @@ class OneKhusaGateway implements PaymentGatewayInterface
 
         if (Cache::has($cacheKey)) {
             $this->accessToken = Cache::get($cacheKey);
+
             return;
         }
 
         try {
-
-            Log::debug('OneKhusa authentication attempt', [
+            $url = $this->baseUrl.'/account/getAccessToken';
+            $payload = [
                 'apiKey' => $this->apiKey,
                 'apiSecret' => $this->apiSecret,
-                'organisationId' => $this->organizationId,
-                'merchantAccountNumber' => (int) $this->merchantAccountNumber,
+                'organisationId' => $this->organisationId,
+                'merchantAccountNumber' => $this->merchantAccountNumber,
+            ];
+
+            Log::info('OneKhusa authentication request', [
+                'url' => $url,
+                'payload' => $payload,
             ]);
 
             $response = Http::withHeaders([
-                'Accept' => 'application/json',
                 'Content-Type' => 'application/json',
-            ])->post($this->baseUrl . '/account/getAccessToken', [
-                'apiKey' => $this->apiKey,
-                'apiSecret' => $this->apiSecret,
-                'organisationId' => $this->organizationId,
-                'merchantAccountNumber' => (int) $this->merchantAccountNumber,
-            ]);
+                'Accept-Language' => 'en',
+            ])->post($url, $payload);
 
             if ($response->successful()) {
                 $data = $response->json();
-                $this->accessToken = $data['access_token'] ?? null;
+                $this->accessToken = $data['accessToken'] ?? null;
 
                 if ($this->accessToken) {
-                    // Cache token for 50 minutes (tokens usually last 1 hour)
-                    Cache::put($cacheKey, $this->accessToken, now()->addMinutes(50));
+                    Cache::put($cacheKey, $this->accessToken, now()->addMinutes(4));
                 }
             } else {
                 Log::error('OneKhusa authentication failed', [
@@ -298,28 +345,32 @@ class OneKhusaGateway implements PaymentGatewayInterface
 
                 throw new \Exception('Failed to authenticate with OneKhusa');
             }
-        } catch (\Exception $e) {
-            Log::error('OneKhusa authentication error: ' . $e->getMessage());
-            throw $e;
+        } catch (\Illuminate\Http\Client\RequestException $e) {
+            Log::error('OneKhusa authentication error: '.$e->getMessage());
+            throw new \Exception('Failed to connect to OneKhusa API');
         }
     }
 
-    private function makeRequest(string $method, string $endpoint, array $data = []): array
+    /**
+     * Make an authenticated API request to OneKhusa.
+     */
+    private function makeRequest(string $method, string $endpoint, array $data = [], array $extraHeaders = []): mixed
     {
-        $url = $this->baseUrl . $endpoint;
+        $url = $this->baseUrl.$endpoint;
 
         try {
-            $request = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $this->accessToken,
-                'Accept' => 'application/json',
+            $headers = array_merge([
+                'Authorization' => 'Bearer '.$this->accessToken,
                 'Content-Type' => 'application/json',
-            ]);
+                'Accept-Language' => 'en',
+            ], $extraHeaders);
+
+            $request = Http::withHeaders($headers);
 
             $response = match (strtoupper($method)) {
                 'POST' => $request->post($url, $data),
                 'GET' => $request->get($url, $data),
                 'PUT' => $request->put($url, $data),
-                'DELETE' => $request->delete($url),
                 default => throw new \Exception("Unsupported HTTP method: {$method}")
             };
 
@@ -341,15 +392,39 @@ class OneKhusaGateway implements PaymentGatewayInterface
             ];
 
         } catch (\Illuminate\Http\Client\RequestException $e) {
-            Log::error('OneKhusa HTTP Error', ['message' => $e->getMessage()]);
+            Log::error('OneKhusa HTTP Error', ['message' => $e->getMessage(), 'url' => $url]);
             throw new \Exception('Failed to connect to OneKhusa API');
         }
     }
 
-    private function verifyWebhookSignature(array $payload): bool
+    /**
+     * Verify webhook signature via OneKhusa's dedicated verification endpoint.
+     * Do NOT compute HMAC locally — pass the signature as-is for API comparison.
+     */
+    private function verifyWebhookViaApi(): bool
     {
-        $signature = request()->header('X-OneKhusa-Signature', '');
-        $computedSignature = hash_hmac('sha256', json_encode($payload), $this->apiSecret);
-        return hash_equals($signature, $computedSignature);
+        try {
+            $eventCode = request()->header('X-OneKhusa-Webhook-Event', '');
+            $signature = request()->header('X-OneKhusa-Webhook-Signature', '');
+
+            if (empty($eventCode) || empty($signature)) {
+                return false;
+            }
+
+            $this->authenticate();
+
+            $response = $this->makeRequest('POST', '/merchants/webhooks/verify', [
+                'merchantAccountNumber' => $this->merchantAccountNumber,
+                'eventCode' => $eventCode,
+                'webhookSignature' => $signature,
+            ]);
+
+            return ($response['isSignatureValid'] ?? false) === true;
+
+        } catch (\Exception $e) {
+            Log::error('OneKhusa webhook verification error: '.$e->getMessage());
+
+            return false;
+        }
     }
 }
