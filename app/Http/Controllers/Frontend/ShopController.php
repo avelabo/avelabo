@@ -52,11 +52,13 @@ class ShopController extends Controller
             }
         }
 
-        // Brand filter (accepts slug or ID)
+         // Brand filter (accepts slug or ID)
         if ($request->filled('brand')) {
-            $brand = Brand::where('slug', $request->brand)
-                ->orWhere('id', $request->brand)
-                ->first();
+            $brandQuery = Brand::where('slug', $request->brand);
+            if (is_numeric($request->brand)) {
+                $brandQuery->orWhere('id', $request->brand);
+            }
+            $brand = $brandQuery->first();
             if ($brand) {
                 $query->where('brand_id', $brand->id);
             }
@@ -196,21 +198,16 @@ class ShopController extends Controller
             }
         }
 
-        // Current brand info
+        // Current brand info (reuse $brand from filter above)
         $currentBrand = null;
-        if ($request->filled('brand')) {
-            $brandModel = Brand::where('slug', $request->brand)
-                ->orWhere('id', $request->brand)
-                ->first();
-            if ($brandModel) {
-                $currentBrand = [
-                    'id' => $brandModel->id,
-                    'name' => $brandModel->name,
-                    'slug' => $brandModel->slug,
-                    'logo' => $brandModel->logo,
-                    'description' => $brandModel->description,
-                ];
-            }
+        if (isset($brand) && $brand) {
+            $currentBrand = [
+                'id' => $brand->id,
+                'name' => $brand->name,
+                'slug' => $brand->slug,
+                'logo' => $brand->logo,
+                'description' => $brand->description,
+            ];
         }
 
         return Inertia::render('Frontend/Shop', [
