@@ -76,42 +76,56 @@ export default function HeroSlider({ sliders = [] }) {
                 }}
                 className="hero-slider rounded-xl overflow-hidden"
             >
-                {slides.map((slide, index) => (
-                    <SwiperSlide key={slide.id || index}>
-                        <div
-                            className="relative h-[280px] sm:h-[320px] lg:h-[340px] bg-cover bg-center"
-                            style={{
-                                backgroundImage: `url(${getImageUrl(slide)})`,
-                                backgroundColor: slide.bg_color || '#3b82f6',
-                            }}
-                        >
-                            {/* Content overlay */}
-                            <div className="absolute inset-0 flex items-center">
-                                <div className="px-6 sm:px-10 lg:px-12 w-full">
-                                    <div className="max-w-md">
-                                        {slide.subtitle && (
-                                            <p className="text-white/80 text-sm mb-2">{slide.subtitle}</p>
-                                        )}
-                                        <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold !text-white mb-3 leading-tight">
-                                            {slide.title}
-                                        </h2>
-                                        {slide.description && (
-                                            <p className="text-white/70 text-sm mb-5 line-clamp-2">{slide.description}</p>
-                                        )}
-                                        {slide.button_text && slide.button_link && (
-                                            <Link
-                                                href={slide.button_link}
-                                                className="inline-flex items-center gap-2 bg-[#2a2a2a] hover:bg-[#1a1a1a] text-white px-5 py-2.5 rounded-md font-medium text-sm transition-colors"
-                                            >
-                                                {slide.button_text}
-                                            </Link>
-                                        )}
+                {slides.map((slide, index) => {
+                    const opts = slide.text_options || {};
+                    const align = opts.text_align || 'left';
+                    const vertical = opts.text_vertical || 'center';
+
+                    const verticalClass = vertical === 'top' ? 'items-start' : vertical === 'bottom' ? 'items-end' : 'items-center';
+                    const horizontalClass = align === 'center' ? 'justify-center' : align === 'right' ? 'justify-end' : 'justify-start';
+                    const textAlignClass = align === 'center' ? 'text-center' : align === 'right' ? 'text-right' : 'text-left';
+
+                    return (
+                        <SwiperSlide key={slide.id || index}>
+                            <div
+                                className="relative h-[280px] sm:h-[320px] lg:h-[340px] bg-cover bg-center"
+                                style={{
+                                    backgroundImage: `url(${getImageUrl(slide)})`,
+                                    backgroundColor: slide.bg_color || '#3b82f6',
+                                }}
+                            >
+                                {/* Content overlay */}
+                                <div className={`absolute inset-0 flex ${verticalClass} ${horizontalClass}`}>
+                                    <div className={`px-6 sm:px-10 lg:px-12 ${vertical === 'top' ? 'pt-8' : vertical === 'bottom' ? 'pb-14' : ''}`}>
+                                        <div className={`max-w-md ${textAlignClass}`}>
+                                            {slide.subtitle && (
+                                                <p className="text-sm mb-2" style={{ color: opts.subtitle_color || 'rgba(255,255,255,0.8)' }}>{slide.subtitle}</p>
+                                            )}
+                                            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-3 leading-tight" style={{ color: opts.title_color || '#ffffff' }}>
+                                                {slide.title}
+                                            </h2>
+                                            {slide.description && (
+                                                <p className="text-sm mb-5 line-clamp-2" style={{ color: opts.description_color || 'rgba(255,255,255,0.7)' }}>{slide.description}</p>
+                                            )}
+                                            {slide.button_text && slide.button_link && (
+                                                <Link
+                                                    href={slide.button_link}
+                                                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-md font-medium text-sm transition-opacity hover:opacity-90"
+                                                    style={{
+                                                        backgroundColor: opts.button_bg_color || '#2a2a2a',
+                                                        color: opts.button_text_color || '#ffffff',
+                                                    }}
+                                                >
+                                                    {slide.button_text}
+                                                </Link>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    </SwiperSlide>
-                ))}
+                        </SwiperSlide>
+                    );
+                })}
             </Swiper>
 
             {/* Bottom controls bar */}

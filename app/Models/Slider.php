@@ -13,6 +13,7 @@ class Slider extends Model
         'image',
         'button_text',
         'button_link',
+        'text_options',
         'sort_order',
         'is_active',
     ];
@@ -20,6 +21,7 @@ class Slider extends Model
     protected $casts = [
         'is_active' => 'boolean',
         'sort_order' => 'integer',
+        'text_options' => 'array',
     ];
 
     public function scopeActive($query)
@@ -37,6 +39,7 @@ class Slider extends Model
         if ($this->image && str_starts_with($this->image, 'http')) {
             return $this->image;
         }
-        return $this->image ? '/storage/' . $this->image : null;
+
+        return $this->image ? '/storage/'.$this->image : null;
     }
 }

@@ -18,7 +18,7 @@ class HomeController extends Controller
         // Get active sliders
         $sliders = Slider::active()
             ->ordered()
-            ->get(['id', 'title', 'subtitle', 'description', 'image', 'button_text', 'button_link']);
+            ->get(['id', 'title', 'subtitle', 'description', 'image', 'button_text', 'button_link', 'text_options']);
 
         // Featured products (hot deals, featured items)
         $featuredProducts = Product::with(['category:id,name,slug', 'images'])

@@ -7,6 +7,16 @@ export default function Edit({ slider }) {
         slider.image ? `/storage/${slider.image}` : null
     );
 
+    const defaultTextOptions = {
+        text_align: 'left',
+        text_vertical: 'center',
+        title_color: '#ffffff',
+        subtitle_color: '#ffffffcc',
+        description_color: '#ffffffb3',
+        button_bg_color: '#2a2a2a',
+        button_text_color: '#ffffff',
+    };
+
     const { data, setData, post, processing, errors } = useForm({
         _method: 'PUT',
         title: slider.title || '',
@@ -15,9 +25,14 @@ export default function Edit({ slider }) {
         image: null,
         button_text: slider.button_text || '',
         button_link: slider.button_link || '',
+        text_options: { ...defaultTextOptions, ...(slider.text_options || {}) },
         sort_order: slider.sort_order || 0,
         is_active: slider.is_active ?? true,
     });
+
+    const setTextOption = (key, value) => {
+        setData('text_options', { ...data.text_options, [key]: value });
+    };
 
     const handleImageChange = (e) => {
         const file = e.target.files[0];
@@ -139,6 +154,101 @@ export default function Edit({ slider }) {
                                         placeholder="e.g., /shop or https://..."
                                     />
                                     {errors.button_link && <p className="text-red-500 text-sm mt-1">{errors.button_link}</p>}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Text Position & Colors */}
+                        <div className="bg-white dark:bg-dark-card rounded-xl shadow-card p-6">
+                            <h3 className="text-lg font-semibold text-heading dark:text-white mb-4">Text Position & Colors</h3>
+
+                            <div className="space-y-5">
+                                {/* Horizontal Alignment */}
+                                <div>
+                                    <label className="block text-sm font-medium text-heading dark:text-white mb-2">
+                                        Horizontal Alignment
+                                    </label>
+                                    <div className="flex gap-2">
+                                        {[
+                                            { value: 'left', icon: 'format_align_left' },
+                                            { value: 'center', icon: 'format_align_center' },
+                                            { value: 'right', icon: 'format_align_right' },
+                                        ].map((opt) => (
+                                            <button
+                                                key={opt.value}
+                                                type="button"
+                                                onClick={() => setTextOption('text_align', opt.value)}
+                                                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                                    data.text_options.text_align === opt.value
+                                                        ? 'bg-brand text-white'
+                                                        : 'bg-gray-100 dark:bg-dark-body text-body hover:text-heading dark:hover:text-white'
+                                                }`}
+                                            >
+                                                <span className="material-icons text-lg">{opt.icon}</span>
+                                                {opt.value.charAt(0).toUpperCase() + opt.value.slice(1)}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Vertical Alignment */}
+                                <div>
+                                    <label className="block text-sm font-medium text-heading dark:text-white mb-2">
+                                        Vertical Alignment
+                                    </label>
+                                    <div className="flex gap-2">
+                                        {[
+                                            { value: 'top', icon: 'vertical_align_top' },
+                                            { value: 'center', icon: 'vertical_align_center' },
+                                            { value: 'bottom', icon: 'vertical_align_bottom' },
+                                        ].map((opt) => (
+                                            <button
+                                                key={opt.value}
+                                                type="button"
+                                                onClick={() => setTextOption('text_vertical', opt.value)}
+                                                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                                    data.text_options.text_vertical === opt.value
+                                                        ? 'bg-brand text-white'
+                                                        : 'bg-gray-100 dark:bg-dark-body text-body hover:text-heading dark:hover:text-white'
+                                                }`}
+                                            >
+                                                <span className="material-icons text-lg">{opt.icon}</span>
+                                                {opt.value.charAt(0).toUpperCase() + opt.value.slice(1)}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Colors */}
+                                <div className="grid grid-cols-2 gap-4">
+                                    {[
+                                        { key: 'title_color', label: 'Title Color' },
+                                        { key: 'subtitle_color', label: 'Subtitle Color' },
+                                        { key: 'description_color', label: 'Description Color' },
+                                        { key: 'button_bg_color', label: 'Button Background' },
+                                        { key: 'button_text_color', label: 'Button Text Color' },
+                                    ].map((color) => (
+                                        <div key={color.key}>
+                                            <label className="block text-sm font-medium text-heading dark:text-white mb-1">
+                                                {color.label}
+                                            </label>
+                                            <div className="flex items-center gap-2">
+                                                <input
+                                                    type="color"
+                                                    value={data.text_options[color.key]?.slice(0, 7) || '#ffffff'}
+                                                    onChange={(e) => setTextOption(color.key, e.target.value)}
+                                                    className="w-10 h-10 rounded-lg border-0 cursor-pointer bg-transparent"
+                                                />
+                                                <input
+                                                    type="text"
+                                                    value={data.text_options[color.key] || ''}
+                                                    onChange={(e) => setTextOption(color.key, e.target.value)}
+                                                    className="flex-1 px-3 py-2 bg-gray-100 dark:bg-dark-body border-0 rounded-lg text-sm focus:ring-2 focus:ring-brand dark:text-white"
+                                                    placeholder="#ffffff"
+                                                />
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
                         </div>

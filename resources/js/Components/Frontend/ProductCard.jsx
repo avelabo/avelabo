@@ -159,7 +159,7 @@ export default function ProductCard({ product, variant = 'default', className = 
 
                 {/* Product Name */}
                 <Link href={`/product/${slug}`}>
-                    <h3 className="text-sm font-semibold text-heading mt-1 mb-2 line-clamp-2 min-h-[40px] hover:text-brand-2 transition-colors leading-tight">
+                    <h3 className="text-sm font-semibold text-heading mt-1 mb-2 line-clamp-2 hover:text-brand-2 transition-colors" title={name}>
                         {name}
                     </h3>
                 </Link>

@@ -750,6 +750,26 @@ label {
     display: none;
 }
 
+/* Line clamp utilities - explicit for browser compatibility */
+.line-clamp-1 {
+    display: -webkit-box !important;
+    -webkit-line-clamp: 1 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+}
+.line-clamp-2 {
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+}
+.line-clamp-3 {
+    display: -webkit-box !important;
+    -webkit-line-clamp: 3 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+}
+
 /* Category dropdown custom scrollbar - Brand amber color */
 .category-dropdown-scroll {
     scrollbar-width: thin;
