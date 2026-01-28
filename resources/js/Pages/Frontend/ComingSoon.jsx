@@ -254,7 +254,7 @@ export default function ComingSoon() {
                     </main>
 
                     {/* Footer */}
-                    <footer className="py-8 px-6 lg:px-16">
+                    <footer className="py-6 px-6 lg:px-16">
                         <div
                             className={`flex flex-col sm:flex-row items-center justify-between gap-4 transition-all duration-700 delay-500 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
                         >
