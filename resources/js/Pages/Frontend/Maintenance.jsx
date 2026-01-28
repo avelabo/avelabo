@@ -17,7 +17,17 @@ export default function Maintenance() {
 
     return (
         <>
-            <Head title="Under Maintenance | Avelabo" />
+            <Head title="Under Maintenance | Avelabo">
+                <meta name="description" content="Avelabo is currently undergoing scheduled maintenance. We're making improvements to serve you better. Please check back shortly." />
+                <meta name="robots" content="noindex, nofollow" />
+                <meta property="og:title" content="Under Maintenance | Avelabo" />
+                <meta property="og:description" content="Avelabo is currently undergoing scheduled maintenance. We're making improvements to serve you better." />
+                <meta property="og:type" content="website" />
+                <meta property="og:image" content="/images/logo/logo-web-mid.png" />
+                <meta name="twitter:card" content="summary" />
+                <meta name="twitter:title" content="Under Maintenance | Avelabo" />
+                <meta name="twitter:description" content="Avelabo is currently undergoing scheduled maintenance. We're making improvements to serve you better." />
+            </Head>
 
             <style>{`
                 @keyframes float {

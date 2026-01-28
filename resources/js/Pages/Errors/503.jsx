@@ -21,7 +21,18 @@ export default function Error503() {
 
     return (
         <>
-            <Head title="Service Unavailable | Avelabo" />
+            <Head title="Service Unavailable | Avelabo">
+                <meta name="description" content="Avelabo is temporarily unavailable due to high traffic or maintenance. Our team is working on it. Please try again shortly." />
+                <meta name="robots" content="noindex, nofollow" />
+                <meta property="og:title" content="Service Unavailable | Avelabo" />
+                <meta property="og:description" content="Avelabo is temporarily unavailable. Our team is working on it. Please try again shortly." />
+                <meta property="og:type" content="website" />
+                <meta property="og:image" content="/images/logo/logo-web-mid.png" />
+                <meta name="twitter:card" content="summary" />
+                <meta name="twitter:title" content="Service Unavailable | Avelabo" />
+                <meta name="twitter:description" content="Avelabo is temporarily unavailable. Please try again shortly." />
+                <meta httpEquiv="retry-after" content="300" />
+            </Head>
 
             <style>{`
                 @keyframes float {

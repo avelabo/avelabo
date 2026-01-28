@@ -14,7 +14,17 @@ export default function Error419() {
 
     return (
         <>
-            <Head title="Page Expired | Avelabo" />
+            <Head title="Session Expired | Avelabo">
+                <meta name="description" content="Your session has expired for security reasons. Please refresh the page to continue your shopping experience on Avelabo." />
+                <meta name="robots" content="noindex, nofollow" />
+                <meta property="og:title" content="Session Expired | Avelabo" />
+                <meta property="og:description" content="Your session has expired for security reasons. Please refresh the page to continue." />
+                <meta property="og:type" content="website" />
+                <meta property="og:image" content="/images/logo/logo-web-mid.png" />
+                <meta name="twitter:card" content="summary" />
+                <meta name="twitter:title" content="Session Expired | Avelabo" />
+                <meta name="twitter:description" content="Your session has expired for security reasons. Please refresh the page." />
+            </Head>
 
             <style>{`
                 @keyframes float {

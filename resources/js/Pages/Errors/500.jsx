@@ -14,7 +14,17 @@ export default function Error500() {
 
     return (
         <>
-            <Head title="Server Error | Avelabo" />
+            <Head title="Server Error | Avelabo">
+                <meta name="description" content="Something went wrong on our end. Our team has been notified and is working to fix the issue. Please try again in a few moments." />
+                <meta name="robots" content="noindex, nofollow" />
+                <meta property="og:title" content="Server Error | Avelabo" />
+                <meta property="og:description" content="Something went wrong on our end. Please try again in a few moments." />
+                <meta property="og:type" content="website" />
+                <meta property="og:image" content="/images/logo/logo-web-mid.png" />
+                <meta name="twitter:card" content="summary" />
+                <meta name="twitter:title" content="Server Error | Avelabo" />
+                <meta name="twitter:description" content="Something went wrong on our end. Please try again in a few moments." />
+            </Head>
 
             <style>{`
                 @keyframes float {

@@ -10,7 +10,17 @@ export default function Error404() {
 
     return (
         <>
-            <Head title="Page Not Found | Avelabo" />
+            <Head title="Page Not Found | Avelabo">
+                <meta name="description" content="The page you're looking for doesn't exist or has been moved. Return to Avelabo's homepage to continue shopping." />
+                <meta name="robots" content="noindex, follow" />
+                <meta property="og:title" content="Page Not Found | Avelabo" />
+                <meta property="og:description" content="The page you're looking for doesn't exist or has been moved. Return to Avelabo to continue shopping." />
+                <meta property="og:type" content="website" />
+                <meta property="og:image" content="/images/logo/logo-web-mid.png" />
+                <meta name="twitter:card" content="summary" />
+                <meta name="twitter:title" content="Page Not Found | Avelabo" />
+                <meta name="twitter:description" content="The page you're looking for doesn't exist or has been moved." />
+            </Head>
 
             <style>{`
                 @keyframes float {

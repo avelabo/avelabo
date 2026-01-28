@@ -42,7 +42,18 @@ export default function ComingSoon() {
 
     return (
         <>
-            <Head title="Coming Soon | Avelabo" />
+            <Head title="Coming Soon | Avelabo">
+                <meta name="description" content="Something extraordinary is coming to Malawi. Avelabo - bringing global products to your doorstep with local payments. Stay tuned!" />
+                <meta name="robots" content="index, follow" />
+                <meta property="og:title" content="Coming Soon | Avelabo" />
+                <meta property="og:description" content="Something extraordinary is coming to Malawi. Global products, local payments, delivered to your doorstep." />
+                <meta property="og:type" content="website" />
+                <meta property="og:image" content="/images/logo/logo-web-mid.png" />
+                <meta name="twitter:card" content="summary_large_image" />
+                <meta name="twitter:title" content="Coming Soon | Avelabo" />
+                <meta name="twitter:description" content="Something extraordinary is coming to Malawi. Global products, local payments, delivered to your doorstep." />
+                <meta name="keywords" content="Avelabo, global products, Malawi, online shopping, Mpamba, Airtel Money, coming soon" />
+            </Head>
 
             <style>{`
                 @keyframes float {
@@ -174,8 +185,8 @@ export default function ComingSoon() {
                             <p
                                 className={`text-lg lg:text-xl text-[#666666] max-w-xl mx-auto mb-8 leading-relaxed transition-all duration-700 delay-300 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
                             >
-                                We're crafting a new shopping experience for Malawi.
-                                Premium products, curated selection, delivered to your door.
+                                Bringing global products to your doorstep in Malawi.
+                                Shop international brands, pay with Mpamba and Airtel Money.
                             </p>
 
                             {/* Countdown Timer */}
@@ -240,7 +251,7 @@ export default function ComingSoon() {
                             <div
                                 className={`flex flex-wrap justify-center gap-3 mt-10 transition-all duration-700 delay-500 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
                             >
-                                {['Premium Quality', 'Fast Delivery', 'Secure Payments', 'Local Support'].map((feature, index) => (
+                                {['Global Products', 'Local Payments', 'Fast Delivery', 'Trusted Service'].map((feature, index) => (
                                     <span
                                         key={feature}
                                         className="px-4 py-2 text-xs font-medium tracking-wide text-[#666666] border border-[#e5e5e5] rounded-full"

@@ -10,7 +10,17 @@ export default function Error403() {
 
     return (
         <>
-            <Head title="Access Denied | Avelabo" />
+            <Head title="Access Denied | Avelabo">
+                <meta name="description" content="You don't have permission to access this page. Please sign in with the appropriate credentials or contact support for assistance." />
+                <meta name="robots" content="noindex, nofollow" />
+                <meta property="og:title" content="Access Denied | Avelabo" />
+                <meta property="og:description" content="You don't have permission to access this page. Please sign in or contact support." />
+                <meta property="og:type" content="website" />
+                <meta property="og:image" content="/images/logo/logo-web-mid.png" />
+                <meta name="twitter:card" content="summary" />
+                <meta name="twitter:title" content="Access Denied | Avelabo" />
+                <meta name="twitter:description" content="You don't have permission to access this page." />
+            </Head>
 
             <style>{`
                 @keyframes float {

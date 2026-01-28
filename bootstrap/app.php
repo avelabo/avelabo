@@ -40,6 +40,8 @@ return Application::configure(basePath: dirname(__DIR__))
                 ];
 
                 if (array_key_exists($status, $errorPages)) {
+                    view()->share('isErrorPage', true);
+
                     return Inertia::render($errorPages[$status])
                         ->toResponse($request)
                         ->setStatusCode($status);

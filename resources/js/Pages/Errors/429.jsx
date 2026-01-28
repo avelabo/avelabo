@@ -23,7 +23,17 @@ export default function Error429() {
 
     return (
         <>
-            <Head title="Too Many Requests | Avelabo" />
+            <Head title="Too Many Requests | Avelabo">
+                <meta name="description" content="You've made too many requests. Please wait a moment before trying again. This helps us maintain a fast experience for everyone." />
+                <meta name="robots" content="noindex, nofollow" />
+                <meta property="og:title" content="Too Many Requests | Avelabo" />
+                <meta property="og:description" content="You've made too many requests. Please wait a moment before trying again." />
+                <meta property="og:type" content="website" />
+                <meta property="og:image" content="/images/logo/logo-web-mid.png" />
+                <meta name="twitter:card" content="summary" />
+                <meta name="twitter:title" content="Too Many Requests | Avelabo" />
+                <meta name="twitter:description" content="You've made too many requests. Please wait a moment before trying again." />
+            </Head>
 
             <style>{`
                 @keyframes float {
