@@ -75,14 +75,14 @@ class ProductConverter
                 $action = 'updated';
 
                 // Update images and variants
-                $this->syncImages($product, $data['images'] ?? [], $source, $baseUrl);
+                $this->syncImages($product, $data['images'] ?? [], $sourceId, $baseUrl);
                 $this->syncVariants($product, $data['variants'] ?? []);
             } else {
                 $product = Product::create($productData);
                 $action = 'created';
 
                 // Create images and variants
-                $this->createImages($product, $data['images'] ?? [], $source, $baseUrl);
+                $this->createImages($product, $data['images'] ?? [], $sourceId, $baseUrl);
                 $this->createVariants($product, $data['variants'] ?? []);
             }
 
@@ -121,10 +121,10 @@ class ProductConverter
         return ['brand' => $brand, 'action' => 'created'];
     }
 
-    protected function createImages(Product $product, array $images, string $source, ?string $baseUrl = null): void
+    protected function createImages(Product $product, array $images, string $sourceId, ?string $baseUrl = null): void
     {
         foreach ($images as $index => $imageData) {
-            $path = $this->downloadImage($imageData['path'] ?? $imageData['url'] ?? null, $product, $source, $baseUrl);
+            $path = $this->downloadImage($imageData['path'] ?? $imageData['url'] ?? null, $product, $sourceId, $baseUrl);
 
             if ($path) {
                 ProductImage::create([
@@ -138,7 +138,7 @@ class ProductConverter
         }
     }
 
-    protected function syncImages(Product $product, array $images, string $source, ?string $baseUrl = null): void
+    protected function syncImages(Product $product, array $images, string $sourceId, ?string $baseUrl = null): void
     {
         // Delete existing images
         foreach ($product->images as $image) {
@@ -147,10 +147,10 @@ class ProductConverter
         $product->images()->delete();
 
         // Create new images
-        $this->createImages($product, $images, $source, $baseUrl);
+        $this->createImages($product, $images, $sourceId, $baseUrl);
     }
 
-    protected function downloadImage(?string $imagePath, Product $product, string $source, ?string $baseUrl = null): ?string
+    protected function downloadImage(?string $imagePath, Product $product, string $sourceId, ?string $baseUrl = null): ?string
     {
         if (! $imagePath) {
             return null;
@@ -162,8 +162,8 @@ class ProductConverter
                 $imagePath = rtrim($baseUrl, '/').$imagePath;
             } elseif (! str_starts_with($imagePath, 'http') && $baseUrl) {
                 $imagePath = rtrim($baseUrl ?? '', '/').'/'.ltrim($imagePath, '/');
-            } else {
-                // If it's still not an absolute URL, we can't download it
+            } elseif (! str_starts_with($imagePath, 'http')) {
+                // Relative path with no base URL — can't resolve
                 \Log::warning('No base URL provided', [
                     'image_path' => $imagePath,
                     'product_id' => $product->id,
@@ -204,7 +204,7 @@ class ProductConverter
 
             // Generate unique filename
             $filename = Str::uuid().'.'.$extension;
-            $path = "products/{$source}/{$product->id}/{$filename}";
+            $path = "products/{$sourceId}/{$product->id}/{$filename}";
 
             // Store the image
             Storage::disk('public')->put($path, $response->body());

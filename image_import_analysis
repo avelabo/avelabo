@@ -1,0 +1,22 @@
+
+● Read(app\Services\Import\Converters\ProductConverter.php)
+  ⎿  Read 100 lines
+
+● Here's how product images are saved in ProductConverter.php:
+
+  createImages (line 124) — Loops through the image array, calls downloadImage for each, then creates a        
+  ProductImage record with path, alt_text, sort_order, and is_primary (first image defaults to primary).       
+
+  syncImages (line 141) — For existing products being updated: deletes all old image files from storage and DB,
+   then calls createImages to re-create them.
+
+  downloadImage (line 153) — The core logic:
+  1. Resolves relative URLs by prepending the data source's base_url (lines 161-173)
+  2. Downloads via Http::get() with a 30s timeout (line 186)
+  3. Determines file extension from the URL path, falling back to the Content-Type header (lines 193-203)      
+  4. Stores the file at products/{source}/{product_id}/{uuid}.{ext} on the public disk (lines 206-210)
+  5. Catches exceptions and logs warnings without failing the import (lines 213-222)
+
+  One issue: lines 160-173 have a logic bug — if the image path already starts with http (an absolute URL), it 
+  falls into the else block which logs a warning and returns null, so absolute URLs are never downloaded. The  
+  commented-out block at lines 176-183 was the original correct check that got bypassed.

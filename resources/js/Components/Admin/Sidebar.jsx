@@ -3,7 +3,6 @@ import { useState } from 'react';
 
 export default function Sidebar({ isOpen, isMobileOpen, onClose }) {
     const { url } = usePage();
-    const [expandedMenus, setExpandedMenus] = useState([]);
 
     const menuItems = [
         {
@@ -109,6 +108,16 @@ export default function Sidebar({ isOpen, isMobileOpen, onClose }) {
         },
     ];
 
+    const [expandedMenus, setExpandedMenus] = useState(() => {
+        const initial = [];
+        menuItems.forEach((item, index) => {
+            if (item.children?.some(child => url === child.href || url.startsWith(child.href + '/'))) {
+                initial.push(index);
+            }
+        });
+        return initial;
+    });
+
     const toggleMenu = (index) => {
         setExpandedMenus(prev =>
             prev.includes(index)
@@ -117,7 +126,10 @@ export default function Sidebar({ isOpen, isMobileOpen, onClose }) {
         );
     };
 
-    const isActive = (href) => url === href || url.startsWith(href + '/');
+    const isActive = (href) => {
+        if (href === '/admin') return url === '/admin';
+        return url === href || url.startsWith(href + '/');
+    };
 
     return (
         <aside
