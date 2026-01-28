@@ -158,13 +158,13 @@ export default function ComingSoon() {
 
                             {/* Main Headline */}
                             <h1
-                                className={`text-4xl sm:text-5xl lg:text-6xl font-bold text-[#1a1a1a] leading-[1] tracking-tight mb-5 transition-all duration-700 delay-200 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
+                                className={`text-5xl sm:text-6xl lg:text-7xl font-bold text-[#1a1a1a] leading-[0.95] tracking-tight mb-5 transition-all duration-700 delay-200 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
                             >
                                 Something
                                 <br />
                                 <span className="relative inline-block">
                                     <span className="relative z-10">Extraordinary</span>
-                                    <span className="absolute bottom-1 left-0 w-full h-2 lg:h-3 bg-[#d4a853]/20 -z-0" />
+                                    <span className="absolute bottom-1 left-0 w-full h-2.5 lg:h-3 bg-[#d4a853]/20 -z-0" />
                                 </span>
                                 <br />
                                 is Coming
@@ -172,7 +172,7 @@ export default function ComingSoon() {
 
                             {/* Subheadline */}
                             <p
-                                className={`text-base lg:text-lg text-[#666666] max-w-lg mx-auto mb-8 leading-relaxed transition-all duration-700 delay-300 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
+                                className={`text-lg lg:text-xl text-[#666666] max-w-xl mx-auto mb-8 leading-relaxed transition-all duration-700 delay-300 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
                             >
                                 We're crafting a new shopping experience for Malawi.
                                 Premium products, curated selection, delivered to your door.
