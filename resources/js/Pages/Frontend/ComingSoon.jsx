@@ -12,7 +12,7 @@ export default function ComingSoon() {
             const now = new Date();
             const target = new Date();
             target.setDate(now.getDate() + 1);
-            target.setHours(8, 0, 0, 0);
+            target.setHours(12, 0, 0, 0);
             return target;
         };
 
