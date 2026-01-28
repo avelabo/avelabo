@@ -56,7 +56,7 @@ class ProductConverter
                 'currency_id' => $currencyId,
                 'stock_quantity' => $stockStatus === 'in_stock' ? 100 : 0,
                 'allow_backorders' => $allowBackorders,
-                'status' => 'draft',
+                'status' => $task->settings['product_status'] ?? 'draft',
                 'is_featured' => $data['is_featured'] ?? false,
                 'is_new' => $data['is_new'] ?? true,
                 'rating' => (float) ($data['rating'] ?? 0),

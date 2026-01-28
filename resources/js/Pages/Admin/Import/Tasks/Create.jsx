@@ -331,9 +331,26 @@ export default function Create({ dataSources, sellers, categories, importTypes }
                         </div>
                     )}
 
-                    {/* Execution Settings */}
+                    {/* Import Settings */}
                     <div className="bg-white dark:bg-dark-card rounded-xl shadow-card p-6 space-y-6">
-                        <h3 className="text-lg font-semibold text-heading dark:text-white">Execution Settings</h3>
+                        <h3 className="text-lg font-semibold text-heading dark:text-white">Import Settings</h3>
+
+                        <div>
+                            <label className="block text-sm font-medium text-heading dark:text-white mb-2">
+                                Product Status After Import
+                            </label>
+                            <select
+                                value={data.settings?.product_status || 'draft'}
+                                onChange={(e) => setData('settings', { ...data.settings, product_status: e.target.value })}
+                                className="w-full px-4 py-2.5 bg-gray-100 dark:bg-dark-body border-0 rounded-lg text-sm focus:ring-2 focus:ring-brand"
+                            >
+                                <option value="draft">Draft</option>
+                                <option value="active">Active</option>
+                            </select>
+                            <p className="mt-1 text-xs text-body">
+                                Choose whether imported products should be immediately visible (Active) or require manual review (Draft)
+                            </p>
+                        </div>
 
                         <label className="flex items-center gap-3 cursor-pointer">
                             <input
