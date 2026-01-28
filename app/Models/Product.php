@@ -27,6 +27,7 @@ class Product extends Model
         'short_description',
         'specifications',
         'base_price',
+        'compare_at_price_source',
         'currency_id',
         'sku',
         'barcode',
@@ -54,6 +55,7 @@ class Product extends Model
 
     protected $casts = [
         'base_price' => 'decimal:2',
+        'compare_at_price_source' => 'decimal:2',
         'stock_quantity' => 'integer',
         'low_stock_threshold' => 'integer',
         'track_inventory' => 'boolean',

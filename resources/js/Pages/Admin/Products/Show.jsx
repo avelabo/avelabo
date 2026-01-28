@@ -147,21 +147,13 @@ export default function Show({ product, categories, brands, sellers }) {
                                 <p className="text-2xl font-bold text-heading dark:text-white">{formatCurrency(product.base_price)}</p>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-body mb-1">Compare at Price</label>
+                                <label className="block text-sm font-medium text-body mb-1">Source Compare Price</label>
                                 <p className="text-heading dark:text-white">
-                                    {product.compare_at_price ? (
-                                        <span className="line-through text-gray-400">{formatCurrency(product.compare_at_price)}</span>
+                                    {product.compare_at_price_source ? (
+                                        <span className="text-gray-400">{formatCurrency(product.compare_at_price_source)}</span>
                                     ) : '-'}
                                 </p>
                             </div>
-                            {product.compare_at_price && product.base_price < product.compare_at_price && (
-                                <div>
-                                    <label className="block text-sm font-medium text-body mb-1">Discount</label>
-                                    <p className="text-green-600 font-medium">
-                                        {Math.round((1 - product.base_price / product.compare_at_price) * 100)}% off
-                                    </p>
-                                </div>
-                            )}
                         </div>
                     </div>
 

@@ -14,7 +14,6 @@ export default function Edit({ product, categories, brands, sellers, attributes 
         description: product.description || '',
         short_description: product.short_description || '',
         base_price: product.base_price || '',
-        compare_at_price: product.compare_at_price || '',
         sku: product.sku || '',
         barcode: product.barcode || '',
         stock_quantity: product.stock_quantity || 0,
@@ -200,19 +199,6 @@ export default function Edit({ product, categories, brands, sellers, attributes 
                                 {errors.base_price && <p className="mt-1 text-sm text-red-500">{errors.base_price}</p>}
                             </div>
 
-                            <div>
-                                <label className="block text-sm font-medium text-heading dark:text-white mb-2">
-                                    Compare at Price (MWK)
-                                </label>
-                                <input
-                                    type="number"
-                                    step="0.01"
-                                    min="0"
-                                    value={data.compare_at_price}
-                                    onChange={(e) => setData('compare_at_price', e.target.value)}
-                                    className="w-full px-4 py-2.5 bg-gray-100 dark:bg-dark-body border-0 rounded-lg text-sm focus:ring-2 focus:ring-brand"
-                                />
-                            </div>
                         </div>
                     </div>
 

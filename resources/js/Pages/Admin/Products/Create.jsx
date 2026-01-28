@@ -13,7 +13,6 @@ export default function Create({ categories, brands, sellers, attributes }) {
         description: '',
         short_description: '',
         base_price: '',
-        compare_at_price: '',
         sku: '',
         barcode: '',
         stock_quantity: 0,
@@ -217,22 +216,6 @@ export default function Create({ categories, brands, sellers, attributes }) {
                                 <p className="text-xs text-body mt-1">This is the seller's cost price. Markup will be applied automatically.</p>
                             </div>
 
-                            {/* Compare at Price */}
-                            <div>
-                                <label className="block text-sm font-medium text-heading dark:text-white mb-2">
-                                    Compare at Price (MWK)
-                                </label>
-                                <input
-                                    type="number"
-                                    step="0.01"
-                                    min="0"
-                                    value={data.compare_at_price}
-                                    onChange={(e) => setData('compare_at_price', e.target.value)}
-                                    className="w-full px-4 py-2.5 bg-gray-100 dark:bg-dark-body border-0 rounded-lg text-sm focus:ring-2 focus:ring-brand"
-                                    placeholder="0.00"
-                                />
-                                <p className="text-xs text-body mt-1">Original price for showing discounts</p>
-                            </div>
                         </div>
                     </div>
 
