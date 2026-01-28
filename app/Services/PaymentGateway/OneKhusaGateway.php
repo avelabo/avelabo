@@ -263,11 +263,12 @@ class OneKhusaGateway implements PaymentGatewayInterface
                     errors: $response['errors'] ?? []
                 );
             }
+            Log::info(['message' => $response]);
 
             return new PaymentResponse(
                 success: true,
                 message: 'Fake payment simulated successfully',
-                data: ['message' => $response] //The response comes back as string so we need to convert to array
+                data: ['message' => $response] // The response comes back as string so we need to convert to array
             );
 
         } catch (\Exception $e) {

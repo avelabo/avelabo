@@ -27,7 +27,7 @@ class SettingSeeder extends Seeder
             ],
             [
                 'key' => 'site_description',
-                'value' => 'Avelabo is Malawi\'s premier multi-vendor ecommerce marketplace offering quality products from trusted sellers.',
+                'value' => 'Avelabo is Malawi\'s premier ecommerce marketplace offering quality products from global sellers.',
                 'type' => 'string',
                 'group' => 'general',
                 'is_public' => true,

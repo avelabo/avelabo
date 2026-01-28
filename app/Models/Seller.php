@@ -17,6 +17,7 @@ class Seller extends Model
     protected $fillable = [
         'user_id',
         'shop_name',
+        'display_name',
         'slug',
         'description',
         'logo',
@@ -156,11 +157,13 @@ class Seller extends Model
     }
 
     /**
-     * Get the display name for frontend (seller name or Avelabo)
+     * Get the public name for frontend (display_name, shop_name, or Avelabo)
      */
-    public function getDisplayNameAttribute(): string
+    public function getPublicNameAttribute(): string
     {
-        return $this->show_seller_name ? $this->shop_name : 'Avelabo';
+        $name = $this->attributes['display_name'] ?? null;
+
+        return $this->show_seller_name ? ($name ?: $this->shop_name) : 'Avelabo';
     }
 
     /**

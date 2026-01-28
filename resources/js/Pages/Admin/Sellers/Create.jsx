@@ -5,6 +5,7 @@ export default function Create({ currencies, countries, markupTemplates, availab
     const { data, setData, post, processing, errors } = useForm({
         user_id: '',
         shop_name: '',
+        display_name: '',
         description: '',
         business_type: 'individual',
         business_name: '',
@@ -91,6 +92,21 @@ export default function Create({ currencies, countries, markupTemplates, availab
                                     required
                                 />
                                 {errors.shop_name && <p className="mt-1 text-sm text-red-600">{errors.shop_name}</p>}
+                            </div>
+
+                            <div>
+                                <label htmlFor="display_name" className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
+                                    Display Name
+                                </label>
+                                <input
+                                    id="display_name"
+                                    type="text"
+                                    value={data.display_name}
+                                    onChange={(e) => setData('display_name', e.target.value)}
+                                    className="w-full px-4 py-2.5 bg-gray-100 dark:bg-gray-700 border-0 rounded-lg text-sm dark:text-white"
+                                    placeholder="Public-facing name (leave empty to use shop name)"
+                                />
+                                {errors.display_name && <p className="mt-1 text-sm text-red-600">{errors.display_name}</p>}
                             </div>
 
                             <div>

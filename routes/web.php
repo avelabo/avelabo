@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\BrandController as AdminBrandController;
 use App\Http\Controllers\Admin\CategoryController as AdminCategoryController;
 use App\Http\Controllers\Admin\ContactMessageController;
 use App\Http\Controllers\Admin\CouponController as AdminCouponController;
+use App\Http\Controllers\Admin\CurrencyController as AdminCurrencyController;
 use App\Http\Controllers\Admin\ImportDataSourceController;
 use App\Http\Controllers\Admin\ImportTaskController;
 use App\Http\Controllers\Admin\KycController;
@@ -370,6 +371,12 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::delete('/payment-gateways/{paymentGateway}', [AdminPaymentGatewayController::class, 'destroy'])->name('payment-gateways.destroy');
     Route::patch('/payment-gateways/{paymentGateway}/toggle-status', [AdminPaymentGatewayController::class, 'toggleStatus'])->name('payment-gateways.toggle-status');
     Route::patch('/payment-gateways/{paymentGateway}/toggle-test-mode', [AdminPaymentGatewayController::class, 'toggleTestMode'])->name('payment-gateways.toggle-test-mode');
+
+    // Currencies
+    Route::resource('currencies', AdminCurrencyController::class)->except(['show', 'create', 'edit']);
+    Route::patch('/currencies/{currency}/toggle-status', [AdminCurrencyController::class, 'toggleStatus'])->name('currencies.toggle-status');
+    Route::patch('/currencies/{currency}/set-default', [AdminCurrencyController::class, 'setDefault'])->name('currencies.set-default');
+    Route::put('/exchange-rates/{exchangeRate}', [AdminCurrencyController::class, 'updateExchangeRate'])->name('exchange-rates.update');
 
     // Settings
     Route::get('/settings', [AdminSettingsController::class, 'index'])->name('settings');

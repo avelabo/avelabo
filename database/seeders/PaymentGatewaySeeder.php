@@ -47,7 +47,7 @@ class PaymentGatewaySeeder extends Seeder
                 'slug' => 'cash-on-delivery',
                 'display_name' => 'Cash on Delivery',
                 'description' => 'Pay cash when your order is delivered',
-                'is_active' => true,
+                'is_active' => false,
                 'supported_currencies' => ['MWK'],
                 'supported_countries' => ['MW'],
                 'transaction_fee_percentage' => 0,

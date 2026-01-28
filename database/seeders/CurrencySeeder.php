@@ -38,24 +38,6 @@ class CurrencySeeder extends Seeder
                 'is_active' => true,
                 'is_default' => false,
             ],
-            [
-                'code' => 'GBP',
-                'name' => 'British Pound',
-                'symbol' => '£',
-                'decimal_places' => 2,
-                'symbol_before' => true,
-                'is_active' => false,
-                'is_default' => false,
-            ],
-            [
-                'code' => 'EUR',
-                'name' => 'Euro',
-                'symbol' => '€',
-                'decimal_places' => 2,
-                'symbol_before' => true,
-                'is_active' => false,
-                'is_default' => false,
-            ],
         ];
 
         foreach ($currencies as $currency) {
@@ -75,15 +57,15 @@ class CurrencySeeder extends Seeder
         $zar = Currency::where('code', 'ZAR')->first();
         $usd = Currency::where('code', 'USD')->first();
 
-        if (!$mwk || !$zar || !$usd) {
+        if (! $mwk || ! $zar || ! $usd) {
             return;
         }
 
         // Approximate rates: 1 USD = 1700 MWK, 1 ZAR = 90 MWK
         $rates = [
-            ['from' => $usd->id, 'to' => $mwk->id, 'rate' => 1700.00],
-            ['from' => $zar->id, 'to' => $mwk->id, 'rate' => 90.00],
-            ['from' => $usd->id, 'to' => $zar->id, 'rate' => 18.90],
+            ['from' => $usd->id, 'to' => $mwk->id, 'rate' => 4000.00],
+            ['from' => $zar->id, 'to' => $mwk->id, 'rate' => 240.00],
+            ['from' => $usd->id, 'to' => $zar->id, 'rate' => 17.90],
         ];
 
         foreach ($rates as $rate) {

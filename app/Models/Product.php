@@ -27,7 +27,7 @@ class Product extends Model
         'short_description',
         'specifications',
         'base_price',
-        'compare_at_price_source',
+        'compare_at_price_source', // RELEVANT COMMENT:ignore this column, its not supposed to used, its only for keeping data from source
         'currency_id',
         'sku',
         'barcode',
@@ -200,16 +200,27 @@ class Product extends Model
      */
     public function toCardArray(): array
     {
-        $discount = app(\App\Services\DiscountService::class)
-            ->getProductDiscount($this, $this->display_price);
+        $priceService = app(\App\Services\PriceService::class);
+        $priceData = $priceService->getPrice($this);
+        $discount = $priceService->getPriceWithDiscount($this);
+
+        // Apply currency conversion to discount prices
+        $displayPrice = $priceData['amount'];
+        $originalMarkupPrice = $priceService->getDisplayPrice($this);
+        $conversionRatio = $originalMarkupPrice > 0 ? $displayPrice / $originalMarkupPrice : 1;
+
+        $discountedPrice = $discount['has_discount']
+            ? round($discount['discounted_price'] * $conversionRatio, 2)
+            : $displayPrice;
+        $comparePrice = $discount['has_discount'] ? $displayPrice : null;
 
         return [
             'id' => $this->id,
             'name' => $this->name,
             'slug' => $this->slug,
             'short_description' => $this->short_description,
-            'price' => $discount['discounted_price'],
-            'compare_price' => $discount['has_discount'] ? $discount['original_price'] : null,
+            'price' => $discountedPrice,
+            'compare_price' => $comparePrice,
             'is_on_sale' => $discount['has_discount'],
             'discount_percentage' => $discount['discount_percentage'],
             'promotion_name' => $discount['promotion_name'],
@@ -227,7 +238,7 @@ class Product extends Model
             ] : null,
             'seller' => $this->relationLoaded('seller') && $this->seller ? [
                 'id' => $this->seller->id,
-                'name' => $this->seller->display_name,
+                'name' => $this->seller->public_name,
                 'has_storefront' => $this->seller->has_storefront,
             ] : null,
         ];

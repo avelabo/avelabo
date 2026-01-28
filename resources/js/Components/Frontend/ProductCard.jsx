@@ -71,7 +71,7 @@ export default function ProductCard({ product, variant = 'default', className = 
     const categorySlug = typeof category === 'object' ? category?.slug : null;
 
     // Handle seller/brand - could be string or object
-    const brandName = typeof seller === 'object' ? seller?.shop_name : (seller || null);
+    const brandName = typeof seller === 'object' ? (seller?.display_name || seller?.shop_name) : (seller || null);
 
     // Handle image - use SVG data URI as final fallback to prevent infinite loops
     const placeholderSvg = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"%3E%3Crect fill="%23f5f5f5" width="200" height="200"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" fill="%23999" font-family="sans-serif" font-size="12"%3ENo Image%3C/text%3E%3C/svg%3E';

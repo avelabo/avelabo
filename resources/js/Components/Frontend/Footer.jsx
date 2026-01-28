@@ -100,7 +100,7 @@ export default function Footer() {
                 ================================================ */}
             <div className="border-b border-white/10">
                 <div className="container mx-auto px-4 py-10">
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 lg:gap-8">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6 lg:gap-8">
                         {[
                             {
                                 icon: (
@@ -129,15 +129,6 @@ export default function Footer() {
                                 ),
                                 title: 'Secure Checkout',
                                 desc: 'Protected payments'
-                            },
-                            {
-                                icon: (
-                                    <svg className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
-                                    </svg>
-                                ),
-                                title: 'Easy Returns',
-                                desc: 'Hassle-free process'
                             },
                             {
                                 icon: (
@@ -336,25 +327,12 @@ export default function Footer() {
                         {/* Payment Methods */}
                         <div className="flex items-center gap-3">
                             <span className="text-white/50 text-sm">We accept</span>
-                            <div className="flex items-center gap-2">
-                                {/* Visa */}
-                                <div className="w-12 h-8 bg-white rounded flex items-center justify-center">
-                                    <svg className="h-4" viewBox="0 0 48 16" fill="none">
-                                        <path d="M17.5 1.5L15 14.5H12L14.5 1.5H17.5ZM30.5 9.5L32 5L33 9.5H30.5ZM34 14.5H37L34.5 1.5H32C31.5 1.5 31 1.8 30.8 2.3L25 14.5H28.5L29.2 12.5H33.5L34 14.5ZM27 10C27 6 21 5.8 21 4C21 3.3 21.7 2.8 22.8 2.6C23.3 2.5 25 2.6 26 3.2L27 1.7C26 1.3 24.8 1 23.3 1C20 1 17.5 2.9 17.5 5.6C17.5 7.6 19.3 8.7 20.7 9.3C22 10 22.5 10.4 22.5 11C22.5 11.9 21.4 12.3 20.4 12.3C19 12.3 17.8 12 16.8 11.4L15.8 13C17 13.6 18.5 13.9 20 13.9C23.5 14 26 12 27 10ZM10 1.5L5 14.5H1.5L4 3.7C4 3 3.5 2.5 3 2.3C2.3 2 1.3 1.7 0 1.5L0.1 1H5.5C6.2 1 6.8 1.5 7 2.2L8.2 8.5L11.5 1.5H10Z" fill="#1A1F71"/>
-                                    </svg>
-                                </div>
-                                {/* Mastercard */}
-                                <div className="w-12 h-8 bg-white rounded flex items-center justify-center">
-                                    <svg className="h-5" viewBox="0 0 32 20" fill="none">
-                                        <circle cx="11" cy="10" r="8" fill="#EB001B"/>
-                                        <circle cx="21" cy="10" r="8" fill="#F79E1B"/>
-                                        <path d="M16 4C17.8 5.5 19 7.6 19 10C19 12.4 17.8 14.5 16 16C14.2 14.5 13 12.4 13 10C13 7.6 14.2 5.5 16 4Z" fill="#FF5F00"/>
-                                    </svg>
-                                </div>
-                                {/* Mobile Money indicator */}
-                                <div className="px-3 h-8 bg-white rounded flex items-center justify-center">
-                                    <span className="text-xs font-semibold text-gray-700">M-Pesa</span>
-                                </div>
+                            <div className="bg-white rounded-lg px-3 py-1.5">
+                                <img
+                                    src="/images/frontend/theme/payment_logos.png"
+                                    alt="Accepted payment methods"
+                                    className="h-6 object-contain"
+                                />
                             </div>
                         </div>
                     </div>

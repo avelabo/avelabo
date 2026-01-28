@@ -33,14 +33,13 @@ export default function Sidebar({ isOpen, isMobileOpen, onClose }) {
             ],
         },
         {
-            name: 'Categories',
-            icon: 'category',
-            href: '/admin/categories',
-        },
-        {
-            name: 'Tags',
-            icon: 'label',
-            href: '/admin/tags',
+            name: 'Control Data',
+            icon: 'dataset',
+            children: [
+                { name: 'Categories', href: '/admin/categories' },
+                { name: 'Tags', href: '/admin/tags' },
+                { name: 'Brands', href: '/admin/brands' },
+            ],
         },
         {
             name: 'Data Import',
@@ -89,11 +88,6 @@ export default function Sidebar({ isOpen, isMobileOpen, onClose }) {
             href: '/admin/transactions',
         },
         {
-            name: 'Brands',
-            icon: 'branding_watermark',
-            href: '/admin/brands',
-        },
-        {
             name: 'Reviews',
             icon: 'star',
             href: '/admin/reviews',
@@ -102,6 +96,11 @@ export default function Sidebar({ isOpen, isMobileOpen, onClose }) {
             name: 'Payment Gateways',
             icon: 'payments',
             href: '/admin/payment-gateways',
+        },
+        {
+            name: 'Currencies',
+            icon: 'currency_exchange',
+            href: '/admin/currencies',
         },
         {
             name: 'Settings',

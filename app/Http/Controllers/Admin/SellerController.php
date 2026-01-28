@@ -86,6 +86,7 @@ class SellerController extends Controller
         $validated = $request->validate([
             'user_id' => ['required', 'exists:users,id', 'unique:sellers,user_id'],
             'shop_name' => ['required', 'string', 'max:255'],
+            'display_name' => ['nullable', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:1000'],
             'business_type' => ['required', 'in:individual,company'],
             'business_name' => ['nullable', 'string', 'max:255'],
@@ -163,6 +164,7 @@ class SellerController extends Controller
     {
         $validated = $request->validate([
             'shop_name' => ['required', 'string', 'max:255'],
+            'display_name' => ['nullable', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:1000'],
             'business_type' => ['nullable', 'in:individual,company'],
             'business_name' => ['nullable', 'string', 'max:255'],

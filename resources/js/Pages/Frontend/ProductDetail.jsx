@@ -392,11 +392,11 @@ export default function ProductDetail({ product, relatedProducts }) {
                                 <div className="bg-surface-raised rounded-xl p-5">
                                     <div className="flex items-center gap-4">
                                         <div className="w-12 h-12 bg-brand rounded-lg flex items-center justify-center text-white font-bold text-lg">
-                                            {product.seller.shop_name?.charAt(0) || 'S'}
+                                            {(product.seller.display_name || product.seller.shop_name)?.charAt(0) || 'S'}
                                         </div>
                                         <div className="flex-1">
                                             <p className="text-sm text-muted">Sold by</p>
-                                            <p className="font-semibold text-heading">{product.seller.shop_name || product.seller.name}</p>
+                                            <p className="font-semibold text-heading">{product.seller.display_name || product.seller.shop_name || product.seller.name}</p>
                                         </div>
                                         <Link
                                             href={route('vendor.details', product.seller.slug || product.seller.id)}

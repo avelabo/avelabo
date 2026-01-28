@@ -27,7 +27,7 @@ class ShopController extends Controller
             $request->merge(['brand' => $slug]);
         }
 
-        $query = Product::with(['category:id,name,slug', 'seller:id,shop_name', 'images'])
+        $query = Product::with(['category:id,name,slug', 'seller:id,shop_name,display_name', 'images'])
             ->active()
             ->inStock();
 
@@ -53,7 +53,7 @@ class ShopController extends Controller
             }
         }
 
-         // Brand filter (accepts slug or ID)
+        // Brand filter (accepts slug or ID)
         if ($request->filled('brand')) {
             $brandQuery = Brand::where('slug', $request->brand);
             if (is_numeric($request->brand)) {
@@ -243,7 +243,7 @@ class ShopController extends Controller
         $product = Product::with([
             'category',
             'brand',
-            'seller:id,slug,shop_name,description,logo,show_seller_name,has_storefront',
+            'seller:id,slug,shop_name,display_name,description,logo,show_seller_name,has_storefront',
             'images',
             'variants.attributes.attribute',
             'variants.attributes.attributeValue',
@@ -257,7 +257,7 @@ class ShopController extends Controller
 
         // Get price data
         $priceData = $this->priceService->getPrice($product);
-        $compareAtPrice = $this->priceService->getCompareAtPrice($product);
+        $discount = $this->priceService->getPriceWithDiscount($product);
 
         // Transform product data
         $productData = [
@@ -268,9 +268,9 @@ class ShopController extends Controller
             'short_description' => $product->short_description,
             'specifications' => $product->specifications,
             'price' => $priceData,
-            'compare_price' => $compareAtPrice,
-            'is_on_sale' => $product->is_on_sale,
-            'discount_percentage' => $product->discount_percentage,
+            'compare_price' => $discount['has_discount'] ? $discount['original_price'] : null,
+            'is_on_sale' => $discount['has_discount'],
+            'discount_percentage' => $discount['discount_percentage'],
             'is_featured' => $product->is_featured,
             'is_new' => $product->is_new,
             'rating' => $product->rating,
@@ -302,7 +302,7 @@ class ShopController extends Controller
             ] : null,
             'seller' => $product->seller ? [
                 'id' => $product->seller->id,
-                'name' => $product->seller->display_name,
+                'name' => $product->seller->public_name,
                 'slug' => $product->seller->slug,
                 'description' => $product->seller->show_seller_name ? $product->seller->description : null,
                 'logo' => $product->seller->show_seller_name ? $product->seller->logo : null,

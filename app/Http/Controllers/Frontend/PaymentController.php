@@ -279,6 +279,11 @@ class PaymentController extends Controller
             $verifyReference = $order->payment_request_reference ?? $reference;
             $response = $gateway->verifyPayment($verifyReference);
 
+            // Log::info([
+            //     'success' => $response->isSuccessful(),
+            //     'message' => $response->message,
+            //     'payment_status' => $response->isSuccessful() ? 'paid' : 'pending',
+            // ]);
             return response()->json([
                 'success' => $response->isSuccessful(),
                 'message' => $response->message,

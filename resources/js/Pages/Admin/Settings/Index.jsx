@@ -24,13 +24,13 @@ export default function Settings({ settings = {} }) {
     };
 
     const setValue = (key, value) => {
-        setData('settings', prev => {
-            const existing = prev.find(s => s.key === key);
-            if (existing) {
-                return prev.map(s => s.key === key ? { ...s, value } : s);
-            }
-            return [...prev, { key, value }];
-        });
+        const current = data.settings;
+        const existing = current.find(s => s.key === key);
+        if (existing) {
+            setData('settings', current.map(s => s.key === key ? { ...s, value } : s));
+        } else {
+            setData('settings', [...current, { key, value }]);
+        }
     };
 
     const handleSubmit = (e) => {

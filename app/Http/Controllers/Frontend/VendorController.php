@@ -181,7 +181,7 @@ class VendorController extends Controller
     {
         $data = [
             'id' => $seller->id,
-            'shop_name' => $seller->shop_name,
+            'shop_name' => $seller->public_name,
             'slug' => $seller->slug,
             'description' => $seller->description,
             'logo' => $seller->logo_url,

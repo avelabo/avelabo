@@ -8,6 +8,7 @@ export default function Show({ seller, stats, markupTemplates, currencies, count
 
     const { data, setData, put, processing, errors } = useForm({
         shop_name: seller?.shop_name || '',
+        display_name: seller?.display_name || '',
         description: seller?.description || '',
         business_type: seller?.business_type || 'individual',
         business_name: seller?.business_name || '',
@@ -293,6 +294,21 @@ export default function Show({ seller, stats, markupTemplates, currencies, count
                                             className="w-full px-4 py-2.5 bg-gray-100 dark:bg-dark-body border-0 rounded-lg text-sm dark:text-white"
                                         />
                                         {errors.shop_name && <p className="mt-1 text-sm text-red-600">{errors.shop_name}</p>}
+                                    </div>
+
+                                    <div>
+                                        <label htmlFor="display_name" className="block text-sm font-medium text-heading dark:text-white mb-2">
+                                            Display Name
+                                        </label>
+                                        <input
+                                            id="display_name"
+                                            type="text"
+                                            value={data.display_name}
+                                            onChange={(e) => setData('display_name', e.target.value)}
+                                            className="w-full px-4 py-2.5 bg-gray-100 dark:bg-dark-body border-0 rounded-lg text-sm dark:text-white"
+                                            placeholder="Public-facing name (leave empty to use shop name)"
+                                        />
+                                        {errors.display_name && <p className="mt-1 text-sm text-red-600">{errors.display_name}</p>}
                                     </div>
 
                                     <div>
