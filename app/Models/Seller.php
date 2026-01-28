@@ -100,6 +100,11 @@ class Seller extends Model
         return $this->hasMany(Product::class);
     }
 
+    public function promotions(): HasMany
+    {
+        return $this->hasMany(Promotion::class);
+    }
+
     public function orderItems(): HasMany
     {
         return $this->hasMany(OrderItem::class);
@@ -163,7 +168,7 @@ class Seller extends Model
      */
     public function getLogoUrlAttribute(): ?string
     {
-        if (!$this->logo) {
+        if (! $this->logo) {
             return null;
         }
 
@@ -180,7 +185,7 @@ class Seller extends Model
      */
     public function getBannerUrlAttribute(): ?string
     {
-        if (!$this->banner) {
+        if (! $this->banner) {
             return null;
         }
 

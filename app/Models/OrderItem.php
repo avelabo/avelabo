@@ -32,6 +32,8 @@ class OrderItem extends Model
         'tracking_carrier',
         'shipped_at',
         'delivered_at',
+        'promotion_discount',
+        'coupon_discount',
     ];
 
     protected $casts = [
@@ -43,6 +45,8 @@ class OrderItem extends Model
         'exchange_rate_used' => 'decimal:8',
         'shipped_at' => 'datetime',
         'delivered_at' => 'datetime',
+        'promotion_discount' => 'decimal:2',
+        'coupon_discount' => 'decimal:2',
     ];
 
     public function order(): BelongsTo

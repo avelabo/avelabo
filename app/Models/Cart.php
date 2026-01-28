@@ -15,6 +15,7 @@ class Cart extends Model
         'user_id',
         'guest_token',
         'currency_id',
+        'coupon_id',
         'expires_at',
     ];
 
@@ -30,6 +31,11 @@ class Cart extends Model
     public function currency(): BelongsTo
     {
         return $this->belongsTo(Currency::class);
+    }
+
+    public function coupon(): BelongsTo
+    {
+        return $this->belongsTo(Coupon::class);
     }
 
     public function items(): HasMany

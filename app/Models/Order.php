@@ -35,6 +35,9 @@ class Order extends Model
         'cancelled_at',
         'cancellation_reason',
         'payment_request_reference',
+        'coupon_id',
+        'coupon_code',
+        'promotion_discount_amount',
     ];
 
     protected $casts = [
@@ -47,6 +50,7 @@ class Order extends Model
         'shipped_at' => 'datetime',
         'delivered_at' => 'datetime',
         'cancelled_at' => 'datetime',
+        'promotion_discount_amount' => 'decimal:2',
     ];
 
     public function user(): BelongsTo
@@ -62,6 +66,11 @@ class Order extends Model
     public function currency(): BelongsTo
     {
         return $this->belongsTo(Currency::class);
+    }
+
+    public function coupon(): BelongsTo
+    {
+        return $this->belongsTo(Coupon::class);
     }
 
     public function shippingAddress(): BelongsTo

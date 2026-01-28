@@ -19,7 +19,8 @@ class CheckoutService
         protected CartService $cartService,
         protected PriceService $priceService,
         protected MarkupService $markupService,
-        protected OrderService $orderService
+        protected OrderService $orderService,
+        protected DiscountService $discountService
     ) {}
 
     /**
@@ -36,7 +37,7 @@ class CheckoutService
 
         // Validate stock
         $stockErrors = $this->cartService->validateCartStock($cart);
-        if (!empty($stockErrors)) {
+        if (! empty($stockErrors)) {
             $errors['stock'] = $stockErrors;
         }
 
@@ -44,12 +45,12 @@ class CheckoutService
         $requiredBillingFields = ['first_name', 'last_name', 'email', 'phone', 'address_line_1', 'city', 'country_id'];
         foreach ($requiredBillingFields as $field) {
             if (empty($billingData[$field])) {
-                $errors["billing.{$field}"] = "This field is required";
+                $errors["billing.{$field}"] = 'This field is required';
             }
         }
 
         // Validate email format
-        if (!empty($billingData['email']) && !filter_var($billingData['email'], FILTER_VALIDATE_EMAIL)) {
+        if (! empty($billingData['email']) && ! filter_var($billingData['email'], FILTER_VALIDATE_EMAIL)) {
             $errors['billing.email'] = 'Invalid email address';
         }
 
@@ -122,10 +123,10 @@ class CheckoutService
         ?string $paymentMethod = null,
         ?string $notes = null
     ): Order {
-        return DB::transaction(function () use ($cart, $billingData, $shippingData, $paymentMethod, $notes) {
+        return DB::transaction(function () use ($cart, $billingData, $shippingData, $notes) {
             // Get or create user
             $user = Auth::user();
-            if (!$user) {
+            if (! $user) {
                 // Quick Checkout - create user
                 $user = $this->createQuickCheckoutUser(
                     $billingData['email'],
@@ -184,7 +185,10 @@ class CheckoutService
             'status' => 'pending',
             'currency_id' => $currency?->id,
             'subtotal' => $cartTotals['subtotal'],
-            'discount_amount' => 0,
+            'discount_amount' => $cartTotals['discount_total'] ?? 0,
+            'promotion_discount_amount' => $cartTotals['promotion_discount'] ?? 0,
+            'coupon_id' => $cart->coupon_id,
+            'coupon_code' => $cart->coupon?->code,
             'shipping_amount' => $cartTotals['shipping'],
             'tax_amount' => $cartTotals['tax'],
             'total' => $cartTotals['total'],
@@ -199,10 +203,14 @@ class CheckoutService
      */
     protected function createOrderItems(Order $order, Cart $cart): void
     {
-        $cart->load(['items.product.seller', 'items.product.images', 'items.variant']);
+        $cart->load(['items.product.seller', 'items.product.images', 'items.product.tags', 'items.variant', 'coupon']);
 
         // Get default currency
         $currency = Currency::where('code', 'MWK')->first();
+
+        // Calculate cart totals to get per-item discounts
+        $cartTotals = $this->cartService->calculateTotals($cart);
+        $itemDiscounts = collect($cartTotals['items'])->keyBy('id');
 
         foreach ($cart->items as $cartItem) {
             $product = $cartItem->product;
@@ -221,7 +229,11 @@ class CheckoutService
                 $markupAmount = $displayPrice - $basePrice;
             }
 
-            $lineTotal = $displayPrice * $cartItem->quantity;
+            $itemData = $itemDiscounts->get($cartItem->id);
+            $promoDiscount = $itemData['promotion_discount'] ?? 0;
+            $couponDiscount = $itemData['coupon_discount'] ?? 0;
+
+            $lineTotal = ($displayPrice * $cartItem->quantity) - $promoDiscount - $couponDiscount;
 
             OrderItem::create([
                 'order_id' => $order->id,
@@ -237,6 +249,8 @@ class CheckoutService
                 'markup_amount' => $markupAmount,
                 'display_price' => $displayPrice,
                 'line_total' => $lineTotal,
+                'promotion_discount' => $promoDiscount,
+                'coupon_discount' => $couponDiscount,
                 'currency_id' => $currency?->id ?? 1,
                 'seller_currency_id' => $product->currency_id ?? $currency?->id ?? 1,
                 'exchange_rate_used' => 1,
@@ -244,10 +258,20 @@ class CheckoutService
             ]);
         }
 
-        // Update order totals based on items (recalculate to be accurate)
+        // Record coupon usage
+        if ($cart->coupon && $order->user_id) {
+            $this->discountService->recordCouponUsage(
+                $cart->coupon,
+                $order->user,
+                $order,
+                $cartTotals['coupon_discount']
+            );
+        }
+
+        // Update order totals
         $order->update([
-            'subtotal' => $order->items()->sum('line_total'),
-            'total' => $order->items()->sum('line_total') + $order->shipping_amount + $order->tax_amount - $order->discount_amount,
+            'subtotal' => $order->items()->sum(DB::raw('display_price * quantity')),
+            'total' => $order->items()->sum('line_total') + $order->shipping_amount + $order->tax_amount,
         ]);
     }
 
@@ -261,7 +285,7 @@ class CheckoutService
         $grouped = [];
         foreach ($order->items as $item) {
             $sellerId = $item->seller_id;
-            if (!isset($grouped[$sellerId])) {
+            if (! isset($grouped[$sellerId])) {
                 $grouped[$sellerId] = [
                     'seller' => $item->seller,
                     'items' => [],
