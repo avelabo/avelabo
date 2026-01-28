@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Brand;
 use App\Models\Product;
 use App\Models\Slider;
+use App\Services\DiscountService;
 use Inertia\Inertia;
 
 class HomeController extends Controller
@@ -48,16 +49,18 @@ class HomeController extends Controller
             ->get()
             ->map->toCardArray();
 
-        // On sale products
+        // On sale products (products with active promotions)
+        $discountService = app(DiscountService::class);
         $saleProducts = Product::with(['category:id,name,slug', 'images'])
             ->active()
             ->inStock()
-            ->whereNotNull('compare_at_price')
-            ->whereRaw('compare_at_price > base_price')
             ->orderBy('views_count', 'desc')
-            ->take(10)
+            ->take(50)
             ->get()
-            ->map->toCardArray();
+            ->filter(fn ($product) => $discountService->getProductDiscount($product, $product->display_price)['has_discount'])
+            ->take(10)
+            ->map->toCardArray()
+            ->values();
 
         // Featured brands with product count
         $featuredBrands = Brand::withCount(['products as active_products_count' => function ($query) {
@@ -85,15 +88,16 @@ class HomeController extends Controller
             ->get()
             ->map->toCardArray();
 
-        // Daily deals (random featured on-sale products)
+        // Daily deals (random featured products with active promotions)
         $dailyDeals = Product::with(['category:id,name,slug', 'images'])
             ->active()
             ->inStock()
             ->featured()
-            ->whereNotNull('compare_at_price')
             ->inRandomOrder()
-            ->take(4)
+            ->take(20)
             ->get()
+            ->filter(fn ($product) => $discountService->getProductDiscount($product, $product->display_price)['has_discount'])
+            ->take(4)
             ->map(fn ($product) => [
                 ...$product->toCardArray(),
                 'sale_ends_at' => $product->sale_ends_at?->toIso8601String(),

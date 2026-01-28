@@ -216,7 +216,6 @@ class ProductSeeder extends Seeder
                 'description' => $productData['description'],
                 'short_description' => $productData['short_description'],
                 'base_price' => $productData['base_price'],
-                'compare_at_price' => $productData['compare_at_price'],
                 'currency_id' => $currency->id,
                 'sku' => 'SKU-' . strtoupper(Str::random(6)),
                 'stock_quantity' => $productData['stock_quantity'],

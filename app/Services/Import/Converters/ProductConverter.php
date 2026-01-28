@@ -52,7 +52,6 @@ class ProductConverter
                 'short_description' => $data['short_description'] ?? null,
                 'specifications' => is_array($data['specifications'] ?? null) ? json_encode($data['specifications']) : ($data['specifications'] ?? null),
                 'base_price' => (float) ($data['base_price'] ?? 0),
-                'compare_at_price' => ! empty($data['compare_at_price']) ? (float) $data['compare_at_price'] : null,
                 'currency_id' => $currencyId,
                 'stock_quantity' => $stockStatus === 'in_stock' ? 100 : 0,
                 'allow_backorders' => $allowBackorders,

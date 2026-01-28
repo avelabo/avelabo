@@ -88,7 +88,6 @@ class ProductController extends Controller
             'description' => ['nullable', 'string'],
             'short_description' => ['nullable', 'string', 'max:500'],
             'base_price' => ['required', 'numeric', 'min:0'],
-            'compare_at_price' => ['nullable', 'numeric', 'min:0'],
             'sku' => ['nullable', 'string', 'max:100'],
             'barcode' => ['nullable', 'string', 'max:100'],
             'stock_quantity' => ['required', 'integer', 'min:0'],
@@ -116,7 +115,6 @@ class ProductController extends Controller
                 'description' => $validated['description'] ?? null,
                 'short_description' => $validated['short_description'] ?? null,
                 'base_price' => $validated['base_price'],
-                'compare_at_price' => $validated['compare_at_price'] ?? null,
                 'currency_id' => $seller->default_currency_id ?? 1, // Default to MWK
                 'sku' => $validated['sku'] ?? strtoupper(Str::random(8)),
                 'barcode' => $validated['barcode'] ?? null,
@@ -223,7 +221,6 @@ class ProductController extends Controller
             'description' => ['nullable', 'string'],
             'short_description' => ['nullable', 'string', 'max:500'],
             'base_price' => ['required', 'numeric', 'min:0'],
-            'compare_at_price' => ['nullable', 'numeric', 'min:0'],
             'sku' => ['nullable', 'string', 'max:100'],
             'barcode' => ['nullable', 'string', 'max:100'],
             'stock_quantity' => ['required', 'integer', 'min:0'],

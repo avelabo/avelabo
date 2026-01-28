@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
+use App\Services\DiscountService;
 use App\Services\PriceService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -82,10 +83,12 @@ class ShopController extends Controller
             $query->featured();
         }
 
-        // On sale filter
+        // On sale filter (via active promotions)
         if ($request->boolean('on_sale')) {
-            $query->whereNotNull('compare_at_price')
-                ->whereRaw('compare_at_price > base_price');
+            $discountService = app(DiscountService::class);
+            $allProducts = Product::active()->inStock()->get();
+            $onSaleIds = $discountService->getProductIdsWithActivePromotions($allProducts);
+            $query->whereIn('id', $onSaleIds);
         }
 
         // Sorting

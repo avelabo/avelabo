@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\Seller;
+use App\Services\DiscountService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -144,17 +145,19 @@ class VendorController extends Controller
                 'products_count' => $cat->products_count,
             ]);
 
-        // Deal products from this seller
+        // Deal products from this seller (products with active promotions)
+        $discountService = app(DiscountService::class);
         $dealProducts = Product::with(['category:id,name,slug', 'images'])
             ->where('seller_id', $seller->id)
             ->active()
             ->inStock()
-            ->whereNotNull('compare_at_price')
-            ->whereRaw('compare_at_price > base_price')
             ->inRandomOrder()
-            ->take(4)
+            ->take(20)
             ->get()
-            ->map->toCardArray();
+            ->filter(fn ($product) => $discountService->getProductDiscount($product, $product->display_price)['has_discount'])
+            ->take(4)
+            ->map->toCardArray()
+            ->values();
 
         return Inertia::render('Frontend/VendorDetails', [
             'vendor' => $this->transformSeller($seller, true),
