@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Currency;
 use App\Models\SellerMarkupTemplate;
 use App\Models\SellerMarkupTemplateRange;
 use Illuminate\Http\Request;
@@ -31,7 +32,9 @@ class MarkupTemplateController extends Controller
      */
     public function create()
     {
-        return Inertia::render('Admin/MarkupTemplates/Create');
+        return Inertia::render('Admin/MarkupTemplates/Create', [
+            'currencies' => Currency::where('is_active', true)->get(['id', 'code', 'name']),
+        ]);
     }
 
     /**
@@ -42,6 +45,7 @@ class MarkupTemplateController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:500'],
+            'currency_id' => ['required', 'exists:currencies,id'],
             'is_default' => ['boolean'],
             'is_active' => ['boolean'],
             'ranges' => ['required', 'array', 'min:1'],
@@ -59,6 +63,7 @@ class MarkupTemplateController extends Controller
             $template = SellerMarkupTemplate::create([
                 'name' => $validated['name'],
                 'description' => $validated['description'] ?? null,
+                'currency_id' => $validated['currency_id'],
                 'is_default' => $validated['is_default'] ?? false,
                 'is_active' => $validated['is_active'] ?? true,
             ]);
@@ -98,6 +103,7 @@ class MarkupTemplateController extends Controller
 
         return Inertia::render('Admin/MarkupTemplates/Edit', [
             'template' => $markupTemplate,
+            'currencies' => Currency::where('is_active', true)->get(['id', 'code', 'name']),
         ]);
     }
 
@@ -109,6 +115,7 @@ class MarkupTemplateController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:500'],
+            'currency_id' => ['required', 'exists:currencies,id'],
             'is_default' => ['boolean'],
             'is_active' => ['boolean'],
             'ranges' => ['required', 'array', 'min:1'],
@@ -126,6 +133,7 @@ class MarkupTemplateController extends Controller
             $markupTemplate->update([
                 'name' => $validated['name'],
                 'description' => $validated['description'] ?? null,
+                'currency_id' => $validated['currency_id'],
                 'is_default' => $validated['is_default'] ?? false,
                 'is_active' => $validated['is_active'] ?? true,
             ]);

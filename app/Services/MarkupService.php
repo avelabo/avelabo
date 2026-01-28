@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Product;
 use App\Models\Seller;
+use App\Models\SellerMarkupTemplateRange;
 use App\Models\SellerPriceMarkup;
 use Illuminate\Support\Facades\Cache;
 
@@ -24,12 +25,14 @@ class MarkupService
     /**
      * Calculate the markup amount for a product based on seller's price range configuration
      * Returns the markup value to add to base price
+     *
+     * @deprecated Use calculateMarkupForPrice() instead - markup should be applied after currency conversion
      */
     public function calculateMarkup(Product $product, ?Seller $seller = null): float
     {
         $seller = $seller ?? $product->seller;
 
-        if (!$seller) {
+        if (! $seller) {
             return 0;
         }
 
@@ -42,7 +45,26 @@ class MarkupService
         // Find the markup range that contains this price
         $markupRange = $this->findMarkupRange($seller, $basePrice);
 
-        if (!$markupRange) {
+        if (! $markupRange) {
+            return 0;
+        }
+
+        return (float) $markupRange->markup_amount;
+    }
+
+    /**
+     * Calculate markup for a given price (already converted to selling currency)
+     * This is the preferred method - markup ranges are defined in selling currency (MWK)
+     */
+    public function calculateMarkupForPrice(float $price, ?Seller $seller): float
+    {
+        if (! $seller || $price <= 0) {
+            return 0;
+        }
+
+        $markupRange = $this->findMarkupRange($seller, $price);
+
+        if (! $markupRange) {
             return 0;
         }
 
@@ -57,27 +79,44 @@ class MarkupService
     {
         $basePrice = $product->base_price ?? 0;
         $markup = $this->calculateMarkup($product, $seller);
+
         return round($basePrice + $markup, 2);
     }
 
     /**
-     * Find the markup range that contains the given price
+     * Find the markup range that contains the given price.
+     * First checks seller's direct price markups, then falls back to their assigned template.
      */
-    protected function findMarkupRange(Seller $seller, float $basePrice): ?SellerPriceMarkup
+    protected function findMarkupRange(Seller $seller, float $basePrice): ?object
     {
         $cacheKey = "seller_markup_ranges.{$seller->id}";
 
-        // Cache all markup ranges for this seller
+        // Cache all markup ranges for this seller (direct + template fallback)
         $ranges = Cache::remember($cacheKey, 3600, function () use ($seller) {
-            return SellerPriceMarkup::where('seller_id', $seller->id)
+            // First, try seller's direct price markups
+            $directRanges = SellerPriceMarkup::where('seller_id', $seller->id)
                 ->where('is_active', true)
                 ->orderBy('min_price', 'asc')
                 ->get();
+
+            if ($directRanges->isNotEmpty()) {
+                return $directRanges;
+            }
+
+            // Fall back to seller's assigned markup template
+            if ($seller->markup_template_id) {
+                return SellerMarkupTemplateRange::where('template_id', $seller->markup_template_id)
+                    ->orderBy('min_price', 'asc')
+                    ->get();
+            }
+
+            return collect();
         });
 
         // Find the range that contains this price
         foreach ($ranges as $range) {
-            if ($basePrice >= $range->min_price && $basePrice <= $range->max_price) {
+            $maxPrice = $range->max_price ?? PHP_FLOAT_MAX;
+            if ($basePrice >= $range->min_price && $basePrice <= $maxPrice) {
                 return $range;
             }
         }

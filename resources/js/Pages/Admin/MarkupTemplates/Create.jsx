@@ -2,13 +2,16 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import AdminLayout from '@/Layouts/AdminLayout';
 import { useState } from 'react';
 
-export default function MarkupTemplateCreate() {
+export default function MarkupTemplateCreate({ currencies }) {
     const { data, setData, post, processing, errors } = useForm({
         name: '',
         description: '',
+        currency_id: '',
         is_active: true,
         ranges: [{ min_price: '', max_price: '', markup_amount: '' }],
     });
+
+    const selectedCurrency = currencies?.find(c => String(c.id) === String(data.currency_id));
 
     const addRange = () => {
         setData('ranges', [...data.ranges, { min_price: '', max_price: '', markup_amount: '' }]);
@@ -83,6 +86,26 @@ export default function MarkupTemplateCreate() {
                                         onChange={(e) => setData('description', e.target.value)}
                                     />
                                 </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        Currency *
+                                    </label>
+                                    <select
+                                        className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg outline-none text-sm focus:ring-2 focus:ring-brand dark:text-white"
+                                        value={data.currency_id}
+                                        onChange={(e) => setData('currency_id', e.target.value)}
+                                        required
+                                    >
+                                        <option value="">Select currency...</option>
+                                        {currencies?.map((currency) => (
+                                            <option key={currency.id} value={currency.id}>
+                                                {currency.code} — {currency.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    {errors.currency_id && <p className="text-red-500 text-xs mt-1">{errors.currency_id}</p>}
+                                </div>
                             </div>
                         </div>
 
@@ -109,7 +132,7 @@ export default function MarkupTemplateCreate() {
                                         <div className="flex-1 grid grid-cols-3 gap-4">
                                             <div>
                                                 <label className="block text-xs font-medium text-gray-500 mb-1">
-                                                    Min Price (MWK)
+                                                    Min Price ({selectedCurrency?.code || 'Currency'})
                                                 </label>
                                                 <input
                                                     type="number"
@@ -123,7 +146,7 @@ export default function MarkupTemplateCreate() {
                                             </div>
                                             <div>
                                                 <label className="block text-xs font-medium text-gray-500 mb-1">
-                                                    Max Price (MWK)
+                                                    Max Price ({selectedCurrency?.code || 'Currency'})
                                                 </label>
                                                 <input
                                                     type="number"
@@ -137,7 +160,7 @@ export default function MarkupTemplateCreate() {
                                             </div>
                                             <div>
                                                 <label className="block text-xs font-medium text-gray-500 mb-1">
-                                                    Markup Amount (MWK)
+                                                    Markup Amount ({selectedCurrency?.code || 'Currency'})
                                                 </label>
                                                 <input
                                                     type="number"
@@ -171,7 +194,7 @@ export default function MarkupTemplateCreate() {
                                     <span className="material-icons text-yellow-600 text-lg">lightbulb</span>
                                     <div className="text-sm text-yellow-700 dark:text-yellow-400">
                                         <p className="font-medium">Tip: Price Range Matching</p>
-                                        <p>If a product price is MWK 5,000 and you have a range 0-10,000 with MWK 1,000 markup, the customer sees MWK 6,000. Leave Max Price empty for no upper limit.</p>
+                                        <p>If a product price is {selectedCurrency?.code || 'MWK'} 5,000 and you have a range 0-10,000 with {selectedCurrency?.code || 'MWK'} 1,000 markup, the customer sees {selectedCurrency?.code || 'MWK'} 6,000. Leave Max Price empty for no upper limit.</p>
                                     </div>
                                 </div>
                             </div>
@@ -211,15 +234,15 @@ export default function MarkupTemplateCreate() {
                                         <div key={index} className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                                             <div className="flex justify-between text-sm">
                                                 <span className="text-gray-500">Base Price</span>
-                                                <span className="text-gray-900 dark:text-white">MWK {Number(basePrice).toLocaleString()}</span>
+                                                <span className="text-gray-900 dark:text-white">{selectedCurrency?.code || 'MWK'} {Number(basePrice).toLocaleString()}</span>
                                             </div>
                                             <div className="flex justify-between text-sm">
                                                 <span className="text-gray-500">Markup</span>
-                                                <span className="text-green-600">+MWK {Number(markupAmount).toLocaleString()}</span>
+                                                <span className="text-green-600">+{selectedCurrency?.code || 'MWK'} {Number(markupAmount).toLocaleString()}</span>
                                             </div>
                                             <div className="flex justify-between text-sm font-medium pt-2 border-t border-gray-200 dark:border-gray-600 mt-2">
                                                 <span className="text-gray-700 dark:text-gray-300">Customer Sees</span>
-                                                <span className="text-brand">MWK {Number(finalPrice).toLocaleString()}</span>
+                                                <span className="text-brand">{selectedCurrency?.code || 'MWK'} {Number(finalPrice).toLocaleString()}</span>
                                             </div>
                                         </div>
                                     );

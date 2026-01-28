@@ -43,6 +43,7 @@ export default function Settings({ settings = {} }) {
         { id: 'contact', label: 'Contact Info', icon: 'contact_phone' },
         { id: 'social', label: 'Social Media', icon: 'share' },
         { id: 'footer', label: 'Footer', icon: 'web' },
+        { id: 'maintenance', label: 'Maintenance', icon: 'build' },
     ];
 
     return (
@@ -369,6 +370,112 @@ export default function Settings({ settings = {} }) {
                                                             className="w-full px-4 py-3 bg-gray-100 dark:bg-gray-700 border-0 rounded-lg focus:ring-2 focus:ring-brand text-sm dark:text-white"
                                                             placeholder="Get updates on deals and promotions"
                                                         />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Maintenance Settings */}
+                                    {activeSection === 'maintenance' && (
+                                        <div className="space-y-6">
+                                            {/* Coming Soon Mode */}
+                                            <div className="grid grid-cols-1 md:grid-cols-12 gap-6 pb-6 border-b border-gray-200 dark:border-gray-700">
+                                                <div className="md:col-span-5">
+                                                    <h5 className="text-lg font-quicksand font-bold text-heading dark:text-white mb-2">
+                                                        Coming Soon Mode
+                                                    </h5>
+                                                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                                                        Use this before launching your site to show visitors that the site is coming soon.
+                                                    </p>
+                                                </div>
+                                                <div className="md:col-span-7 space-y-4">
+                                                    <div className="flex items-start gap-4 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                                                        <label className="relative inline-flex items-center cursor-pointer">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={getValue('coming_soon_enabled') === true || getValue('coming_soon_enabled') === '1'}
+                                                                onChange={(e) => setValue('coming_soon_enabled', e.target.checked ? '1' : '0')}
+                                                                className="sr-only peer"
+                                                            />
+                                                            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-brand/20 dark:peer-focus:ring-brand/30 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-500 peer-checked:bg-brand"></div>
+                                                        </label>
+                                                        <div>
+                                                            <h6 className="text-sm font-medium text-heading dark:text-white">
+                                                                Enable Coming Soon Page
+                                                            </h6>
+                                                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                                                Visitors will see a "Coming Soon" page. Use this while preparing for launch.
+                                                            </p>
+                                                        </div>
+                                                    </div>
+
+                                                    {(getValue('coming_soon_enabled') === true || getValue('coming_soon_enabled') === '1') && (
+                                                        <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                                                            <div className="flex gap-2">
+                                                                <span className="material-icons text-blue-600 text-lg">rocket_launch</span>
+                                                                <div className="text-sm text-blue-700 dark:text-blue-400">
+                                                                    <p className="font-medium">Coming Soon Mode is Active</p>
+                                                                    <p className="mt-1">Visitors see the coming soon page. Disable this when you're ready to launch.</p>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            {/* Maintenance Mode */}
+                                            <div className="grid grid-cols-1 md:grid-cols-12 gap-6 pb-6 border-b border-gray-200 dark:border-gray-700">
+                                                <div className="md:col-span-5">
+                                                    <h5 className="text-lg font-quicksand font-bold text-heading dark:text-white mb-2">
+                                                        Maintenance Mode
+                                                    </h5>
+                                                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                                                        Use this when performing updates or maintenance on the site.
+                                                    </p>
+                                                </div>
+                                                <div className="md:col-span-7 space-y-4">
+                                                    <div className="flex items-start gap-4 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                                                        <label className="relative inline-flex items-center cursor-pointer">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={getValue('maintenance_mode_enabled') === true || getValue('maintenance_mode_enabled') === '1'}
+                                                                onChange={(e) => setValue('maintenance_mode_enabled', e.target.checked ? '1' : '0')}
+                                                                className="sr-only peer"
+                                                            />
+                                                            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-brand/20 dark:peer-focus:ring-brand/30 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-500 peer-checked:bg-orange-500"></div>
+                                                        </label>
+                                                        <div>
+                                                            <h6 className="text-sm font-medium text-heading dark:text-white">
+                                                                Enable Maintenance Page
+                                                            </h6>
+                                                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                                                Visitors will see a maintenance page. Use this during updates or fixes.
+                                                            </p>
+                                                        </div>
+                                                    </div>
+
+                                                    {(getValue('maintenance_mode_enabled') === true || getValue('maintenance_mode_enabled') === '1') && (
+                                                        <div className="p-4 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg">
+                                                            <div className="flex gap-2">
+                                                                <span className="material-icons text-orange-600 text-lg">engineering</span>
+                                                                <div className="text-sm text-orange-700 dark:text-orange-400">
+                                                                    <p className="font-medium">Maintenance Mode is Active</p>
+                                                                    <p className="mt-1">Visitors see the maintenance page. Don't forget to disable this when done.</p>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            {/* Info Note */}
+                                            <div className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                                                <div className="flex gap-2">
+                                                    <span className="material-icons text-gray-500 text-lg">info</span>
+                                                    <div className="text-sm text-gray-600 dark:text-gray-400">
+                                                        <p className="font-medium">Note</p>
+                                                        <p className="mt-1">If both modes are enabled, Maintenance Mode takes priority. Admin users can always access the site normally.</p>
                                                     </div>
                                                 </div>
                                             </div>

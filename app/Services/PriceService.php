@@ -33,31 +33,36 @@ class PriceService
     /**
      * Get the final price for a product in the given currency
      * This is the main method used for displaying prices to customers
+     *
+     * Flow: base_price → apply markup → convert to target currency
      */
     public function getPrice(Product $product, ?string $currencyCode = null): array
     {
-        $finalPrice = $this->markupService->getFinalPrice($product);
         $productCurrency = $product->currency?->code ?? 'MWK';
         $targetCurrency = $currencyCode ?? $this->getCustomerCurrency();
 
-        // Convert to target currency if different
-        $convertedPrice = $this->currencyService->convert(
-            $finalPrice,
+        // Step 1: Get display price (base + markup) in source currency
+        $displayPrice = $this->markupService->getFinalPrice($product);
+
+        // Step 2: Convert to target currency
+        $finalPrice = $this->currencyService->convert(
+            $displayPrice,
             $productCurrency,
             $targetCurrency
         );
 
         return [
-            'amount' => $convertedPrice,
+            'amount' => $finalPrice,
             'currency' => $targetCurrency,
-            'formatted' => $this->currencyService->format($convertedPrice, $targetCurrency),
-            'original_amount' => $finalPrice,
+            'formatted' => $this->currencyService->format($finalPrice, $targetCurrency),
+            'original_amount' => $displayPrice,
             'original_currency' => $productCurrency,
         ];
     }
 
     /**
      * Get variant price with markup and currency conversion
+     * Flow: variant price → apply markup → convert to target currency
      */
     public function getVariantPrice(ProductVariant $variant, ?string $currencyCode = null): array
     {
@@ -65,24 +70,21 @@ class PriceService
         $productCurrency = $product->currency?->code ?? 'MWK';
         $targetCurrency = $currencyCode ?? $this->getCustomerCurrency();
 
-        // Calculate markup ratio from the main product
-        $basePrice = $product->base_price;
-        $finalPrice = $this->markupService->getFinalPrice($product);
-        $markupRatio = $basePrice > 0 ? $finalPrice / $basePrice : 1;
+        // Step 1: Apply markup on variant price
+        $markup = $this->markupService->calculateMarkup($product, $product->seller);
+        $displayPrice = round($variant->price + $markup, 2);
 
-        // Apply same ratio to variant price
-        $variantFinalPrice = round($variant->price * $markupRatio, 2);
-
-        $convertedPrice = $this->currencyService->convert(
-            $variantFinalPrice,
+        // Step 2: Convert to target currency
+        $finalPrice = $this->currencyService->convert(
+            $displayPrice,
             $productCurrency,
             $targetCurrency
         );
 
         return [
-            'amount' => $convertedPrice,
+            'amount' => $finalPrice,
             'currency' => $targetCurrency,
-            'formatted' => $this->currencyService->format($convertedPrice, $targetCurrency),
+            'formatted' => $this->currencyService->format($finalPrice, $targetCurrency),
         ];
     }
 

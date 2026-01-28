@@ -29,15 +29,23 @@ class SettingsController extends Controller
         $validated = $request->validate([
             'settings' => 'required|array',
             'settings.*.key' => 'required|string',
-            'settings.*.value' => 'nullable|string',
+            'settings.*.value' => 'nullable',
         ]);
 
         foreach ($validated['settings'] as $setting) {
+            $type = $this->getTypeForKey($setting['key']);
+            $value = $setting['value'] ?? '';
+
+            // Handle boolean values
+            if ($type === 'boolean') {
+                $value = filter_var($value, FILTER_VALIDATE_BOOLEAN) ? '1' : '0';
+            }
+
             Setting::updateOrCreate(
                 ['key' => $setting['key']],
                 [
-                    'value' => $setting['value'] ?? '',
-                    'type' => 'string',
+                    'value' => $value,
+                    'type' => $type,
                     'group' => $this->getGroupForKey($setting['key']),
                     'is_public' => $this->isPublicKey($setting['key']),
                 ]
@@ -45,6 +53,20 @@ class SettingsController extends Controller
         }
 
         return back()->with('success', 'Settings updated successfully.');
+    }
+
+    private function getTypeForKey(string $key): string
+    {
+        $booleanKeys = [
+            'coming_soon_enabled',
+            'maintenance_mode_enabled',
+        ];
+
+        if (in_array($key, $booleanKeys)) {
+            return 'boolean';
+        }
+
+        return 'string';
     }
 
     private function getGroupForKey(string $key): string
@@ -56,6 +78,8 @@ class SettingsController extends Controller
             'footer_' => 'footer',
             'copyright_' => 'footer',
             'app_' => 'apps',
+            'coming_soon_' => 'maintenance',
+            'maintenance_' => 'maintenance',
         ];
 
         foreach ($groups as $prefix => $group) {

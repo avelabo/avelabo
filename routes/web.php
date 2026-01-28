@@ -46,6 +46,19 @@ use Inertia\Inertia;
 
 /*
 |--------------------------------------------------------------------------
+| Coming Soon & Maintenance Pages (No middleware redirect here)
+|--------------------------------------------------------------------------
+*/
+Route::get('/coming-soon', function () {
+    return Inertia::render('Frontend/ComingSoon');
+})->name('coming-soon')->withoutMiddleware(\App\Http\Middleware\ComingSoonMiddleware::class);
+
+Route::get('/maintenance', function () {
+    return Inertia::render('Frontend/Maintenance');
+})->name('maintenance')->withoutMiddleware(\App\Http\Middleware\ComingSoonMiddleware::class);
+
+/*
+|--------------------------------------------------------------------------
 | Frontend Routes (Public)
 |--------------------------------------------------------------------------
 */

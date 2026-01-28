@@ -2,12 +2,11 @@ import { Head, Link, useForm, router } from '@inertiajs/react';
 import AdminLayout from '@/Layouts/AdminLayout';
 import { useMemo } from 'react';
 
-export default function MarkupTemplateEdit({ template }) {
-    const currencyCode = template.currency?.code || 'ZAR';
-
+export default function MarkupTemplateEdit({ template, currencies }) {
     const { data, setData, put, processing, errors } = useForm({
         name: template.name || '',
         description: template.description || '',
+        currency_id: template.currency_id || '',
         is_active: template.is_active ?? true,
         is_default: template.is_default ?? false,
         ranges: template.ranges?.length > 0
@@ -19,6 +18,9 @@ export default function MarkupTemplateEdit({ template }) {
             }))
             : [{ min_price: '', max_price: '', markup_amount: '' }],
     });
+
+    const selectedCurrency = currencies?.find(c => String(c.id) === String(data.currency_id));
+    const currencyCode = selectedCurrency?.code || 'Currency';
 
     const addRange = () => {
         setData('ranges', [...data.ranges, { min_price: '', max_price: '', markup_amount: '' }]);
@@ -153,6 +155,26 @@ export default function MarkupTemplateEdit({ template }) {
                                         value={data.description}
                                         onChange={(e) => setData('description', e.target.value)}
                                     />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        Currency *
+                                    </label>
+                                    <select
+                                        className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg outline-none text-sm focus:ring-2 focus:ring-brand dark:text-white"
+                                        value={data.currency_id}
+                                        onChange={(e) => setData('currency_id', e.target.value)}
+                                        required
+                                    >
+                                        <option value="">Select currency...</option>
+                                        {currencies?.map((currency) => (
+                                            <option key={currency.id} value={currency.id}>
+                                                {currency.code} — {currency.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    {errors.currency_id && <p className="text-red-500 text-xs mt-1">{errors.currency_id}</p>}
                                 </div>
                             </div>
                         </div>

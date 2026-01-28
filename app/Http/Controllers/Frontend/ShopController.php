@@ -70,12 +70,21 @@ class ShopController extends Controller
             $query->where('seller_id', $request->seller);
         }
 
-        // Price range filter (using display_price which includes markup)
+        // Price range filter using display price (base_price + seller markup)
+        $displayPriceSql = 'products.base_price + COALESCE((
+            SELECT spm.markup_amount FROM seller_price_markups spm
+            WHERE spm.seller_id = products.seller_id
+              AND spm.is_active = true
+              AND products.base_price >= spm.min_price
+              AND products.base_price <= spm.max_price
+            LIMIT 1
+        ), 0)';
+
         if ($request->filled('min_price')) {
-            $query->whereRaw('base_price >= ?', [$request->min_price]);
+            $query->whereRaw("({$displayPriceSql}) >= ?", [$request->min_price]);
         }
         if ($request->filled('max_price')) {
-            $query->whereRaw('base_price <= ?', [$request->max_price]);
+            $query->whereRaw("({$displayPriceSql}) <= ?", [$request->max_price]);
         }
 
         // Featured filter
@@ -95,10 +104,10 @@ class ShopController extends Controller
         $sortBy = $request->get('sort', 'featured');
         switch ($sortBy) {
             case 'price_low':
-                $query->orderBy('base_price', 'asc');
+                $query->orderByRaw("({$displayPriceSql}) ASC");
                 break;
             case 'price_high':
-                $query->orderBy('base_price', 'desc');
+                $query->orderByRaw("({$displayPriceSql}) DESC");
                 break;
             case 'newest':
                 $query->latest();
@@ -168,10 +177,18 @@ class ShopController extends Controller
             ->filter(fn ($brand) => $brand->products_count > 0)
             ->values();
 
-        // Get price range
+        // Get price range (using display price = base_price + markup)
+        $displayPriceExpr = 'products.base_price + COALESCE((
+            SELECT spm.markup_amount FROM seller_price_markups spm
+            WHERE spm.seller_id = products.seller_id
+              AND spm.is_active = true
+              AND products.base_price >= spm.min_price
+              AND products.base_price <= spm.max_price
+            LIMIT 1
+        ), 0)';
         $priceRange = [
-            'min' => Product::active()->inStock()->min('base_price') ?? 0,
-            'max' => Product::active()->inStock()->max('base_price') ?? 10000,
+            'min' => Product::active()->inStock()->selectRaw("MIN({$displayPriceExpr}) as min_price")->value('min_price') ?? 0,
+            'max' => Product::active()->inStock()->selectRaw("MAX({$displayPriceExpr}) as max_price")->value('max_price') ?? 10000,
         ];
 
         // Featured/Deal products for sidebar
