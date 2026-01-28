@@ -176,18 +176,6 @@ class Product extends Model
     }
 
     /**
-     * Get the customer-facing compare price (with markup applied)
-     */
-    public function getDisplayComparePriceAttribute(): ?float
-    {
-        if (! $this->compare_at_price) {
-            return null;
-        }
-
-        return app(\App\Services\PriceService::class)->getDisplayComparePrice($this);
-    }
-
-    /**
      * Get primary image URL (full URL for frontend display)
      */
     public function getPrimaryImageUrlAttribute(): ?string
@@ -203,31 +191,6 @@ class Product extends Model
     }
 
     /**
-     * Check if product is on sale (has compare price higher than display price)
-     */
-    public function getIsOnSaleAttribute(): bool
-    {
-        $comparePrice = $this->display_compare_price;
-
-        return $comparePrice && $comparePrice > $this->display_price;
-    }
-
-    /**
-     * Get discount percentage
-     */
-    public function getDiscountPercentageAttribute(): int
-    {
-        if (! $this->is_on_sale) {
-            return 0;
-        }
-
-        $comparePrice = $this->display_compare_price;
-        $displayPrice = $this->display_price;
-
-        return (int) round((($comparePrice - $displayPrice) / $comparePrice) * 100);
-    }
-
-    /**
      * Transform product to array for ProductCard component display.
      * This is the single source of truth for product card data.
      *
@@ -235,15 +198,19 @@ class Product extends Model
      */
     public function toCardArray(): array
     {
+        $discount = app(\App\Services\DiscountService::class)
+            ->getProductDiscount($this, $this->display_price);
+
         return [
             'id' => $this->id,
             'name' => $this->name,
             'slug' => $this->slug,
             'short_description' => $this->short_description,
-            'price' => $this->display_price,
-            'compare_price' => $this->display_compare_price,
-            'is_on_sale' => $this->is_on_sale,
-            'discount_percentage' => $this->discount_percentage,
+            'price' => $discount['discounted_price'],
+            'compare_price' => $discount['has_discount'] ? $discount['original_price'] : null,
+            'is_on_sale' => $discount['has_discount'],
+            'discount_percentage' => $discount['discount_percentage'],
+            'promotion_name' => $discount['promotion_name'],
             'is_featured' => $this->is_featured,
             'is_new' => $this->is_new ?? false,
             'rating' => $this->rating ?? 0,
