@@ -18,6 +18,7 @@ use App\Http\Controllers\Admin\SellerController as AdminSellerController;
 use App\Http\Controllers\Admin\SettingsController as AdminSettingsController;
 use App\Http\Controllers\Admin\SliderController;
 use App\Http\Controllers\Admin\TagController as AdminTagController;
+use App\Http\Controllers\Admin\TransactionController as AdminTransactionController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\EmailVerificationPromptController;
 use App\Http\Controllers\Auth\NewPasswordController;
@@ -346,13 +347,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::post('/orders/{order}/refund', [AdminOrderController::class, 'refund'])->name('orders.refund');
 
     // Transactions
-    Route::get('/transactions', function () {
-        return Inertia::render('Admin/Transactions/Index');
-    })->name('transactions.index');
-
-    Route::get('/transactions/{id}', function ($id) {
-        return Inertia::render('Admin/Transactions/Show', ['id' => $id]);
-    })->name('transactions.show');
+    Route::get('/transactions', [AdminTransactionController::class, 'index'])->name('transactions.index');
+    Route::get('/transactions/{payment}', [AdminTransactionController::class, 'show'])->name('transactions.show');
+    Route::post('/transactions/clear-all', [AdminTransactionController::class, 'clearAll'])->name('transactions.clear-all');
 
     // Brands
     Route::get('/brands', [AdminBrandController::class, 'index'])->name('brands.index');

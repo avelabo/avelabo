@@ -50,7 +50,9 @@ class ProductController extends Controller
 
         // Transform to include primary image URL
         $products->through(function ($product) {
-            $product->primary_image_url = Storage::disk('public')->url($product->primary_image->path);
+            $product->primary_image_url = $product->primary_image
+                ? Storage::disk('public')->url($product->primary_image->path)
+                : null;
 
             return $product;
         });
