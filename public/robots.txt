@@ -1,2 +1,76 @@
+# Avelabo Robots.txt
+# Bringing global products to your doorstep in Malawi
+
 User-agent: *
-Disallow:
+
+# Allow public pages
+Allow: /
+Allow: /shop
+Allow: /product/
+Allow: /brand/
+Allow: /about
+Allow: /contact
+Allow: /search
+Allow: /vendor-guide
+Allow: /privacy-policy
+Allow: /purchase-guide
+
+# Block admin panel
+Disallow: /admin
+Disallow: /admin/
+
+# Block seller portal
+Disallow: /seller
+Disallow: /seller/
+
+# Block customer account areas
+Disallow: /account
+Disallow: /account/
+Disallow: /customer
+Disallow: /customer/
+
+# Block checkout and payment
+Disallow: /checkout
+Disallow: /checkout/
+Disallow: /payment
+Disallow: /payment/
+
+# Block cart
+Disallow: /cart
+Disallow: /cart/
+
+# Block authentication pages
+Disallow: /login
+Disallow: /register
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /verify-email
+
+# Block utility pages
+Disallow: /coming-soon
+Disallow: /maintenance
+Disallow: /wishlist
+Disallow: /compare
+Disallow: /invoice
+Disallow: /blog
+Disallow: /vendors
+Disallow: /vendor/
+
+# Block API and internal routes
+Disallow: /api/
+Disallow: /currency/set
+Disallow: /search/instant
+
+# Block Laravel system paths
+Disallow: /storage/
+Disallow: /sanctum/
+Disallow: /livewire/
+Disallow: /_debugbar/
+Disallow: /telescope/
+Disallow: /horizon/
+
+# Crawl-delay for polite crawling
+Crawl-delay: 1
+
+# Sitemap location
+Sitemap: https://avelabo.com/sitemap.xml

@@ -41,6 +41,7 @@ use App\Http\Controllers\Seller\OrderController as SellerOrderController;
 use App\Http\Controllers\Seller\ProductController as SellerProductController;
 use App\Http\Controllers\Seller\PromotionController as SellerPromotionController;
 use App\Http\Controllers\Seller\SellerRegistrationController;
+use App\Http\Controllers\SitemapController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -56,6 +57,15 @@ Route::get('/coming-soon', function () {
 Route::get('/maintenance', function () {
     return Inertia::render('Frontend/Maintenance');
 })->name('maintenance')->withoutMiddleware(\App\Http\Middleware\ComingSoonMiddleware::class);
+
+/*
+|--------------------------------------------------------------------------
+| Sitemap
+|--------------------------------------------------------------------------
+*/
+Route::get('/sitemap.xml', [SitemapController::class, 'index'])
+    ->name('sitemap')
+    ->withoutMiddleware(\App\Http\Middleware\ComingSoonMiddleware::class);
 
 /*
 |--------------------------------------------------------------------------
