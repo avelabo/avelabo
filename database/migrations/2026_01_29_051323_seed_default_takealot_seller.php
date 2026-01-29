@@ -24,7 +24,7 @@ return new class extends Migration
         $currencyId = $zarCurrency?->id ?? $mwkCurrency?->id;
         $countryId = $saCountry?->id ?? $mwCountry?->id;
 
-        if (!$currencyId || !$countryId) {
+        if (! $currencyId || ! $countryId) {
             throw new \RuntimeException('Required currencies and countries must be seeded before running this migration.');
         }
 
@@ -33,7 +33,7 @@ return new class extends Migration
         // Check if Takealot user already exists
         $existingUser = DB::table('users')->where('email', 'takealot@system.avelabo.com')->first();
 
-        if (!$existingUser) {
+        if (! $existingUser) {
             // Create the Takealot system user
             $userId = DB::table('users')->insertGetId([
                 'name' => 'Takealot System',
@@ -51,7 +51,7 @@ return new class extends Migration
         // Check if Takealot seller already exists
         $existingSeller = DB::table('sellers')->where('slug', 'takealot')->first();
 
-        if (!$existingSeller) {
+        if (! $existingSeller) {
             // Create the Takealot seller
             $sellerId = DB::table('sellers')->insertGetId([
                 'user_id' => $userId,
@@ -83,8 +83,24 @@ return new class extends Migration
                 'created_at' => $now,
                 'updated_at' => $now,
             ]);
+        } else {
+            $sellerId = $existingSeller->id;
 
-            // Create approved KYC for the seller
+            // Update existing seller to ensure correct status
+            DB::table('sellers')->where('id', $sellerId)->update([
+                'status' => 'active',
+                'is_verified' => true,
+                'show_seller_name' => false,
+                'has_storefront' => false,
+                'approved_at' => $existingSeller->approved_at ?? $now,
+                'updated_at' => $now,
+            ]);
+        }
+
+        // Create approved KYC for the seller if it doesn't exist
+        $existingKyc = DB::table('seller_kyc')->where('seller_id', $sellerId)->first();
+
+        if (! $existingKyc) {
             DB::table('seller_kyc')->insert([
                 'seller_id' => $sellerId,
                 'document_type' => 'national_id',
