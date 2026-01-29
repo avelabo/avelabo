@@ -2,7 +2,7 @@ import { Head, Link, router, useForm } from '@inertiajs/react';
 import AdminLayout from '@/Layouts/AdminLayout';
 import { useState } from 'react';
 
-export default function Index({ products, filters, categories, sellers, brands, stats }) {
+export default function Index({ products, filters, categories, sellers, brands, stats, currencies, displayCurrency }) {
     const [selectAll, setSelectAll] = useState(false);
     const [selectedItems, setSelectedItems] = useState([]);
     const [search, setSearch] = useState(filters?.search || '');
@@ -141,12 +141,22 @@ export default function Index({ products, filters, categories, sellers, brands, 
         }
     };
 
-    const formatCurrency = (amount) => {
-        return new Intl.NumberFormat('en-MW', {
-            style: 'currency',
-            currency: 'MWK',
+    const formatCurrency = (amount, currencyCode = displayCurrency) => {
+        const currencySymbols = {
+            'MWK': 'MK',
+            'ZAR': 'R',
+            'USD': '$',
+        };
+        const symbol = currencySymbols[currencyCode] || currencyCode;
+        const formatted = new Intl.NumberFormat('en', {
             minimumFractionDigits: 0,
+            maximumFractionDigits: 2,
         }).format(amount || 0);
+        return `${symbol} ${formatted}`;
+    };
+
+    const handleCurrencyChange = (currency) => {
+        router.get(route('admin.products.index'), { ...filters, currency: currency || undefined }, { preserveState: true });
     };
 
     return (
@@ -285,6 +295,21 @@ export default function Index({ products, filters, categories, sellers, brands, 
                                 </select>
                             </div>
                         </div>
+                        {/* Currency Selector Row */}
+                        <div className="mt-4 flex items-center gap-3">
+                            <span className="text-sm text-body">Display prices in:</span>
+                            <select
+                                className="px-4 py-2 bg-gray-100 dark:bg-dark-body border-0 rounded-lg text-sm focus:ring-2 focus:ring-brand"
+                                value={displayCurrency || 'MWK'}
+                                onChange={(e) => handleCurrencyChange(e.target.value)}
+                            >
+                                {currencies?.map((currency) => (
+                                    <option key={currency.id} value={currency.code}>
+                                        {currency.code} ({currency.symbol})
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
                     </div>
 
                     {/* Bulk Actions */}
@@ -334,7 +359,11 @@ export default function Index({ products, filters, categories, sellers, brands, 
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Seller</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Source</th>
+                                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Base Price</th>
+                                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <span className="text-green-600">+Markup</span>
+                                    </th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                                     <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
@@ -388,8 +417,28 @@ export default function Index({ products, filters, categories, sellers, brands, 
                                             <td className="px-6 py-4 text-sm text-body">
                                                 {product.category?.name || '-'}
                                             </td>
-                                            <td className="px-6 py-4 text-sm font-medium text-heading dark:text-white">
-                                                {formatCurrency(product.base_price)}
+                                            <td className="px-6 py-4 text-center">
+                                                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                                                    {product.original_currency}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 text-sm text-right">
+                                                <div className="text-heading dark:text-white font-medium">
+                                                    {formatCurrency(product.converted_base_price)}
+                                                </div>
+                                                <div className="text-xs text-body">
+                                                    {formatCurrency(product.base_price, product.original_currency)} orig
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 text-sm text-right">
+                                                <div className="text-green-600 dark:text-green-400 font-semibold">
+                                                    {formatCurrency(product.price_with_markup)}
+                                                </div>
+                                                {product.markup_amount > 0 && (
+                                                    <div className="text-xs text-green-500">
+                                                        +{formatCurrency(product.markup_amount)}
+                                                    </div>
+                                                )}
                                             </td>
                                             <td className="px-6 py-4">
                                                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
@@ -429,7 +478,7 @@ export default function Index({ products, filters, categories, sellers, brands, 
                                     ))
                                 ) : (
                                     <tr>
-                                        <td colSpan="8" className="px-6 py-12 text-center">
+                                        <td colSpan="10" className="px-6 py-12 text-center">
                                             <span className="material-icons text-5xl text-gray-300 mb-4">inventory_2</span>
                                             <h3 className="text-lg font-medium text-heading dark:text-white mb-2">No products found</h3>
                                             <p className="text-body mb-6">Try adjusting your filters or add a new product.</p>

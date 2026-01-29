@@ -30,7 +30,9 @@ class ProductController extends Controller
      */
     public function index(Request $request)
     {
-        $products = Product::with(['seller:id,shop_name', 'category:id,name', 'brand:id,name', 'images'])
+        $displayCurrency = $request->currency ?? 'MWK';
+
+        $products = Product::with(['seller:id,shop_name', 'category:id,name', 'brand:id,name', 'images', 'currency:id,code,symbol'])
             ->when($request->search, function ($query, $search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('name', 'like', "%{$search}%")
@@ -48,11 +50,19 @@ class ProductController extends Controller
             ->paginate(15)
             ->withQueryString();
 
-        // Transform to include primary image URL
-        $products->through(function ($product) {
+        // Transform to include primary image URL and pricing data
+        $products->through(function ($product) use ($displayCurrency) {
             $product->primary_image_url = $product->primary_image
                 ? Storage::disk('public')->url($product->primary_image->path)
                 : null;
+
+            // Get price data for admin display
+            $priceData = $this->priceService->getPrice($product, $displayCurrency);
+            $product->original_currency = $product->currency?->code ?? 'MWK';
+            $product->original_currency_symbol = $product->currency?->symbol ?? 'MK';
+            $product->converted_base_price = $priceData['amount'] - $this->getMarkupInCurrency($product, $displayCurrency);
+            $product->price_with_markup = $priceData['amount'];
+            $product->markup_amount = $priceData['amount'] - $product->converted_base_price;
 
             return $product;
         });
@@ -68,12 +78,25 @@ class ProductController extends Controller
 
         return Inertia::render('Admin/Products/Index', [
             'products' => $products,
-            'filters' => $request->only(['search', 'status', 'category_id', 'seller_id', 'stock']),
+            'filters' => $request->only(['search', 'status', 'category_id', 'seller_id', 'stock', 'currency']),
             'categories' => Category::active()->get(['id', 'name']),
             'sellers' => Seller::where('status', 'active')->get(['id', 'shop_name']),
             'brands' => Brand::active()->orderBy('name')->get(['id', 'name']),
             'stats' => $stats,
+            'currencies' => \App\Models\Currency::active()->get(['id', 'code', 'symbol', 'name']),
+            'displayCurrency' => $displayCurrency,
         ]);
+    }
+
+    /**
+     * Calculate markup amount in target currency for admin display
+     */
+    protected function getMarkupInCurrency(Product $product, string $targetCurrency): float
+    {
+        $productCurrency = $product->currency?->code ?? 'MWK';
+        $markup = app(\App\Services\MarkupService::class)->calculateMarkup($product, $product->seller);
+
+        return app(\App\Services\CurrencyService::class)->convert($markup, $productCurrency, $targetCurrency);
     }
 
     /**
