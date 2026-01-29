@@ -14,7 +14,7 @@ export default function KycIndex({ kycApplications, filters }) {
         pending: 'bg-yellow-100 text-yellow-700',
         approved: 'bg-green-100 text-green-700',
         rejected: 'bg-red-100 text-red-700',
-        documents_requested: 'bg-orange-100 text-orange-700',
+        under_review: 'bg-orange-100 text-orange-700',
     };
 
     const statusTabs = [
@@ -22,7 +22,7 @@ export default function KycIndex({ kycApplications, filters }) {
         { value: 'pending', label: 'Pending', count: filters?.counts?.pending || 0 },
         { value: 'approved', label: 'Approved', count: filters?.counts?.approved || 0 },
         { value: 'rejected', label: 'Rejected', count: filters?.counts?.rejected || 0 },
-        { value: 'documents_requested', label: 'Docs Requested', count: filters?.counts?.documents_requested || 0 },
+        { value: 'under_review', label: 'Under Review', count: filters?.counts?.under_review || 0 },
     ];
 
     return (

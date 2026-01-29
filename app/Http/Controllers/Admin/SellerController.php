@@ -35,9 +35,9 @@ class SellerController extends Controller
 
         $stats = [
             'total' => Seller::count(),
-            'approved' => Seller::where('status', 'approved')->count(),
-            'pending' => Seller::where('status', 'pending')->orWhere('status', 'pending_kyc')->count(),
-            'rejected' => Seller::where('status', 'rejected')->count(),
+            'active' => Seller::where('status', 'active')->count(),
+            'pending' => Seller::where('status', 'pending')->count(),
+            'suspended' => Seller::where('status', 'suspended')->count(),
         ];
 
         $markupTemplates = SellerMarkupTemplate::where('is_active', true)
@@ -66,7 +66,7 @@ class SellerController extends Controller
 
         // Get users who are not already sellers
         $availableUsers = User::whereDoesntHave('seller')
-            ->where('is_active', true)
+            ->where('status', 'active')
             ->orderBy('name')
             ->get(['id', 'name', 'email']);
 
@@ -95,7 +95,7 @@ class SellerController extends Controller
             'country_id' => ['required', 'exists:countries,id'],
             'markup_template_id' => ['nullable', 'exists:seller_markup_templates,id'],
             'commission_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],
-            'status' => ['required', 'in:pending,approved,suspended'],
+            'status' => ['required', 'in:pending,active,suspended,banned,inactive'],
             'show_seller_name' => ['boolean'],
             'has_storefront' => ['boolean'],
             'is_featured' => ['boolean'],
@@ -189,13 +189,13 @@ class SellerController extends Controller
     public function updateStatus(Request $request, Seller $seller)
     {
         $validated = $request->validate([
-            'status' => ['required', 'in:approved,suspended,rejected'],
+            'status' => ['required', 'in:pending,active,suspended,banned,inactive'],
             'reason' => ['nullable', 'string', 'max:500'],
         ]);
 
         $seller->update([
             'status' => $validated['status'],
-            'is_verified' => $validated['status'] === 'approved',
+            'is_verified' => $validated['status'] === 'active',
         ]);
 
         // TODO: Send notification to seller

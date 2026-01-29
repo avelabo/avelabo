@@ -165,8 +165,8 @@ class SellerRegistrationController extends Controller
             ]
         );
 
-        // Update seller status
-        $seller->update(['status' => 'pending_kyc']);
+        // Update seller status (stays pending until KYC is approved)
+        $seller->update(['status' => 'pending']);
 
         return redirect()->route('seller.kyc.status')
             ->with('success', 'KYC documents submitted successfully! We will review them shortly.');

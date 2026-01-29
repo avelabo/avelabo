@@ -27,7 +27,7 @@ export default function KycShow({ kyc, seller }) {
         pending: 'bg-yellow-100 text-yellow-700',
         approved: 'bg-green-100 text-green-700',
         rejected: 'bg-red-100 text-red-700',
-        documents_requested: 'bg-orange-100 text-orange-700',
+        under_review: 'bg-orange-100 text-orange-700',
     };
 
     const documentTypes = {
@@ -192,7 +192,7 @@ export default function KycShow({ kyc, seller }) {
 
                 {/* Sidebar - Actions */}
                 <div className="space-y-6">
-                    {kyc.status === 'pending' || kyc.status === 'documents_requested' ? (
+                    {kyc.status === 'pending' || kyc.status === 'under_review' ? (
                         <>
                             {/* Quick Actions */}
                             <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-6">

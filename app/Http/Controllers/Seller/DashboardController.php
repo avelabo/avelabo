@@ -24,7 +24,7 @@ class DashboardController extends Controller
         }
 
         // Check seller status
-        if ($seller->status !== 'approved') {
+        if ($seller->status !== 'active') {
             return redirect()->route('seller.kyc.status');
         }
 
