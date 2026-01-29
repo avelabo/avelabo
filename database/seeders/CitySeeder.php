@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
+use App\Models\City;
 use App\Models\Country;
 use App\Models\Region;
-use App\Models\City;
 use Illuminate\Database\Seeder;
 
 class CitySeeder extends Seeder
@@ -13,7 +13,7 @@ class CitySeeder extends Seeder
     {
         $malawi = Country::where('code', 'MW')->first();
 
-        if (!$malawi) {
+        if (! $malawi) {
             return;
         }
 
@@ -62,7 +62,6 @@ class CitySeeder extends Seeder
                 City::updateOrCreate(
                     ['region_id' => $region->id, 'name' => $city['name']],
                     [
-                        'country_id' => $malawi->id,
                         'region_id' => $region->id,
                         'name' => $city['name'],
                         'is_active' => $city['is_active'],
