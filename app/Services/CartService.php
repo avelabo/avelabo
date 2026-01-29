@@ -206,7 +206,7 @@ class CartService
      */
     public function calculateTotals(Cart $cart): array
     {
-        $cart->load(['items.product.seller', 'items.variant']);
+        $cart->load(['items.product.seller', 'items.product.images', 'items.variant']);
 
         $subtotal = 0;
         $itemsData = [];
@@ -236,10 +236,10 @@ class CartService
                 continue;
             }
 
-            // Get current display price
+            // Get current display price (with currency conversion)
             $unitPrice = $variant
                 ? $this->priceService->getVariantPrice($variant)['amount']
-                : $this->priceService->getDisplayPrice($product);
+                : $this->priceService->getPrice($product)['amount'];
 
             $lineTotal = $unitPrice * $item->quantity;
             $subtotal += $lineTotal;
@@ -266,6 +266,9 @@ class CartService
         $tax = 0;
         $total = $subtotal + $shipping + $tax;
 
+        // Get customer's preferred currency
+        $customerCurrency = $this->getCustomerCurrencyCode();
+
         return [
             'items' => $itemsData,
             'item_count' => $cart->items->sum('quantity'),
@@ -273,7 +276,7 @@ class CartService
             'shipping' => $shipping,
             'tax' => $tax,
             'total' => $total,
-            'currency' => 'MWK',
+            'currency' => $customerCurrency,
         ];
     }
 
@@ -380,11 +383,37 @@ class CartService
 
             $unitPrice = $variant
                 ? $this->priceService->getVariantPrice($variant)['amount']
-                : $this->priceService->getDisplayPrice($product);
+                : $this->priceService->getPrice($product)['amount'];
 
             if ($item->unit_price != $unitPrice) {
                 $item->update(['unit_price' => $unitPrice]);
             }
         }
+    }
+
+    /**
+     * Get customer's preferred currency code
+     */
+    protected function getCustomerCurrencyCode(): string
+    {
+        $user = Auth::user();
+
+        if ($user && $user->preferredCurrency) {
+            return $user->preferredCurrency->code;
+        }
+
+        // Get from session
+        $sessionCurrency = session('currency');
+
+        if (is_array($sessionCurrency) && isset($sessionCurrency['code'])) {
+            return $sessionCurrency['code'];
+        }
+
+        if (is_string($sessionCurrency) && ! empty($sessionCurrency)) {
+            return $sessionCurrency;
+        }
+
+        // Default to MWK
+        return 'MWK';
     }
 }
