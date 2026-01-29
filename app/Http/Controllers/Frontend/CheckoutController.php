@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Frontend;
 
 use App\Actions\Fortify\CreateNewUser;
 use App\Http\Controllers\Controller;
+use App\Models\City;
 use App\Models\Country;
 use App\Models\PaymentGateway;
 use App\Services\CartService;
@@ -41,7 +42,33 @@ class CheckoutController extends Controller
             ->get(['id', 'name', 'slug', 'display_name', 'description', 'logo']);
 
         // Get countries for address form
-        $countries = Country::orderBy('name')->get(['id', 'name', 'code']);
+        $countries = Country::where('is_active', true)
+            ->orderBy('name')
+            ->get(['id', 'name', 'code', 'code_2']);
+
+        // Get Malawi (the only country we deliver to)
+        $malawi = Country::where('code', 'MWI')->first(['id', 'name', 'code']);
+
+        // Get delivery cities in Malawi with region info (only cities with delivery available)
+        $deliveryCities = [];
+        if ($malawi) {
+            $deliveryCities = City::query()
+                ->whereHas('region', function ($query) use ($malawi) {
+                    $query->where('country_id', $malawi->id);
+                })
+                ->with('region:id,name,code')
+                ->active()
+                ->deliveryAvailable()
+                ->orderBy('name')
+                ->get(['id', 'region_id', 'name'])
+                ->map(fn ($city) => [
+                    'id' => $city->id,
+                    'name' => $city->name,
+                    'region_id' => $city->region_id,
+                    'region_name' => $city->region->name,
+                    'region_code' => $city->region->code,
+                ]);
+        }
 
         // Get user's addresses if logged in
         $user = Auth::user();
@@ -64,6 +91,8 @@ class CheckoutController extends Controller
             'cart' => $cartData,
             'paymentGateways' => $paymentGateways,
             'countries' => $countries,
+            'malawi' => $malawi,
+            'deliveryCities' => $deliveryCities,
             'savedAddresses' => $savedAddresses,
             'user' => $user ? [
                 'name' => $user->name,
@@ -80,31 +109,36 @@ class CheckoutController extends Controller
     {
         Log::info('Checkout process started', ['request_data' => $request->all()]);
 
+        // Check if billing country is Malawi
+        $malawi = Country::where('code', 'MWI')->first();
+        $billingIsMalawi = $malawi && $request->input('billing.country_id') == $malawi->id;
+
         try {
-            $validated = $request->validate([
+            $rules = [
                 // Billing info
                 'billing.first_name' => 'required|string|max:100',
                 'billing.last_name' => 'required|string|max:100',
                 'billing.email' => 'required|email|max:255',
                 'billing.phone' => 'required|string|max:20',
-                'billing.address_line_1' => 'required|string|max:255',
                 'billing.address_line_2' => 'nullable|string|max:255',
-                'billing.city' => 'required|string|max:100',
+                'billing.city' => 'nullable|string|max:100',
+                'billing.city_id' => 'nullable|exists:cities,id',
                 'billing.state' => 'nullable|string|max:100',
                 'billing.postal_code' => 'nullable|string|max:20',
                 'billing.country_id' => 'required|exists:countries,id',
 
-                // Shipping info
+                // Shipping info (always to Malawi)
                 'shipping.same_as_billing' => 'boolean',
                 'shipping.first_name' => 'required_if:shipping.same_as_billing,false|nullable|string|max:100',
                 'shipping.last_name' => 'required_if:shipping.same_as_billing,false|nullable|string|max:100',
                 'shipping.phone' => 'required_if:shipping.same_as_billing,false|nullable|string|max:20',
-                'shipping.address_line_1' => 'required_if:shipping.same_as_billing,false|nullable|string|max:255',
+                'shipping.address_line_1' => 'nullable|string|max:255',
                 'shipping.address_line_2' => 'nullable|string|max:255',
-                'shipping.city' => 'required_if:shipping.same_as_billing,false|nullable|string|max:100',
+                'shipping.city' => 'nullable|string|max:100',
+                'shipping.city_id' => 'required|exists:cities,id',
                 'shipping.state' => 'nullable|string|max:100',
                 'shipping.postal_code' => 'nullable|string|max:20',
-                'shipping.country_id' => 'required_if:shipping.same_as_billing,false|nullable|exists:countries,id',
+                'shipping.country_id' => 'nullable|exists:countries,id',
 
                 // Payment
                 'payment_gateway_id' => 'required|exists:payment_gateways,id',
@@ -112,7 +146,16 @@ class CheckoutController extends Controller
                 // Optional
                 'notes' => 'nullable|string|max:1000',
                 'create_account' => 'boolean',
-            ]);
+            ];
+
+            // Billing address is only required for non-Malawi countries
+            if ($billingIsMalawi) {
+                $rules['billing.address_line_1'] = 'nullable|string|max:255';
+            } else {
+                $rules['billing.address_line_1'] = 'required|string|max:255';
+            }
+
+            $validated = $request->validate($rules);
 
             Log::info('Checkout validation passed', ['validated' => $validated]);
 

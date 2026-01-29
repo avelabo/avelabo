@@ -14,10 +14,12 @@ class City extends Model
         'region_id',
         'name',
         'is_active',
+        'is_delivery_available',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'is_delivery_available' => 'boolean',
     ];
 
     public function region(): BelongsTo
@@ -33,5 +35,10 @@ class City extends Model
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
+    }
+
+    public function scopeDeliveryAvailable($query)
+    {
+        return $query->where('is_delivery_available', true);
     }
 }
