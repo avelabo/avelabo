@@ -42,7 +42,18 @@ class CheckoutService
         }
 
         // Validate required billing fields
-        $requiredBillingFields = ['first_name', 'last_name', 'email', 'phone', 'address_line_1', 'city', 'country_id'];
+        // Note: For Malawian customers, address_line_1 and city are not required
+        // since many don't have formal addresses
+        $malawi = \App\Models\Country::where('code', 'MWI')->first();
+        $billingIsMalawi = $malawi && ($billingData['country_id'] ?? null) == $malawi->id;
+
+        $requiredBillingFields = ['first_name', 'last_name', 'email', 'phone', 'country_id'];
+        if (! $billingIsMalawi) {
+            // Non-Malawi billing requires address details
+            $requiredBillingFields[] = 'address_line_1';
+            $requiredBillingFields[] = 'city';
+        }
+
         foreach ($requiredBillingFields as $field) {
             if (empty($billingData[$field])) {
                 $errors["billing.{$field}"] = 'This field is required';

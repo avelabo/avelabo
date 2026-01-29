@@ -474,58 +474,59 @@ export default function Checkout({ cart, paymentGateways = [], countries = [], m
                         />
                     )}
 
-                    <form onSubmit={handleCheckoutSubmit}>
-                        {/* Login Section (for guests) */}
-                        {!user && (
-                            <div className="mb-8">
-                                <div className="flex items-center gap-2 text-body">
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                    </svg>
-                                    <span>Already have an account?</span>
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowLoginForm(!showLoginForm)}
-                                        className="text-brand hover:text-brand-dark font-semibold"
-                                    >
-                                        Click here to login
-                                    </button>
-                                </div>
-
-                                <div className={`collapse ${showLoginForm ? 'show' : ''}`}>
-                                    <div className="mt-4 bg-white p-6 rounded-lg border border-gray-200">
-                                        <p className="text-sm text-body mb-6">
-                                            If you have shopped with us before, please enter your details below. If you are a new customer, please proceed to the Billing & Shipping section.
-                                        </p>
-                                        <div className="grid md:grid-cols-2 gap-4 mb-4">
-                                            <input
-                                                type="email"
-                                                value={loginForm.data.email}
-                                                onChange={(e) => loginForm.setData('email', e.target.value)}
-                                                placeholder="Email Address"
-                                                className="w-full border border-gray-200 rounded-md px-4 py-3 text-sm focus:border-brand focus:outline-none"
-                                            />
-                                            <input
-                                                type="password"
-                                                value={loginForm.data.password}
-                                                onChange={(e) => loginForm.setData('password', e.target.value)}
-                                                placeholder="Password"
-                                                className="w-full border border-gray-200 rounded-md px-4 py-3 text-sm focus:border-brand focus:outline-none"
-                                            />
-                                        </div>
-                                        <button
-                                            type="button"
-                                            onClick={handleLoginSubmit}
-                                            disabled={loginForm.processing}
-                                            className="bg-brand hover:bg-brand-dark text-white px-6 py-3 rounded-md font-semibold transition-colors"
-                                        >
-                                            {loginForm.processing ? 'Logging in...' : 'Log in'}
-                                        </button>
-                                    </div>
-                                </div>
+                    {/* Login Section (for guests) - Separate form to avoid validation conflicts */}
+                    {!user && (
+                        <div className="mb-8">
+                            <div className="flex items-center gap-2 text-body">
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                </svg>
+                                <span>Already have an account?</span>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowLoginForm(!showLoginForm)}
+                                    className="text-brand hover:text-brand-dark font-semibold"
+                                >
+                                    Click here to login
+                                </button>
                             </div>
-                        )}
 
+                            <div className={`collapse ${showLoginForm ? 'show' : ''}`}>
+                                <form onSubmit={handleLoginSubmit} className="mt-4 bg-white p-6 rounded-lg border border-gray-200">
+                                    <p className="text-sm text-body mb-6">
+                                        If you have shopped with us before, please enter your details below. If you are a new customer, please proceed to the Billing & Shipping section.
+                                    </p>
+                                    <div className="grid md:grid-cols-2 gap-4 mb-4">
+                                        <input
+                                            type="email"
+                                            value={loginForm.data.email}
+                                            onChange={(e) => loginForm.setData('email', e.target.value)}
+                                            placeholder="Email Address"
+                                            autoComplete="email"
+                                            className="w-full border border-gray-200 rounded-md px-4 py-3 text-sm focus:border-brand focus:outline-none"
+                                        />
+                                        <input
+                                            type="password"
+                                            value={loginForm.data.password}
+                                            onChange={(e) => loginForm.setData('password', e.target.value)}
+                                            placeholder="Password"
+                                            autoComplete="current-password"
+                                            className="w-full border border-gray-200 rounded-md px-4 py-3 text-sm focus:border-brand focus:outline-none"
+                                        />
+                                    </div>
+                                    <button
+                                        type="submit"
+                                        disabled={loginForm.processing}
+                                        className="bg-brand hover:bg-brand-dark text-white px-6 py-3 rounded-md font-semibold transition-colors"
+                                    >
+                                        {loginForm.processing ? 'Logging in...' : 'Log in'}
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    )}
+
+                    <form onSubmit={handleCheckoutSubmit}>
                         {/* Main Two-Column Layout */}
                         <div className="flex flex-col lg:flex-row gap-8">
                             {/* Left Column - Forms */}
