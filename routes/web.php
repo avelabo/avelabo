@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\CategoryController as AdminCategoryController;
 use App\Http\Controllers\Admin\ContactMessageController;
 use App\Http\Controllers\Admin\CouponController as AdminCouponController;
 use App\Http\Controllers\Admin\CurrencyController as AdminCurrencyController;
+use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\ImportDataSourceController;
 use App\Http\Controllers\Admin\ImportTaskController;
 use App\Http\Controllers\Admin\KycController;
@@ -19,6 +20,8 @@ use App\Http\Controllers\Admin\SettingsController as AdminSettingsController;
 use App\Http\Controllers\Admin\SliderController;
 use App\Http\Controllers\Admin\TagController as AdminTagController;
 use App\Http\Controllers\Admin\TransactionController as AdminTransactionController;
+use App\Http\Controllers\Admin\UserController as AdminUserController;
+use App\Http\Controllers\Api\LocationController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\EmailVerificationPromptController;
 use App\Http\Controllers\Auth\NewPasswordController;
@@ -127,6 +130,18 @@ Route::get('/vendor/{slug}', [VendorController::class, 'show'])->name('vendor.de
 Route::get('/vendor-guide', [PageController::class, 'vendorGuide'])->name('vendor.guide');
 Route::get('/privacy-policy', [PageController::class, 'privacyPolicy'])->name('privacy.policy');
 Route::get('/purchase-guide', [PageController::class, 'purchaseGuide'])->name('purchase.guide');
+
+/*
+|--------------------------------------------------------------------------
+| Location API Routes (for dynamic dropdowns)
+|--------------------------------------------------------------------------
+*/
+Route::prefix('api/locations')->name('api.locations.')->group(function () {
+    Route::get('/countries', [LocationController::class, 'countries'])->name('countries');
+    Route::get('/countries/{country}/regions', [LocationController::class, 'regions'])->name('regions');
+    Route::get('/regions/{region}/cities', [LocationController::class, 'cities'])->name('cities');
+    Route::get('/delivery-cities', [LocationController::class, 'deliveryCities'])->name('delivery-cities');
+});
 
 /*
 |--------------------------------------------------------------------------
@@ -301,9 +316,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(function () {
     // Dashboard
-    Route::get('/', function () {
-        return Inertia::render('Admin/Dashboard');
-    })->name('dashboard');
+    Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
 
     // KYC Management
     Route::get('/kyc', [KycController::class, 'index'])->name('kyc.index');
@@ -350,6 +363,15 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::get('/transactions', [AdminTransactionController::class, 'index'])->name('transactions.index');
     Route::get('/transactions/{payment}', [AdminTransactionController::class, 'show'])->name('transactions.show');
     Route::post('/transactions/clear-all', [AdminTransactionController::class, 'clearAll'])->name('transactions.clear-all');
+
+    // Users
+    Route::get('/users', [AdminUserController::class, 'index'])->name('users.index');
+    Route::get('/users/{user}', [AdminUserController::class, 'show'])->name('users.show');
+    Route::put('/users/{user}', [AdminUserController::class, 'update'])->name('users.update');
+    Route::patch('/users/{user}/status', [AdminUserController::class, 'updateStatus'])->name('users.update-status');
+    Route::patch('/users/{user}/roles', [AdminUserController::class, 'updateRoles'])->name('users.update-roles');
+    Route::post('/users/{user}/reset-password', [AdminUserController::class, 'resetPassword'])->name('users.reset-password');
+    Route::delete('/users/{user}', [AdminUserController::class, 'destroy'])->name('users.destroy');
 
     // Brands
     Route::get('/brands', [AdminBrandController::class, 'index'])->name('brands.index');
