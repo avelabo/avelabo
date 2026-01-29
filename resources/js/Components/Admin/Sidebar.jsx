@@ -106,6 +106,11 @@ export default function Sidebar({ isOpen, isMobileOpen, onClose }) {
             icon: 'settings',
             href: '/admin/settings',
         },
+        {
+            name: 'Trash Bin',
+            icon: 'delete_sweep',
+            href: '/admin/trash',
+        },
     ];
 
     const [expandedMenus, setExpandedMenus] = useState(() => {

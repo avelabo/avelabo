@@ -20,6 +20,7 @@ use App\Http\Controllers\Admin\SettingsController as AdminSettingsController;
 use App\Http\Controllers\Admin\SliderController;
 use App\Http\Controllers\Admin\TagController as AdminTagController;
 use App\Http\Controllers\Admin\TransactionController as AdminTransactionController;
+use App\Http\Controllers\Admin\TrashController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Api\LocationController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
@@ -423,6 +424,16 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     // Settings
     Route::get('/settings', [AdminSettingsController::class, 'index'])->name('settings');
     Route::post('/settings', [AdminSettingsController::class, 'update'])->name('settings.update');
+
+    // Trash Bin
+    Route::prefix('trash')->name('trash.')->group(function () {
+        Route::get('/', [TrashController::class, 'index'])->name('index');
+        Route::post('/{type}/{id}/restore', [TrashController::class, 'restore'])->name('restore');
+        Route::delete('/{type}/{id}', [TrashController::class, 'forceDelete'])->name('force-delete');
+        Route::post('/empty', [TrashController::class, 'empty'])->name('empty');
+        Route::post('/restore-all', [TrashController::class, 'restoreAll'])->name('restore-all');
+        Route::get('/{type}/{id}/cascade-info', [TrashController::class, 'getCascadeInfo'])->name('cascade-info');
+    });
 
     // Page Content Management
     Route::resource('pages', PageContentController::class)->parameters(['pages' => 'page']);
