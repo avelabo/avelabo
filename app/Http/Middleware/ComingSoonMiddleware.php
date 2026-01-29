@@ -22,6 +22,12 @@ class ComingSoonMiddleware
         'register',
         'password/*',
         'email/*',
+        'shop',
+        'shop/*',
+        'cart',
+        'cart/*',
+        'checkout',
+        'checkout/*',
     ];
 
     /**
