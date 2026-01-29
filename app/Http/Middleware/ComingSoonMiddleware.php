@@ -15,6 +15,7 @@ class ComingSoonMiddleware
     protected array $exceptRoutes = [
         'coming-soon',
         'maintenance',
+        'admin',
         'admin/*',
         'login',
         'logout',
