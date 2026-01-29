@@ -247,7 +247,7 @@ export default function Cart({ cart }) {
                                                     <div className="w-24 h-24 lg:w-28 lg:h-28 flex-shrink-0 bg-surface-raised rounded-lg overflow-hidden">
                                                         {item.image ? (
                                                             <img
-                                                                src={`/storage/${item.image}`}
+                                                                src={`${item.image}`}
                                                                 alt={item.name}
                                                                 className="w-full h-full object-cover"
                                                             />

@@ -996,7 +996,7 @@ export default function Checkout({ cart, paymentGateways = [], countries = [], m
                                         {items.map((item) => (
                                             <div key={item.id} className="flex items-center gap-3 pb-4 border-b border-gray-100">
                                                 <img
-                                                    src={item.image ? `/storage/${item.image}` : '/assets/imgs/shop/product-placeholder.jpg'}
+                                                    src={item.image ? `${item.image}` : '/assets/imgs/shop/product-placeholder.jpg'}
                                                     alt={item.name}
                                                     className="w-14 h-14 object-cover rounded-lg"
                                                 />
