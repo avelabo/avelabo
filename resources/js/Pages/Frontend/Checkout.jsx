@@ -266,7 +266,8 @@ export default function Checkout({ cart, paymentGateways = [], countries = [], m
         loginForm.post(route('login'), {
             onSuccess: () => {
                 toast.success('Logged in successfully!');
-                router.reload();
+                // Redirect back to checkout after login (login route redirects to home by default)
+                router.visit(route('checkout'));
             },
             onError: () => {
                 toast.error('Invalid email or password. Please try again.');
