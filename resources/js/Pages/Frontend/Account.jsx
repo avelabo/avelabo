@@ -51,13 +51,6 @@ export default function Account({
         is_billing: false,
     });
 
-    // Form for logout
-    const logoutForm = useForm({});
-
-    const handleLogout = () => {
-        logoutForm.post(route('logout'));
-    };
-
     const handleProfileSubmit = (e) => {
         e.preventDefault();
         profileForm.put(route('account.profile.update'), {
@@ -234,15 +227,14 @@ export default function Account({
                                                 </li>
                                             ))}
                                             <li>
-                                                <button
-                                                    type="button"
-                                                    onClick={handleLogout}
-                                                    disabled={logoutForm.processing}
-                                                    className="w-full flex items-center gap-3 px-5 py-4 text-left text-heading hover:text-brand hover:bg-grey-9 transition-colors font-semibold disabled:opacity-50"
+                                                <Link
+                                                    href={route('logout')}
+                                                    method="post"
+                                                    as="button"
+                                                    className="w-full flex items-center gap-3 px-5 py-4 text-left text-heading hover:text-brand hover:bg-grey-9 transition-colors font-semibold"
                                                 >
-                                                    <i className="fi-rs-sign-out text-lg"></i>
-                                                    {logoutForm.processing ? 'Logging out...' : 'Logout'}
-                                                </button>
+                                                    <i className="fi-rs-sign-out text-lg"></i> Logout
+                                                </Link>
                                             </li>
                                         </ul>
                                     </nav>
