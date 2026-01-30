@@ -267,9 +267,14 @@ export default function Checkout({ cart, paymentGateways = [], countries = [], m
     const [deliveryAddress, setDeliveryAddress] = useState('');
     const [isGettingLocation, setIsGettingLocation] = useState(false);
     const [userCoordinates, setUserCoordinates] = useState(null);
+    const [selectedSavedAddress, setSelectedSavedAddress] = useState(null);
+    const [showNewAddressForm, setShowNewAddressForm] = useState(false);
 
     // Check if billing country is Malawi
     const [billingIsMalawi, setBillingIsMalawi] = useState(false);
+
+    // Show all saved addresses - they can be used for delivery
+    const savedShippingAddresses = savedAddresses;
 
     const { data, setData, post, processing, errors } = useForm({
         billing: {
@@ -287,6 +292,7 @@ export default function Checkout({ cart, paymentGateways = [], countries = [], m
         },
         shipping: {
             same_as_billing: true,
+            address_id: null,
             first_name: '',
             last_name: '',
             phone: '',
@@ -308,6 +314,80 @@ export default function Checkout({ cart, paymentGateways = [], countries = [], m
     useEffect(() => {
         setBillingIsMalawi(String(data.billing.country_id) === String(malawi?.id));
     }, [data.billing.country_id, malawi?.id]);
+
+    // Handle selecting a saved address
+    const handleSelectSavedAddress = (address) => {
+        setSelectedSavedAddress(address);
+        setShowNewAddressForm(false);
+
+        // Populate the shipping data with the saved address
+        setData('shipping', {
+            ...data.shipping,
+            address_id: address.id,
+            first_name: address.first_name || '',
+            last_name: address.last_name || '',
+            phone: address.phone || '',
+            address_line_1: address.address_line_1 || '',
+            address_line_2: address.address_line_2 || '',
+            city: address.city || '',
+            city_id: address.city_id || '',
+            state: address.state || '',
+            postal_code: address.postal_code || '',
+            country_id: address.country_id || malawi?.id || '',
+            coordinates: address.latitude && address.longitude
+                ? { lat: parseFloat(address.latitude), lng: parseFloat(address.longitude) }
+                : null,
+        });
+
+        // Set the delivery address text for the modal
+        setDeliveryAddress(address.address_line_1 || '');
+
+        // Set coordinates if available
+        if (address.latitude && address.longitude) {
+            setUserCoordinates({
+                lat: parseFloat(address.latitude),
+                lng: parseFloat(address.longitude),
+            });
+        } else {
+            setUserCoordinates(null);
+        }
+    };
+
+    // Handle creating a new address (clear the selection)
+    const handleCreateNewAddress = () => {
+        setSelectedSavedAddress(null);
+        setShowNewAddressForm(true);
+
+        // Clear shipping data for new address entry
+        setData('shipping', {
+            ...data.shipping,
+            address_id: null,
+            first_name: '',
+            last_name: '',
+            phone: '',
+            address_line_1: '',
+            address_line_2: '',
+            city: '',
+            city_id: '',
+            state: '',
+            postal_code: '',
+            country_id: malawi?.id || '',
+            coordinates: null,
+        });
+
+        setDeliveryAddress('');
+        setUserCoordinates(null);
+    };
+
+    // Auto-select default saved address for returning users
+    useEffect(() => {
+        if (user && savedShippingAddresses.length > 0 && !selectedSavedAddress) {
+            const defaultAddress = savedShippingAddresses.find(addr => addr.is_default) || savedShippingAddresses[0];
+            if (defaultAddress) {
+                handleSelectSavedAddress(defaultAddress);
+            }
+        }
+    }, [user, savedShippingAddresses.length]);
 
     const loginForm = useForm({
         email: '',
@@ -760,7 +840,11 @@ export default function Checkout({ cart, paymentGateways = [], countries = [], m
                                     <div className="flex items-center justify-between mb-5">
                                         <div>
                                             <h4 className="text-lg font-bold text-heading">Delivery Location</h4>
-                                            <p className="text-sm text-muted mt-0.5">Select your delivery city in Malawi</p>
+                                            <p className="text-sm text-muted mt-0.5">
+                                                {savedShippingAddresses.length > 0
+                                                    ? 'Select a saved address or add a new one'
+                                                    : 'Select your delivery city in Malawi'}
+                                            </p>
                                         </div>
                                         <div className="flex items-center gap-1.5 px-3 py-1.5 bg-brand text-white text-xs font-semibold rounded-full">
                                             <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
@@ -770,8 +854,114 @@ export default function Checkout({ cart, paymentGateways = [], countries = [], m
                                         </div>
                                     </div>
 
-                                    {/* City Selection Cards - Compact */}
-                                    <div className="grid grid-cols-3 gap-3 mb-5">
+                                    {/* Saved Addresses Section - Only for logged-in users with saved addresses */}
+                                    {user && savedShippingAddresses.length > 0 && (
+                                        <div className="mb-6">
+                                            <div className="flex items-center justify-between mb-3">
+                                                <p className="text-sm font-medium text-heading">Your Saved Addresses</p>
+                                                <button
+                                                    type="button"
+                                                    onClick={handleCreateNewAddress}
+                                                    className="text-xs text-brand hover:text-brand-dark font-medium flex items-center gap-1"
+                                                >
+                                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                                    </svg>
+                                                    Add New Address
+                                                </button>
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                {savedShippingAddresses.map((address) => {
+                                                    const isSelected = selectedSavedAddress?.id === address.id;
+                                                    const cityInfo = deliveryCities.find(c => c.id === address.city_id);
+
+                                                    return (
+                                                        <button
+                                                            key={address.id}
+                                                            type="button"
+                                                            onClick={() => handleSelectSavedAddress(address)}
+                                                            className={`w-full text-left p-4 rounded-lg border transition-all ${
+                                                                isSelected
+                                                                    ? 'border-brand bg-brand/5 ring-1 ring-brand'
+                                                                    : 'border-gray-200 bg-white hover:border-gray-300'
+                                                            }`}
+                                                        >
+                                                            <div className="flex items-start gap-3">
+                                                                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 ${
+                                                                    isSelected ? 'border-brand bg-brand' : 'border-gray-300'
+                                                                }`}>
+                                                                    {isSelected && (
+                                                                        <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                                                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                                                        </svg>
+                                                                    )}
+                                                                </div>
+                                                                <div className="flex-1 min-w-0">
+                                                                    <div className="flex items-center gap-2 mb-1">
+                                                                        <span className="font-medium text-heading text-sm">
+                                                                            {address.full_name}
+                                                                        </span>
+                                                                        {address.is_default && (
+                                                                            <span className="px-1.5 py-0.5 text-xs bg-brand/10 text-brand rounded font-medium">
+                                                                                Default
+                                                                            </span>
+                                                                        )}
+                                                                        {address.has_coordinates && (
+                                                                            <span className="px-1.5 py-0.5 text-xs bg-green-100 text-green-700 rounded font-medium flex items-center gap-0.5">
+                                                                                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                                                                                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                                                                                </svg>
+                                                                                GPS
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
+                                                                    <p className="text-sm text-body">
+                                                                        {cityInfo?.name || address.city}, {address.state}
+                                                                    </p>
+                                                                    {address.address_line_1 && (
+                                                                        <p className="text-xs text-muted mt-0.5 truncate">
+                                                                            {address.address_line_1}
+                                                                        </p>
+                                                                    )}
+                                                                    {address.phone && (
+                                                                        <p className="text-xs text-muted mt-0.5">
+                                                                            {address.phone}
+                                                                        </p>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+
+                                            {/* Divider when showing new address form */}
+                                            {showNewAddressForm && (
+                                                <div className="relative my-5">
+                                                    <div className="absolute inset-0 flex items-center">
+                                                        <div className="w-full border-t border-gray-200"></div>
+                                                    </div>
+                                                    <div className="relative flex justify-center">
+                                                        <span className="px-3 bg-surface text-sm text-muted">New Address</span>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {/* City Selection Cards - Show when no saved addresses, creating new address, or selected address has no city */}
+                                    {(savedShippingAddresses.length === 0 || showNewAddressForm || (selectedSavedAddress && !selectedSavedAddress.city_id)) && (
+                                        <>
+                                        {/* Show helpful message when saved address needs city selection */}
+                                        {selectedSavedAddress && !selectedSavedAddress.city_id && (
+                                            <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                                                <p className="text-sm text-amber-800">
+                                                    Please select a delivery city for this address
+                                                </p>
+                                            </div>
+                                        )}
+                                        <div className="grid grid-cols-3 gap-3 mb-5">
                                         {deliveryCities.map((city) => {
                                             const isSelected = data.shipping.city_id === city.id;
                                             const CityIcon = CityIcons[city.name];
@@ -827,11 +1017,13 @@ export default function Checkout({ cart, paymentGateways = [], countries = [], m
                                                 </button>
                                             );
                                         })}
-                                    </div>
+                                        </div>
 
-                                    {/* Error message for city selection */}
-                                    {errors['shipping.city_id'] && (
-                                        <p className="text-red-500 text-sm mb-4">Please select a delivery city</p>
+                                        {/* Error message for city selection */}
+                                        {errors['shipping.city_id'] && (
+                                            <p className="text-red-500 text-sm mb-4">Please select a delivery city</p>
+                                        )}
+                                        </>
                                     )}
 
                                     {/* Selected City Summary */}

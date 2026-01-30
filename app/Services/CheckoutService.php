@@ -97,11 +97,32 @@ class CheckoutService
     }
 
     /**
-     * Create or update user address
+     * Get or create user address
+     * If address_id is provided, use existing address
+     * Otherwise create a new address
      */
-    public function createOrUpdateAddress(User $user, array $addressData, string $type = 'billing'): UserAddress
+    public function getOrCreateAddress(User $user, array $addressData, string $type = 'billing'): UserAddress
     {
         $isBilling = $type === 'billing';
+
+        // If an existing address ID is provided, use that address
+        if (! empty($addressData['address_id'])) {
+            $existingAddress = UserAddress::where('id', $addressData['address_id'])
+                ->where('user_id', $user->id)
+                ->first();
+
+            if ($existingAddress) {
+                // Update coordinates if new ones are provided
+                if (isset($addressData['coordinates']) && is_array($addressData['coordinates'])) {
+                    $existingAddress->update([
+                        'latitude' => $addressData['coordinates']['lat'] ?? $existingAddress->latitude,
+                        'longitude' => $addressData['coordinates']['lng'] ?? $existingAddress->longitude,
+                    ]);
+                }
+
+                return $existingAddress;
+            }
+        }
 
         // Extract coordinates if provided
         $latitude = null;
@@ -111,27 +132,80 @@ class CheckoutService
             $longitude = $addressData['coordinates']['lng'] ?? null;
         }
 
-        return UserAddress::updateOrCreate(
-            [
-                'user_id' => $user->id,
-                'is_billing' => $isBilling,
-                'is_default' => true,
-            ],
-            [
-                'label' => $isBilling ? 'Billing Address' : 'Shipping Address',
-                'first_name' => $addressData['first_name'] ?? '',
-                'last_name' => $addressData['last_name'] ?? '',
-                'phone' => $addressData['phone'] ?? null,
-                'address_line_1' => $addressData['address_line_1'] ?? '',
-                'address_line_2' => $addressData['address_line_2'] ?? null,
-                'city_name' => $addressData['city'] ?? '',
-                'region_name' => $addressData['state'] ?? null,
-                'postal_code' => $addressData['postal_code'] ?? null,
-                'country_id' => $addressData['country_id'] ?? null,
-                'latitude' => $latitude,
-                'longitude' => $longitude,
-            ]
-        );
+        // Build address attributes for comparison and creation
+        $addressAttributes = [
+            'first_name' => $addressData['first_name'] ?? '',
+            'last_name' => $addressData['last_name'] ?? '',
+            'phone' => $addressData['phone'] ?? null,
+            'address_line_1' => $addressData['address_line_1'] ?? '',
+            'address_line_2' => $addressData['address_line_2'] ?? null,
+            'city_name' => $addressData['city'] ?? '',
+            'city_id' => $addressData['city_id'] ?? null,
+            'region_name' => $addressData['state'] ?? null,
+            'postal_code' => $addressData['postal_code'] ?? null,
+            'country_id' => $addressData['country_id'] ?? null,
+        ];
+
+        // Check if a similar address already exists for this user
+        $existingAddress = UserAddress::where('user_id', $user->id)
+            ->where('city_id', $addressAttributes['city_id'])
+            ->where('address_line_1', $addressAttributes['address_line_1'])
+            ->where('first_name', $addressAttributes['first_name'])
+            ->where('last_name', $addressAttributes['last_name'])
+            ->first();
+
+        if ($existingAddress) {
+            // Update with any new data (including city, coordinates, phone, etc.)
+            $existingAddress->update([
+                'phone' => $addressAttributes['phone'] ?? $existingAddress->phone,
+                'address_line_1' => $addressAttributes['address_line_1'] ?: $existingAddress->address_line_1,
+                'address_line_2' => $addressAttributes['address_line_2'] ?? $existingAddress->address_line_2,
+                'city_id' => $addressAttributes['city_id'] ?? $existingAddress->city_id,
+                'city_name' => $addressAttributes['city_name'] ?: $existingAddress->city_name,
+                'region_name' => $addressAttributes['region_name'] ?? $existingAddress->region_name,
+                'country_id' => $addressAttributes['country_id'] ?? $existingAddress->country_id,
+                'latitude' => $latitude ?? $existingAddress->latitude,
+                'longitude' => $longitude ?? $existingAddress->longitude,
+            ]);
+
+            return $existingAddress;
+        }
+
+        // Reset is_default for other addresses of this type
+        UserAddress::where('user_id', $user->id)
+            ->where('is_billing', $isBilling)
+            ->update(['is_default' => false]);
+
+        // Create new address
+        return UserAddress::create([
+            'user_id' => $user->id,
+            'is_billing' => $isBilling,
+            'is_default' => true,
+            'label' => $this->generateAddressLabel($user, $addressAttributes['city_name'], $isBilling),
+            ...$addressAttributes,
+            'latitude' => $latitude,
+            'longitude' => $longitude,
+        ]);
+    }
+
+    /**
+     * Generate a unique label for the address
+     */
+    protected function generateAddressLabel(User $user, string $cityName, bool $isBilling): string
+    {
+        $baseLabel = $isBilling ? 'Billing' : 'Delivery';
+        $cityPart = $cityName ? " - {$cityName}" : '';
+
+        // Check if a similar label already exists
+        $existingCount = UserAddress::where('user_id', $user->id)
+            ->where('label', 'like', "{$baseLabel}%")
+            ->count();
+
+        if ($existingCount === 0) {
+            return "{$baseLabel}{$cityPart}";
+        }
+
+        return "{$baseLabel}{$cityPart} ".($existingCount + 1);
     }
 
     /**
@@ -141,10 +215,10 @@ class CheckoutService
         Cart $cart,
         array $billingData,
         array $shippingData,
-        ?string $paymentMethod = null,
+        ?int $paymentGatewayId = null,
         ?string $notes = null
     ): Order {
-        return DB::transaction(function () use ($cart, $billingData, $shippingData, $notes) {
+        return DB::transaction(function () use ($cart, $billingData, $shippingData, $paymentGatewayId, $notes) {
             // Get or create user
             $user = Auth::user();
             if (! $user) {
@@ -163,14 +237,25 @@ class CheckoutService
                 $cart->update(['user_id' => $user->id, 'session_id' => null]);
             }
 
-            // Create addresses
-            $billingAddress = $this->createOrUpdateAddress($user, $billingData, 'billing');
-            $shippingAddress = ($shippingData['same_as_billing'] ?? true)
-                ? $billingAddress
-                : $this->createOrUpdateAddress($user, $shippingData, 'shipping');
+            // Get or create addresses
+            $billingAddress = $this->getOrCreateAddress($user, $billingData, 'billing');
+
+            // For shipping: if same_as_billing, merge billing contact info with shipping location data
+            // This is because billing can be anywhere, but shipping is always to Malawi with specific city
+            if ($shippingData['same_as_billing'] ?? true) {
+                // Use billing contact info but shipping location (city, address, coordinates)
+                $mergedShippingData = array_merge($shippingData, [
+                    'first_name' => $billingData['first_name'] ?? '',
+                    'last_name' => $billingData['last_name'] ?? '',
+                    'phone' => $billingData['phone'] ?? null,
+                ]);
+                $shippingAddress = $this->getOrCreateAddress($user, $mergedShippingData, 'shipping');
+            } else {
+                $shippingAddress = $this->getOrCreateAddress($user, $shippingData, 'shipping');
+            }
 
             // Create order
-            $order = $this->createOrder($user, $cart, $billingAddress, $shippingAddress, $notes);
+            $order = $this->createOrder($user, $cart, $billingAddress, $shippingAddress, $paymentGatewayId, $notes);
 
             // Create order items
             $this->createOrderItems($order, $cart);
@@ -193,6 +278,7 @@ class CheckoutService
         Cart $cart,
         UserAddress $billingAddress,
         UserAddress $shippingAddress,
+        ?int $paymentGatewayId = null,
         ?string $notes = null
     ): Order {
         // Get default currency (MWK) - all orders are processed in MWK
@@ -201,10 +287,18 @@ class CheckoutService
         // Calculate cart totals in MWK to ensure correct amount is sent to payment gateway
         $cartTotals = $this->cartService->calculateTotals($cart, 'MWK');
 
+        // Get payment gateway name if provided
+        $paymentGateway = null;
+        if ($paymentGatewayId) {
+            $gateway = \App\Models\PaymentGateway::find($paymentGatewayId);
+            $paymentGateway = $gateway?->slug ?? $gateway?->name;
+        }
+
         return Order::create([
             'user_id' => $user->id,
             'order_number' => $this->orderService->generateOrderNumber(),
             'status' => 'pending',
+            'payment_status' => 'pending',
             'currency_id' => $currency?->id,
             'subtotal' => $cartTotals['subtotal'],
             'discount_amount' => $cartTotals['discount_total'] ?? 0,
@@ -216,6 +310,9 @@ class CheckoutService
             'total' => $cartTotals['total'],
             'billing_address_id' => $billingAddress->id,
             'shipping_address_id' => $shippingAddress->id,
+            'billing_address_snapshot' => $billingAddress->toSnapshot(),
+            'shipping_address_snapshot' => $shippingAddress->toSnapshot(),
+            'payment_gateway' => $paymentGateway,
             'notes' => $notes,
         ]);
     }

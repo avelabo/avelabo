@@ -75,15 +75,30 @@ class CheckoutController extends Controller
         $savedAddresses = [];
         if ($user) {
             $savedAddresses = $user->addresses()
-                ->with('country')
+                ->with(['country', 'city', 'region'])
+                ->orderByDesc('is_default')
+                ->orderByDesc('updated_at')
                 ->get()
                 ->map(fn ($addr) => [
                     'id' => $addr->id,
                     'label' => $addr->label,
-                    'name' => $addr->full_name,
-                    'address' => $addr->full_address,
+                    'first_name' => $addr->first_name,
+                    'last_name' => $addr->last_name,
+                    'phone' => $addr->phone,
+                    'address_line_1' => $addr->address_line_1,
+                    'address_line_2' => $addr->address_line_2,
+                    'city' => $addr->city_name ?? $addr->city?->name,
+                    'city_id' => $addr->city_id,
+                    'state' => $addr->region_name ?? $addr->region?->name,
+                    'postal_code' => $addr->postal_code,
+                    'country_id' => $addr->country_id,
+                    'latitude' => $addr->latitude,
+                    'longitude' => $addr->longitude,
+                    'full_name' => $addr->full_name,
+                    'full_address' => $addr->full_address,
                     'is_default' => $addr->is_default,
                     'is_billing' => $addr->is_billing,
+                    'has_coordinates' => $addr->hasCoordinates(),
                 ]);
         }
 
@@ -129,6 +144,7 @@ class CheckoutController extends Controller
 
                 // Shipping info (always to Malawi)
                 'shipping.same_as_billing' => 'boolean',
+                'shipping.address_id' => 'nullable|exists:user_addresses,id',
                 'shipping.first_name' => 'required_if:shipping.same_as_billing,false|nullable|string|max:100',
                 'shipping.last_name' => 'required_if:shipping.same_as_billing,false|nullable|string|max:100',
                 'shipping.phone' => 'required_if:shipping.same_as_billing,false|nullable|string|max:20',
@@ -192,7 +208,7 @@ class CheckoutController extends Controller
                     $cart,
                     $validated['billing'],
                     $validated['shipping'] ?? ['same_as_billing' => true],
-                    null,
+                    $validated['payment_gateway_id'],
                     $validated['notes'] ?? null
                 );
 
@@ -371,7 +387,7 @@ class CheckoutController extends Controller
                 $cart,
                 $checkoutData['billing'],
                 $checkoutData['shipping'],
-                null,
+                $checkoutData['payment_gateway_id'],
                 $checkoutData['notes'] ?? null
             );
 
