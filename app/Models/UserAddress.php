@@ -24,6 +24,8 @@ class UserAddress extends Model
         'region_name',
         'country_id',
         'postal_code',
+        'latitude',
+        'longitude',
         'is_default',
         'is_billing',
     ];
@@ -31,6 +33,8 @@ class UserAddress extends Model
     protected $casts = [
         'is_default' => 'boolean',
         'is_billing' => 'boolean',
+        'latitude' => 'decimal:7',
+        'longitude' => 'decimal:7',
     ];
 
     public function user(): BelongsTo
@@ -55,7 +59,7 @@ class UserAddress extends Model
 
     public function getFullNameAttribute(): string
     {
-        return $this->first_name . ' ' . $this->last_name;
+        return $this->first_name.' '.$this->last_name;
     }
 
     public function getFullAddressAttribute(): string
@@ -68,6 +72,7 @@ class UserAddress extends Model
             $this->postal_code,
             $this->country?->name,
         ]);
+
         return implode(', ', $parts);
     }
 
@@ -83,6 +88,31 @@ class UserAddress extends Model
             'region' => $this->region_name ?? $this->region?->name,
             'country' => $this->country?->name,
             'postal_code' => $this->postal_code,
+            'latitude' => $this->latitude,
+            'longitude' => $this->longitude,
+        ];
+    }
+
+    /**
+     * Check if this address has GPS coordinates
+     */
+    public function hasCoordinates(): bool
+    {
+        return $this->latitude !== null && $this->longitude !== null;
+    }
+
+    /**
+     * Get coordinates as an array
+     */
+    public function getCoordinatesAttribute(): ?array
+    {
+        if (! $this->hasCoordinates()) {
+            return null;
+        }
+
+        return [
+            'lat' => (float) $this->latitude,
+            'lng' => (float) $this->longitude,
         ];
     }
 }

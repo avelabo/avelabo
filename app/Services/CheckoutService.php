@@ -103,6 +103,14 @@ class CheckoutService
     {
         $isBilling = $type === 'billing';
 
+        // Extract coordinates if provided
+        $latitude = null;
+        $longitude = null;
+        if (isset($addressData['coordinates']) && is_array($addressData['coordinates'])) {
+            $latitude = $addressData['coordinates']['lat'] ?? null;
+            $longitude = $addressData['coordinates']['lng'] ?? null;
+        }
+
         return UserAddress::updateOrCreate(
             [
                 'user_id' => $user->id,
@@ -120,6 +128,8 @@ class CheckoutService
                 'region_name' => $addressData['state'] ?? null,
                 'postal_code' => $addressData['postal_code'] ?? null,
                 'country_id' => $addressData['country_id'] ?? null,
+                'latitude' => $latitude,
+                'longitude' => $longitude,
             ]
         );
     }

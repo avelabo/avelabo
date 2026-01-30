@@ -139,6 +139,9 @@ class CheckoutController extends Controller
                 'shipping.state' => 'nullable|string|max:100',
                 'shipping.postal_code' => 'nullable|string|max:20',
                 'shipping.country_id' => 'nullable|exists:countries,id',
+                'shipping.coordinates' => 'nullable|array',
+                'shipping.coordinates.lat' => 'nullable|numeric|between:-90,90',
+                'shipping.coordinates.lng' => 'nullable|numeric|between:-180,180',
 
                 // Payment
                 'payment_gateway_id' => 'required|exists:payment_gateways,id',

@@ -39,7 +39,7 @@ const CityIcons = {
 };
 
 // Delivery Instructions Modal
-const DeliveryInstructionsModal = ({ city, isOpen, onClose, onConfirm, deliveryAddress, setDeliveryAddress, isGettingLocation, onGetLocation }) => {
+const DeliveryInstructionsModal = ({ city, isOpen, onClose, onConfirm, deliveryAddress, setDeliveryAddress, isGettingLocation, onGetLocation, userCoordinates, onClearLocation }) => {
     if (!isOpen || !city) return null;
 
     const cityInstructions = {
@@ -121,6 +121,84 @@ const DeliveryInstructionsModal = ({ city, isOpen, onClose, onConfirm, deliveryA
                         </div>
                     </div>
 
+                    {/* Share Location Section */}
+                    <div>
+                        <label className="block text-sm font-medium text-heading mb-2">
+                            GPS Location
+                        </label>
+
+                        {userCoordinates ? (
+                            /* Show captured coordinates in custom fields */
+                            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                                <div className="flex items-start justify-between mb-3">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
+                                            <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                            </svg>
+                                        </div>
+                                        <span className="text-sm font-medium text-green-800">Location captured</span>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={onClearLocation}
+                                        className="text-xs text-red-600 hover:text-red-700 font-medium"
+                                    >
+                                        Clear
+                                    </button>
+                                </div>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="block text-xs text-green-700 mb-1">Latitude</label>
+                                        <input
+                                            type="text"
+                                            value={userCoordinates.lat.toFixed(6)}
+                                            readOnly
+                                            className="w-full bg-white border border-green-200 rounded px-3 py-2 text-sm text-heading font-mono"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs text-green-700 mb-1">Longitude</label>
+                                        <input
+                                            type="text"
+                                            value={userCoordinates.lng.toFixed(6)}
+                                            readOnly
+                                            className="w-full bg-white border border-green-200 rounded px-3 py-2 text-sm text-heading font-mono"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        ) : (
+                            /* Share Location Button */
+                            <button
+                                type="button"
+                                onClick={onGetLocation}
+                                disabled={isGettingLocation}
+                                className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg text-sm font-medium text-heading transition-colors disabled:opacity-50"
+                            >
+                                {isGettingLocation ? (
+                                    <>
+                                        <svg className="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                        </svg>
+                                        Getting your location...
+                                    </>
+                                ) : (
+                                    <>
+                                        <svg className="w-5 h-5 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        </svg>
+                                        Share my current location
+                                    </>
+                                )}
+                            </button>
+                        )}
+                        <p className="text-xs text-muted mt-2">
+                            Sharing your GPS location helps our driver find you more easily
+                        </p>
+                    </div>
+
                     {/* Delivery Address Input */}
                     <div>
                         <label className="block text-sm font-medium text-heading mb-2">
@@ -135,31 +213,6 @@ const DeliveryInstructionsModal = ({ city, isOpen, onClose, onConfirm, deliveryA
                         />
                         <p className="text-xs text-muted mt-1.5">{info.tip}</p>
                     </div>
-
-                    {/* Share Location Button */}
-                    <button
-                        type="button"
-                        onClick={onGetLocation}
-                        disabled={isGettingLocation}
-                        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg text-sm font-medium text-heading transition-colors disabled:opacity-50"
-                    >
-                        {isGettingLocation ? (
-                            <>
-                                <svg className="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                </svg>
-                                Getting your location...
-                            </>
-                        ) : (
-                            <>
-                                <svg className="w-5 h-5 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                </svg>
-                                Share my current location
-                            </>
-                        )}
-                    </button>
                 </div>
 
                 {/* Footer */}
@@ -341,10 +394,6 @@ export default function Checkout({ cart, paymentGateways = [], countries = [], m
                     lng: position.coords.longitude,
                 };
                 setUserCoordinates(coords);
-                setDeliveryAddress(prev =>
-                    prev ? `${prev} (GPS: ${coords.lat.toFixed(6)}, ${coords.lng.toFixed(6)})`
-                         : `GPS Location: ${coords.lat.toFixed(6)}, ${coords.lng.toFixed(6)}`
-                );
                 setIsGettingLocation(false);
                 toast.success('Location captured successfully!');
             },
@@ -354,6 +403,11 @@ export default function Checkout({ cart, paymentGateways = [], countries = [], m
             },
             { enableHighAccuracy: true, timeout: 10000 }
         );
+    };
+
+    // Clear user's location
+    const handleClearLocation = () => {
+        setUserCoordinates(null);
     };
 
     // Handle billing city selection for Malawi
@@ -418,6 +472,8 @@ export default function Checkout({ cart, paymentGateways = [], countries = [], m
                 setDeliveryAddress={setDeliveryAddress}
                 isGettingLocation={isGettingLocation}
                 onGetLocation={handleGetLocation}
+                userCoordinates={userCoordinates}
+                onClearLocation={handleClearLocation}
             />
 
             {/* Breadcrumb */}
@@ -793,8 +849,17 @@ export default function Checkout({ cart, paymentGateways = [], countries = [], m
                                                         {selectedDeliveryCity.name}, {selectedDeliveryCity.region_name}
                                                     </p>
                                                     {data.shipping.address_line_1 && (
-                                                        <p className="text-sm text-body mt-1 truncate">
+                                                        <p className="text-sm text-body mt-1">
                                                             {data.shipping.address_line_1}
+                                                        </p>
+                                                    )}
+                                                    {data.shipping.coordinates && (
+                                                        <p className="text-xs text-muted mt-1 flex items-center gap-1">
+                                                            <svg className="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                            </svg>
+                                                            GPS: {data.shipping.coordinates.lat.toFixed(6)}, {data.shipping.coordinates.lng.toFixed(6)}
                                                         </p>
                                                     )}
                                                 </div>
