@@ -1,17 +1,8 @@
-import { useState } from 'react';
-import FilterWidget from './FilterWidget';
+import { useState, useEffect } from 'react';
 import { useCurrency } from '@/hooks/useCurrency';
 
 /**
- * PriceRangeFilter - Price range filter with slider and inputs
- *
- * @param {number} min - Minimum price value (default: 0)
- * @param {number} max - Maximum price value (default: 10000)
- * @param {number} currentMin - Currently selected min price
- * @param {number} currentMax - Currently selected max price
- * @param {function} onApply - Callback when filter is applied: (min, max) => void
- * @param {string} title - Widget title (default: 'Filter by price')
- * @param {string} className - Additional CSS classes
+ * PriceRangeFilter - Clean price range filter with dual slider
  */
 export default function PriceRangeFilter({
     min = 0,
@@ -19,53 +10,143 @@ export default function PriceRangeFilter({
     currentMin = null,
     currentMax = null,
     onApply,
-    title = 'Filter by price',
     className = '',
 }) {
     const { format } = useCurrency();
+    const [localMin, setLocalMin] = useState(currentMin || min);
     const [localMax, setLocalMax] = useState(currentMax || max);
+
+    // Update local state when props change
+    useEffect(() => {
+        setLocalMin(currentMin || min);
+        setLocalMax(currentMax || max);
+    }, [currentMin, currentMax, min, max]);
 
     const handleApply = () => {
         if (onApply) {
-            onApply(min, localMax);
+            onApply(localMin, localMax);
         }
     };
 
+    // Calculate percentage for visual indicator
+    const minPercent = ((localMin - min) / (max - min)) * 100;
+    const maxPercent = ((localMax - min) / (max - min)) * 100;
+
     return (
-        <FilterWidget title={title} className={className}>
-            <div className="mb-5">
-                {/* Range Slider */}
+        <div className={className}>
+            {/* Price Display */}
+            <div className="flex items-center justify-between mb-6">
+                <div className="text-center">
+                    <span className="text-xs text-muted block mb-1">From</span>
+                    <span className="text-sm font-semibold text-heading">{format(localMin)}</span>
+                </div>
+                <div className="flex-1 mx-4 h-px bg-border-light" />
+                <div className="text-center">
+                    <span className="text-xs text-muted block mb-1">To</span>
+                    <span className="text-sm font-semibold text-heading">{format(localMax)}</span>
+                </div>
+            </div>
+
+            {/* Dual Range Slider */}
+            <div className="relative h-2 mb-6">
+                {/* Track Background */}
+                <div className="absolute inset-0 bg-surface-sunken rounded-full" />
+
+                {/* Active Track */}
+                <div
+                    className="absolute h-full bg-heading rounded-full"
+                    style={{
+                        left: `${minPercent}%`,
+                        width: `${maxPercent - minPercent}%`,
+                    }}
+                />
+
+                {/* Min Slider */}
+                <input
+                    type="range"
+                    min={min}
+                    max={max}
+                    value={localMin}
+                    onChange={(e) => {
+                        const value = Math.min(Number(e.target.value), localMax - 1);
+                        setLocalMin(value);
+                    }}
+                    className="absolute w-full h-2 appearance-none bg-transparent pointer-events-none
+                        [&::-webkit-slider-thumb]:pointer-events-auto
+                        [&::-webkit-slider-thumb]:appearance-none
+                        [&::-webkit-slider-thumb]:w-5
+                        [&::-webkit-slider-thumb]:h-5
+                        [&::-webkit-slider-thumb]:rounded-full
+                        [&::-webkit-slider-thumb]:bg-white
+                        [&::-webkit-slider-thumb]:border-2
+                        [&::-webkit-slider-thumb]:border-heading
+                        [&::-webkit-slider-thumb]:cursor-pointer
+                        [&::-webkit-slider-thumb]:shadow-md
+                        [&::-webkit-slider-thumb]:transition-transform
+                        [&::-webkit-slider-thumb]:hover:scale-110
+                        [&::-moz-range-thumb]:pointer-events-auto
+                        [&::-moz-range-thumb]:appearance-none
+                        [&::-moz-range-thumb]:w-5
+                        [&::-moz-range-thumb]:h-5
+                        [&::-moz-range-thumb]:rounded-full
+                        [&::-moz-range-thumb]:bg-white
+                        [&::-moz-range-thumb]:border-2
+                        [&::-moz-range-thumb]:border-heading
+                        [&::-moz-range-thumb]:cursor-pointer
+                    "
+                />
+
+                {/* Max Slider */}
                 <input
                     type="range"
                     min={min}
                     max={max}
                     value={localMax}
-                    onChange={(e) => setLocalMax(parseInt(e.target.value))}
-                    className="w-full accent-brand"
+                    onChange={(e) => {
+                        const value = Math.max(Number(e.target.value), localMin + 1);
+                        setLocalMax(value);
+                    }}
+                    className="absolute w-full h-2 appearance-none bg-transparent pointer-events-none
+                        [&::-webkit-slider-thumb]:pointer-events-auto
+                        [&::-webkit-slider-thumb]:appearance-none
+                        [&::-webkit-slider-thumb]:w-5
+                        [&::-webkit-slider-thumb]:h-5
+                        [&::-webkit-slider-thumb]:rounded-full
+                        [&::-webkit-slider-thumb]:bg-white
+                        [&::-webkit-slider-thumb]:border-2
+                        [&::-webkit-slider-thumb]:border-heading
+                        [&::-webkit-slider-thumb]:cursor-pointer
+                        [&::-webkit-slider-thumb]:shadow-md
+                        [&::-webkit-slider-thumb]:transition-transform
+                        [&::-webkit-slider-thumb]:hover:scale-110
+                        [&::-moz-range-thumb]:pointer-events-auto
+                        [&::-moz-range-thumb]:appearance-none
+                        [&::-moz-range-thumb]:w-5
+                        [&::-moz-range-thumb]:h-5
+                        [&::-moz-range-thumb]:rounded-full
+                        [&::-moz-range-thumb]:bg-white
+                        [&::-moz-range-thumb]:border-2
+                        [&::-moz-range-thumb]:border-heading
+                        [&::-moz-range-thumb]:cursor-pointer
+                    "
                 />
-
-                {/* Price Labels */}
-                <div className="flex justify-between text-sm mt-2">
-                    <span>
-                        From: <strong className="text-brand">{format(min)}</strong>
-                    </span>
-                    <span>
-                        To: <strong className="text-brand">{format(localMax)}</strong>
-                    </span>
-                </div>
             </div>
 
             {/* Apply Button */}
             <button
                 onClick={handleApply}
-                className="inline-flex items-center gap-2 bg-brand hover:bg-brand-dark text-white px-5 py-2.5 rounded-md text-sm font-semibold transition-colors"
+                className="
+                    w-full py-2.5 px-4 rounded-lg
+                    text-sm font-medium
+                    bg-heading text-white
+                    hover:bg-brand-dark
+                    transition-colors duration-200
+                    flex items-center justify-center gap-2
+                "
             >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-                </svg>
-                Filter
+                Apply Filter
             </button>
-        </FilterWidget>
+        </div>
     );
 }
 
@@ -78,7 +159,6 @@ export function PriceRangeInputs({
     currentMin = '',
     currentMax = '',
     onApply,
-    title = 'Filter by price',
     className = '',
 }) {
     const [localMin, setLocalMin] = useState(currentMin || '');
@@ -94,31 +174,55 @@ export function PriceRangeInputs({
     };
 
     return (
-        <FilterWidget title={title} className={className}>
+        <div className={className}>
             <div className="flex items-center gap-3 mb-4">
-                <input
-                    type="number"
-                    placeholder="Min"
-                    value={localMin}
-                    onChange={(e) => setLocalMin(e.target.value)}
-                    className="w-full border border-border rounded-md px-3 py-2 text-sm outline-none focus:border-brand"
-                />
-                <span className="text-muted">-</span>
-                <input
-                    type="number"
-                    placeholder="Max"
-                    value={localMax}
-                    onChange={(e) => setLocalMax(e.target.value)}
-                    className="w-full border border-border rounded-md px-3 py-2 text-sm outline-none focus:border-brand"
-                />
+                <div className="flex-1">
+                    <label className="text-xs text-muted mb-1.5 block">Min</label>
+                    <input
+                        type="number"
+                        placeholder="0"
+                        value={localMin}
+                        onChange={(e) => setLocalMin(e.target.value)}
+                        className="
+                            w-full py-2.5 px-3 rounded-lg
+                            text-sm text-heading
+                            bg-surface-sunken border-0
+                            focus:outline-none focus:ring-2 focus:ring-heading/10
+                            transition-all duration-200
+                        "
+                    />
+                </div>
+                <span className="text-muted mt-5">—</span>
+                <div className="flex-1">
+                    <label className="text-xs text-muted mb-1.5 block">Max</label>
+                    <input
+                        type="number"
+                        placeholder="10000"
+                        value={localMax}
+                        onChange={(e) => setLocalMax(e.target.value)}
+                        className="
+                            w-full py-2.5 px-3 rounded-lg
+                            text-sm text-heading
+                            bg-surface-sunken border-0
+                            focus:outline-none focus:ring-2 focus:ring-heading/10
+                            transition-all duration-200
+                        "
+                    />
+                </div>
             </div>
 
             <button
                 onClick={handleApply}
-                className="w-full bg-brand hover:bg-brand-dark text-white px-4 py-2 rounded-md text-sm font-semibold transition-colors"
+                className="
+                    w-full py-2.5 px-4 rounded-lg
+                    text-sm font-medium
+                    bg-heading text-white
+                    hover:bg-brand-dark
+                    transition-colors duration-200
+                "
             >
                 Apply
             </button>
-        </FilterWidget>
+        </div>
     );
 }
