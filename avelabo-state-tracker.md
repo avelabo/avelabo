@@ -16,6 +16,9 @@ Features can be moved from one version to the next depending on timelines and cu
 
 ## V0.1.1
 
+#UI
+- In-App/Browser Notifications 
+
 #Misc
 - Email logo using Google Profile or BIMI
 - Bulk Message Sender 
@@ -37,8 +40,8 @@ Features can be moved from one version to the next depending on timelines and cu
 - Discounts/Promotion Management - Exists (Not tested thoroughly)
 - Discount/Promotion Push 2 Comms 
 - Discount/Promotion connected to particular coupon  
-- Order Management 
-- Order Placement and Updates push 2 comms  - Working
+- Order Management - Working (improvements can be done)
+- Order Placement and Updates push 2 comms  - Working (improvements can be done)
 - Refund Management 
 - Invoice Management  - Working (improvements can be done)
 - Reviews and Ratings - Deferred
@@ -55,7 +58,6 @@ Features can be moved from one version to the next depending on timelines and cu
 - Home (New, Featured, Essentials, ...) - Working (changes to breakdown by essentials etc)
 - Shop, Cart, Checkout  - Working
 - Payment Flow - Working (clean up and finalization needed)
-- In-App/Browser Notifications -
 - Pages (About, What is the magic, How it works, How to become a seller, Trust and Reliability) -
 - Pages (Privacy Policy, Refund Policy, Return Policy, Terms and Policies, Support) ..under the help -
 
