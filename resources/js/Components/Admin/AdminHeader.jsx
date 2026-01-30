@@ -2,16 +2,13 @@ import { Link, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
 export default function AdminHeader({ onMenuToggle, onDarkModeToggle, darkMode }) {
-    const { adminCounts } = usePage().props;
+    const { adminCounts, auth } = usePage().props;
     const [notificationsOpen, setNotificationsOpen] = useState(false);
     const [profileOpen, setProfileOpen] = useState(false);
     const unreadMessages = adminCounts?.unread_messages || 0;
-
-    const notifications = [
-        { id: 1, title: 'Your order is placed', description: 'Consectetur adipiscing elit', time: '3 min ago', type: 'order' },
-        { id: 2, title: 'New user registered', description: 'A new user has registered', time: '15 min ago', type: 'user' },
-        { id: 3, title: 'Order shipped', description: 'Order #12345 has been shipped', time: '1 hour ago', type: 'shipping' },
-    ];
+    const notifications = adminCounts?.notifications || [];
+    const notificationsCount = adminCounts?.notifications_count || 0;
+    const user = auth?.user;
 
     return (
         <header className="sticky top-0 z-30 bg-white dark:bg-dark-sidebar shadow-sm h-16">
@@ -38,15 +35,6 @@ export default function AdminHeader({ onMenuToggle, onDarkModeToggle, darkMode }
 
                 {/* Right Side */}
                 <div className="flex items-center gap-4">
-                    {/* Language Selector */}
-                    <div className="hidden md:flex items-center gap-2">
-                        <img src="/images/admin/theme/flag-us.png" alt="EN" className="w-5 h-5 rounded-full" />
-                        <select className="bg-transparent border-none text-sm cursor-pointer focus:ring-0">
-                            <option>English</option>
-                            <option>Chichewa</option>
-                        </select>
-                    </div>
-
                     {/* Dark Mode Toggle */}
                     <button
                         onClick={onDarkModeToggle}
@@ -91,9 +79,11 @@ export default function AdminHeader({ onMenuToggle, onDarkModeToggle, darkMode }
                             className="relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 notification-shake"
                         >
                             <span className="material-icons">notifications</span>
-                            <span className="absolute top-0 right-0 w-5 h-5 bg-danger text-white text-xs rounded-full flex items-center justify-center">
-                                3
-                            </span>
+                            {notificationsCount > 0 && (
+                                <span className="absolute top-0 right-0 w-5 h-5 bg-danger text-white text-xs rounded-full flex items-center justify-center">
+                                    {notificationsCount > 99 ? '99+' : notificationsCount}
+                                </span>
+                            )}
                         </button>
 
                         {notificationsOpen && (
@@ -102,26 +92,37 @@ export default function AdminHeader({ onMenuToggle, onDarkModeToggle, darkMode }
                                     <h6 className="font-semibold text-heading dark:text-white">Notifications</h6>
                                 </div>
                                 <div className="max-h-80 overflow-y-auto">
-                                    {notifications.map((notification) => (
-                                        <div key={notification.id} className="p-4 border-b dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/5 cursor-pointer">
-                                            <div className="flex items-start gap-3">
-                                                <div className="w-10 h-10 rounded-full bg-brand/10 flex items-center justify-center">
-                                                    <span className="material-icons text-brand text-sm">
-                                                        {notification.type === 'order' ? 'shopping_bag' : notification.type === 'user' ? 'person' : 'local_shipping'}
-                                                    </span>
+                                    {notifications.length > 0 ? (
+                                        notifications.map((notification) => (
+                                            <Link
+                                                key={notification.id}
+                                                href={notification.link}
+                                                className="block p-4 border-b dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/5"
+                                            >
+                                                <div className="flex items-start gap-3">
+                                                    <div className="w-10 h-10 rounded-full bg-brand/10 flex items-center justify-center">
+                                                        <span className="material-icons text-brand text-sm">
+                                                            {notification.type === 'order' ? 'shopping_bag' : notification.type === 'user' ? 'person' : 'local_shipping'}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <p className="font-medium text-sm text-heading dark:text-white">{notification.title}</p>
+                                                        <p className="text-xs text-body">{notification.description}</p>
+                                                        <p className="text-xs text-muted mt-1">{notification.time}</p>
+                                                    </div>
                                                 </div>
-                                                <div className="flex-1">
-                                                    <p className="font-medium text-sm text-heading dark:text-white">{notification.title}</p>
-                                                    <p className="text-xs text-body">{notification.description}</p>
-                                                    <p className="text-xs text-muted mt-1">{notification.time}</p>
-                                                </div>
-                                            </div>
+                                            </Link>
+                                        ))
+                                    ) : (
+                                        <div className="p-8 text-center">
+                                            <span className="material-icons text-4xl text-gray-300 mb-2">notifications_none</span>
+                                            <p className="text-sm text-muted">No new notifications</p>
                                         </div>
-                                    ))}
+                                    )}
                                 </div>
-                                <div className="p-4">
-                                    <Link href="/admin/notifications" className="text-brand text-sm font-medium hover:underline">
-                                        View All Notifications
+                                <div className="p-4 border-t dark:border-white/10">
+                                    <Link href="/admin/orders" className="text-brand text-sm font-medium hover:underline">
+                                        View All Orders
                                     </Link>
                                 </div>
                             </div>
@@ -134,22 +135,20 @@ export default function AdminHeader({ onMenuToggle, onDarkModeToggle, darkMode }
                             onClick={() => setProfileOpen(!profileOpen)}
                             className="flex items-center gap-3"
                         >
-                            <img
-                                src="/images/admin/people/avatar-1.png"
-                                alt="Profile"
-                                className="w-10 h-10 rounded-full object-cover"
-                            />
+                            <div className="w-10 h-10 rounded-full bg-brand/20 flex items-center justify-center text-brand font-semibold">
+                                {user?.name?.charAt(0)?.toUpperCase() || 'A'}
+                            </div>
                             <div className="hidden md:block text-left">
-                                <p className="text-sm font-medium text-heading dark:text-white">Admin User</p>
-                                <p className="text-xs text-body">Administrator</p>
+                                <p className="text-sm font-medium text-heading dark:text-white">{user?.name || 'Admin User'}</p>
+                                <p className="text-xs text-body capitalize">{user?.role || 'Administrator'}</p>
                             </div>
                         </button>
 
                         {profileOpen && (
                             <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-dark-card rounded-lg shadow-dropdown z-50">
                                 <div className="p-4 border-b dark:border-white/10">
-                                    <p className="font-medium text-heading dark:text-white">Admin User</p>
-                                    <p className="text-sm text-body">admin@example.com</p>
+                                    <p className="font-medium text-heading dark:text-white">{user?.name || 'Admin User'}</p>
+                                    <p className="text-sm text-body">{user?.email || 'admin@example.com'}</p>
                                 </div>
                                 <div className="py-2">
                                     <Link href="/admin/profile" className="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 dark:hover:bg-white/5">
