@@ -131,7 +131,7 @@ export default function About({ pageContent = {} }) {
                     <div className="grid lg:grid-cols-12 gap-6 lg:gap-10 items-center">
                         <div className="lg:col-span-8">
                             <p className="text-white/60 text-sm uppercase tracking-widest mb-3">The Question Everyone Asks</p>
-                            <h2 className="text-2xl lg:text-3xl font-bold mb-3">
+                            <h2 className="text-2xl lg:text-3xl font-bold text-white mb-3">
                                 "How do you operate in a forex shortage?"
                             </h2>
                             <p className="text-white/80 leading-relaxed">

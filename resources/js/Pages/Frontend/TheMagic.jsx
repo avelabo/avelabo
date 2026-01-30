@@ -179,9 +179,9 @@ export default function TheMagic({ pageContent = {} }) {
                                 <div key={index} className="relative flex-1 px-4 text-center">
                                     {/* Node */}
                                     <div className="w-16 h-16 mx-auto bg-white/10 border border-white/30 rounded-2xl flex items-center justify-center mb-5 relative z-10">
-                                        <span className="text-xl font-bold">{index + 1}</span>
+                                        <span className="text-xl font-bold text-white">{index + 1}</span>
                                     </div>
-                                    <h3 className="text-lg font-bold mb-1">{step.label}</h3>
+                                    <h3 className="text-lg font-bold text-white mb-1">{step.label}</h3>
                                     <p className="text-sm text-white/60 mb-2">{step.location}</p>
                                     <p className="text-sm text-white/80 leading-relaxed">{step.description}</p>
                                 </div>
@@ -195,14 +195,14 @@ export default function TheMagic({ pageContent = {} }) {
                             <div key={index} className="flex gap-4">
                                 <div className="flex flex-col items-center">
                                     <div className="w-11 h-11 bg-white/10 border border-white/30 rounded-xl flex items-center justify-center">
-                                        <span className="font-bold">{index + 1}</span>
+                                        <span className="font-bold text-white">{index + 1}</span>
                                     </div>
                                     {index < flow.steps.length - 1 && (
                                         <div className="w-0.5 h-full bg-white/20 mt-2"></div>
                                     )}
                                 </div>
                                 <div className="flex-1 pb-6">
-                                    <h3 className="text-lg font-bold mb-1">{step.label}</h3>
+                                    <h3 className="text-lg font-bold text-white mb-1">{step.label}</h3>
                                     <p className="text-sm text-white/60 mb-1">{step.location}</p>
                                     <p className="text-sm text-white/80 leading-relaxed">{step.description}</p>
                                 </div>

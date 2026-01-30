@@ -204,7 +204,7 @@ export default function TrustAndSafety({ pageContent = {} }) {
                         <div className="lg:col-span-4">
                             <h2 className="text-sm uppercase tracking-widest text-white/60 mb-3">Our Commitments</h2>
                             <div className="w-12 h-0.5 bg-white/30 rounded-full mb-6"></div>
-                            <p className="text-xl font-medium">
+                            <p className="text-xl font-medium text-white">
                                 Promises we make to every customer.
                             </p>
                         </div>
@@ -212,7 +212,7 @@ export default function TrustAndSafety({ pageContent = {} }) {
                             <div className="grid sm:grid-cols-2 gap-4">
                                 {commitments.map((commitment, index) => (
                                     <div key={index} className="bg-white/5 rounded-2xl p-5 border border-white/10">
-                                        <h3 className="text-lg font-bold mb-2">{commitment.title}</h3>
+                                        <h3 className="text-lg font-bold text-white mb-2">{commitment.title}</h3>
                                         <p className="text-white/70 leading-relaxed">{commitment.description}</p>
                                     </div>
                                 ))}

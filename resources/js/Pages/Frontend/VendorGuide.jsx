@@ -206,7 +206,7 @@ export default function VendorGuide({ pageContent = {} }) {
                     <div className="text-center mb-10">
                         <h2 className="text-sm uppercase tracking-widest text-white/60 mb-3">Getting Started</h2>
                         <div className="w-12 h-0.5 bg-white/30 mx-auto rounded-full mb-6"></div>
-                        <p className="text-2xl lg:text-3xl font-bold max-w-2xl mx-auto">
+                        <p className="text-2xl lg:text-3xl font-bold text-white max-w-2xl mx-auto">
                             From application to first delivery in days, not weeks.
                         </p>
                     </div>
@@ -215,7 +215,7 @@ export default function VendorGuide({ pageContent = {} }) {
                         {steps.map((step, index) => (
                             <div key={index} className="bg-white/5 rounded-2xl p-5 border border-white/10">
                                 <span className="text-3xl font-bold text-white/20 block mb-3">{step.number}</span>
-                                <h3 className="text-lg font-bold mb-2">{step.title}</h3>
+                                <h3 className="text-lg font-bold text-white mb-2">{step.title}</h3>
                                 <p className="text-white/70 leading-relaxed text-sm">{step.description}</p>
                             </div>
                         ))}

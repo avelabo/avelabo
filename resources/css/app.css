@@ -123,6 +123,17 @@ h1, h2, h3, h4, h5, h6 {
     color: #ffffff;
 }
 
+/* Headings on dark backgrounds */
+.bg-heading h1, .bg-heading h2, .bg-heading h3, .bg-heading h4, .bg-heading h5, .bg-heading h6,
+.bg-heading p, .bg-heading span {
+    color: #ffffff;
+}
+
+.bg-heading .text-white\/60 { color: rgba(255, 255, 255, 0.6); }
+.bg-heading .text-white\/70 { color: rgba(255, 255, 255, 0.7); }
+.bg-heading .text-white\/80 { color: rgba(255, 255, 255, 0.8); }
+.bg-heading .text-white\/20 { color: rgba(255, 255, 255, 0.2); }
+
 /* Typography Utilities */
 .text-balance { text-wrap: balance; }
 .text-pretty { text-wrap: pretty; }
