@@ -6,7 +6,9 @@ use App\Models\Cart;
 use App\Models\Category;
 use App\Models\ContactMessage;
 use App\Models\Currency;
+use App\Models\Order;
 use App\Models\Setting;
+use App\Models\User;
 use App\Models\Wishlist;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -121,8 +123,52 @@ class HandleInertiaRequests extends Middleware
             return null;
         }
 
+        // Get recent notifications for admin
+        $recentNotifications = collect();
+
+        // Recent orders (last 24 hours)
+        $recentOrders = Order::where('created_at', '>=', now()->subDay())
+            ->latest()
+            ->take(5)
+            ->get(['id', 'order_number', 'total', 'status', 'created_at']);
+
+        foreach ($recentOrders as $order) {
+            $recentNotifications->push([
+                'id' => 'order_'.$order->id,
+                'title' => 'New order placed',
+                'description' => "Order #{$order->order_number}",
+                'time' => $order->created_at->diffForHumans(),
+                'type' => 'order',
+                'link' => "/admin/orders/{$order->id}",
+            ]);
+        }
+
+        // Recent users (last 24 hours)
+        $recentUsers = User::where('created_at', '>=', now()->subDay())
+            ->where('role', 'customer')
+            ->latest()
+            ->take(3)
+            ->get(['id', 'name', 'created_at']);
+
+        foreach ($recentUsers as $newUser) {
+            $recentNotifications->push([
+                'id' => 'user_'.$newUser->id,
+                'title' => 'New user registered',
+                'description' => $newUser->name,
+                'time' => $newUser->created_at->diffForHumans(),
+                'type' => 'user',
+                'link' => "/admin/users/{$newUser->id}",
+            ]);
+        }
+
+        // Sort by most recent and limit
+        $notifications = $recentNotifications->sortByDesc('time')->take(10)->values();
+
         return [
-            'unread_messages' => ContactMessage::where('status', 'new')->count(),
+            'unread_messages' => ContactMessage::unread()->count(),
+            'pending_orders' => Order::where('status', 'pending')->count(),
+            'notifications' => $notifications,
+            'notifications_count' => $notifications->count(),
         ];
     }
 }
