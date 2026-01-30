@@ -3,10 +3,13 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Mail\Admin\RefundAlertMail;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\OrderStatusHistory;
 use App\Models\Refund;
+use App\Notifications\Customer\RefundInitiatedNotification;
+use App\Services\NotificationService;
 use App\Services\OrderService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -16,7 +19,8 @@ use Inertia\Inertia;
 class OrderController extends Controller
 {
     public function __construct(
-        protected OrderService $orderService
+        protected OrderService $orderService,
+        protected NotificationService $notificationService
     ) {}
 
     /**
@@ -36,7 +40,7 @@ class OrderController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('order_number', 'like', "%{$search}%")
-                    ->orWhereHas('user', fn($u) => $u->where('name', 'like', "%{$search}%")
+                    ->orWhereHas('user', fn ($u) => $u->where('name', 'like', "%{$search}%")
                         ->orWhere('email', 'like', "%{$search}%"));
             });
         }
@@ -174,10 +178,10 @@ class OrderController extends Controller
 
                 if ($validated['status'] === 'shipped') {
                     $updateData['shipped_at'] = now();
-                    if (!empty($validated['tracking_number'])) {
+                    if (! empty($validated['tracking_number'])) {
                         $updateData['tracking_number'] = $validated['tracking_number'];
                     }
-                    if (!empty($validated['tracking_carrier'])) {
+                    if (! empty($validated['tracking_carrier'])) {
                         $updateData['tracking_carrier'] = $validated['tracking_carrier'];
                     }
                 } elseif ($validated['status'] === 'delivered') {
@@ -207,7 +211,8 @@ class OrderController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Failed to update status: ' . $e->getMessage());
+
+            return back()->with('error', 'Failed to update status: '.$e->getMessage());
         }
     }
 
@@ -217,7 +222,7 @@ class OrderController extends Controller
     public function refund(Request $request, Order $order)
     {
         $validated = $request->validate([
-            'amount' => ['required', 'numeric', 'min:0.01', 'max:' . $order->total],
+            'amount' => ['required', 'numeric', 'min:0.01', 'max:'.$order->total],
             'reason' => ['required', 'string', 'max:500'],
             'items' => ['nullable', 'array'],
             'items.*' => ['exists:order_items,id'],
@@ -241,7 +246,7 @@ class OrderController extends Controller
             ]);
 
             // Mark specified items as refunded
-            if (!empty($validated['items'])) {
+            if (! empty($validated['items'])) {
                 OrderItem::whereIn('id', $validated['items'])
                     ->where('order_id', $order->id)
                     ->update(['status' => 'refunded']);
@@ -252,7 +257,7 @@ class OrderController extends Controller
                 $this->orderService->updateOrderStatus(
                     $order,
                     'refunded',
-                    'Full refund processed: ' . $validated['reason'],
+                    'Full refund processed: '.$validated['reason'],
                     Auth::user()
                 );
             }
@@ -261,11 +266,27 @@ class OrderController extends Controller
 
             DB::commit();
 
+            // Send refund notification to customer
+            if ($order->user) {
+                $this->notificationService->sendToUser(
+                    $order->user,
+                    new RefundInitiatedNotification($order, $refundAmount, $order->currency?->code ?? 'MWK'),
+                    'customer'
+                );
+            }
+
+            // Alert admins of refund
+            $this->notificationService->sendToAdmins(
+                new RefundAlertMail($order, $refund),
+                'admin.refund'
+            );
+
             return back()->with('success', 'Refund processed successfully.');
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Failed to process refund: ' . $e->getMessage());
+
+            return back()->with('error', 'Failed to process refund: '.$e->getMessage());
         }
     }
 
@@ -283,7 +304,7 @@ class OrderController extends Controller
                 'status' => 'delivered',
                 'delivered_at' => now(),
             ]);
-        } elseif ($statuses->every(fn($s) => in_array($s, ['shipped', 'delivered']))) {
+        } elseif ($statuses->every(fn ($s) => in_array($s, ['shipped', 'delivered']))) {
             $order->update([
                 'status' => 'shipped',
                 'shipped_at' => $order->shipped_at ?? now(),

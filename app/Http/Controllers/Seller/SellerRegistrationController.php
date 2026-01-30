@@ -3,13 +3,15 @@
 namespace App\Http\Controllers\Seller;
 
 use App\Http\Controllers\Controller;
+use App\Mail\Admin\NewKycSubmissionMail;
+use App\Mail\Admin\NewSellerRegistrationMail;
 use App\Models\Role;
 use App\Models\Seller;
 use App\Models\SellerKyc;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 
@@ -55,12 +57,12 @@ class SellerRegistrationController extends Controller
             'city_id' => ['nullable', 'exists:cities,id'],
         ]);
 
-        DB::transaction(function () use ($user, $validated) {
+        $seller = DB::transaction(function () use ($user, $validated) {
             // Create seller record
             $seller = Seller::create([
                 'user_id' => $user->id,
                 'shop_name' => $validated['shop_name'],
-                'slug' => Str::slug($validated['shop_name']) . '-' . Str::random(5),
+                'slug' => Str::slug($validated['shop_name']).'-'.Str::random(5),
                 'description' => $validated['shop_description'] ?? null,
                 'business_type' => $validated['business_type'],
                 'business_registration_number' => $validated['business_registration_number'] ?? null,
@@ -71,7 +73,7 @@ class SellerRegistrationController extends Controller
             ]);
 
             // Update user phone if provided
-            if (!$user->phone && $validated['phone']) {
+            if (! $user->phone && $validated['phone']) {
                 $user->update(['phone' => $validated['phone']]);
             }
 
@@ -80,7 +82,15 @@ class SellerRegistrationController extends Controller
             if ($sellerRole) {
                 $user->roles()->syncWithoutDetaching([$sellerRole->id]);
             }
+
+            return $seller;
         });
+
+        // Notify admins of new seller registration
+        app(NotificationService::class)->sendToAdmins(
+            new NewSellerRegistrationMail($seller),
+            'admin.new_seller_registration'
+        );
 
         return redirect()->route('seller.kyc.create')
             ->with('success', 'Shop profile created! Please complete KYC verification.');
@@ -94,7 +104,7 @@ class SellerRegistrationController extends Controller
         $user = Auth::user();
         $seller = $user->seller;
 
-        if (!$seller) {
+        if (! $seller) {
             return redirect()->route('seller.register')
                 ->with('error', 'Please create your shop profile first.');
         }
@@ -121,7 +131,7 @@ class SellerRegistrationController extends Controller
         $user = Auth::user();
         $seller = $user->seller;
 
-        if (!$seller) {
+        if (! $seller) {
             return redirect()->route('seller.register')
                 ->with('error', 'Please create your shop profile first.');
         }
@@ -168,6 +178,12 @@ class SellerRegistrationController extends Controller
         // Update seller status (stays pending until KYC is approved)
         $seller->update(['status' => 'pending']);
 
+        // Notify admins of new KYC submission
+        app(NotificationService::class)->sendToAdmins(
+            new NewKycSubmissionMail($kyc),
+            'admin.new_kyc_submission'
+        );
+
         return redirect()->route('seller.kyc.status')
             ->with('success', 'KYC documents submitted successfully! We will review them shortly.');
     }
@@ -180,7 +196,7 @@ class SellerRegistrationController extends Controller
         $user = Auth::user();
         $seller = $user->seller;
 
-        if (!$seller) {
+        if (! $seller) {
             return redirect()->route('seller.register');
         }
 

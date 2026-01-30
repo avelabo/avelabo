@@ -5,6 +5,9 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Seller;
 use App\Models\SellerKyc;
+use App\Notifications\Seller\KycApprovedNotification;
+use App\Notifications\Seller\KycDocumentsRequestedNotification;
+use App\Notifications\Seller\KycRejectedNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -18,7 +21,7 @@ class KycController extends Controller
     public function index(Request $request)
     {
         $kycs = SellerKyc::with(['seller:id,shop_name,user_id', 'seller.user:id,name,email'])
-            ->when($request->status, fn($q, $status) => $q->where('status', $status))
+            ->when($request->status, fn ($q, $status) => $q->where('status', $status))
             ->when($request->search, function ($query, $search) {
                 $query->whereHas('seller', function ($q) use ($search) {
                     $q->where('shop_name', 'like', "%{$search}%")
@@ -102,7 +105,7 @@ class KycController extends Controller
      */
     public function approve(Request $request, SellerKyc $kyc)
     {
-        if (!in_array($kyc->status, ['pending', 'under_review'])) {
+        if (! in_array($kyc->status, ['pending', 'under_review'])) {
             return back()->with('error', 'This KYC application has already been processed.');
         }
 
@@ -120,7 +123,8 @@ class KycController extends Controller
             'approved_at' => now(),
         ]);
 
-        // TODO: Send approval email to seller
+        // Send approval notification to seller
+        $kyc->seller->user->notify(new KycApprovedNotification);
 
         return redirect()->route('admin.kyc.index')
             ->with('success', "Seller '{$kyc->seller->shop_name}' has been approved!");
@@ -131,7 +135,7 @@ class KycController extends Controller
      */
     public function reject(Request $request, SellerKyc $kyc)
     {
-        if (!in_array($kyc->status, ['pending', 'under_review'])) {
+        if (! in_array($kyc->status, ['pending', 'under_review'])) {
             return back()->with('error', 'This KYC application has already been processed.');
         }
 
@@ -151,7 +155,8 @@ class KycController extends Controller
             'status' => 'pending',
         ]);
 
-        // TODO: Send rejection email to seller with reason
+        // Send rejection notification to seller with reason
+        $kyc->seller->user->notify(new KycRejectedNotification($validated['rejection_reason']));
 
         return redirect()->route('admin.kyc.index')
             ->with('success', "KYC application for '{$kyc->seller->shop_name}' has been rejected.");
@@ -176,7 +181,11 @@ class KycController extends Controller
             'status' => 'pending',
         ]);
 
-        // TODO: Send email requesting additional documents
+        // Send notification requesting additional documents
+        $kyc->seller->user->notify(new KycDocumentsRequestedNotification(
+            ['Documents as specified in the notes'],
+            $validated['rejection_reason']
+        ));
 
         return back()->with('success', 'Request for additional documents has been sent.');
     }

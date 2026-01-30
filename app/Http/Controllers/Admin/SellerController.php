@@ -9,6 +9,7 @@ use App\Models\Seller;
 use App\Models\SellerMarkupTemplate;
 use App\Models\SellerPriceMarkup;
 use App\Models\User;
+use App\Notifications\Seller\StatusChangedNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
@@ -198,7 +199,11 @@ class SellerController extends Controller
             'is_verified' => $validated['status'] === 'active',
         ]);
 
-        // TODO: Send notification to seller
+        // Send notification to seller about status change
+        $seller->user->notify(new StatusChangedNotification(
+            $validated['status'],
+            $validated['reason'] ?? null
+        ));
 
         return back()->with('success', 'Seller status updated.');
     }

@@ -2,9 +2,19 @@
 
 namespace App\Services;
 
+use App\Mail\Admin\NewOrderAlertMail;
 use App\Models\Order;
 use App\Models\OrderStatusHistory;
+use App\Models\Seller;
 use App\Models\User;
+use App\Notifications\Customer\OrderCancelledNotification;
+use App\Notifications\Customer\OrderConfirmationNotification;
+use App\Notifications\Customer\OrderDeliveredNotification;
+use App\Notifications\Customer\OrderProcessingNotification;
+use App\Notifications\Customer\OrderShippedNotification;
+use App\Notifications\Customer\PaymentSuccessfulNotification;
+use App\Notifications\Seller\NewOrderNotification;
+use App\Notifications\Seller\OrderPaidNotification;
 use Illuminate\Support\Facades\DB;
 
 class OrderService
@@ -43,7 +53,7 @@ class OrderService
             // Update timestamps based on status
             switch ($status) {
                 case 'processing':
-                    if (!$order->paid_at) {
+                    if (! $order->paid_at) {
                         $updateData['paid_at'] = now();
                     }
                     break;
@@ -73,7 +83,94 @@ class OrderService
             ]);
         });
 
-        return $order->fresh();
+        $order = $order->fresh();
+
+        // Send status-based notifications
+        $this->sendStatusNotification($order, $oldStatus, $status, $note);
+
+        return $order;
+    }
+
+    /**
+     * Send notifications based on order status change
+     */
+    protected function sendStatusNotification(Order $order, string $oldStatus, string $newStatus, ?string $note = null): void
+    {
+        if (! $order->user) {
+            return;
+        }
+
+        $notificationService = app(NotificationService::class);
+
+        switch ($newStatus) {
+            case 'processing':
+                // Send order processing notification to customer
+                $notificationService->sendToUser(
+                    $order->user,
+                    new OrderProcessingNotification($order),
+                    'customer'
+                );
+
+                // Send payment confirmation if this is a paid transition
+                if ($order->latestPayment && $order->latestPayment->status === 'paid') {
+                    $notificationService->sendToUser(
+                        $order->user,
+                        new PaymentSuccessfulNotification($order, $order->latestPayment),
+                        'customer'
+                    );
+
+                    // Notify sellers that payment is confirmed
+                    $this->notifySellersOrderPaid($order);
+                }
+                break;
+
+            case 'shipped':
+                $notificationService->sendToUser(
+                    $order->user,
+                    new OrderShippedNotification($order),
+                    'customer'
+                );
+                break;
+
+            case 'delivered':
+                $notificationService->sendToUser(
+                    $order->user,
+                    new OrderDeliveredNotification($order),
+                    'customer'
+                );
+                break;
+
+            case 'cancelled':
+                $notificationService->sendToUser(
+                    $order->user,
+                    new OrderCancelledNotification($order, $note),
+                    'customer'
+                );
+                break;
+        }
+    }
+
+    /**
+     * Notify sellers when order payment is confirmed
+     */
+    protected function notifySellersOrderPaid(Order $order): void
+    {
+        $order->load('items.seller.user');
+        $notificationService = app(NotificationService::class);
+
+        // Group items by seller
+        $sellerItems = $order->items->groupBy('seller_id');
+
+        foreach ($sellerItems as $sellerId => $items) {
+            $seller = Seller::with('user')->find($sellerId);
+            if ($seller && $seller->user) {
+                $notificationService->sendToUser(
+                    $seller->user,
+                    new OrderPaidNotification($order, $items),
+                    'seller'
+                );
+            }
+        }
     }
 
     /**
@@ -122,8 +219,8 @@ class OrderService
             }
         }
         // If all items shipped (or delivered), mark order as shipped
-        elseif ($itemStatuses->every(fn($s) => in_array($s, ['shipped', 'delivered']))) {
-            if (!in_array($order->status, ['shipped', 'delivered'])) {
+        elseif ($itemStatuses->every(fn ($s) => in_array($s, ['shipped', 'delivered']))) {
+            if (! in_array($order->status, ['shipped', 'delivered'])) {
                 $this->updateOrderStatus($order, 'shipped', 'All items shipped');
             }
         }
@@ -164,7 +261,7 @@ class OrderService
             'delivered_at' => $order->delivered_at?->toISOString(),
             'cancelled_at' => $order->cancelled_at?->toISOString(),
             'created_at' => $order->created_at->toISOString(),
-            'items' => $order->items->map(fn($item) => [
+            'items' => $order->items->map(fn ($item) => [
                 'id' => $item->id,
                 'product_name' => $item->product_name,
                 'variant_name' => $item->variant_name,
@@ -192,7 +289,7 @@ class OrderService
                 'method' => $order->latestPayment->payment_method,
                 'gateway' => $order->latestPayment->gateway?->display_name,
             ] : null,
-            'timeline' => $order->statusHistory->map(fn($history) => [
+            'timeline' => $order->statusHistory->map(fn ($history) => [
                 'status' => $history->status,
                 'note' => $history->note,
                 'created_at' => $history->created_at->toISOString(),
@@ -226,7 +323,7 @@ class OrderService
         ];
 
         // Add pricing breakdown to items
-        $customerData['items'] = $order->items->map(fn($item) => [
+        $customerData['items'] = $order->items->map(fn ($item) => [
             'id' => $item->id,
             'product_id' => $item->product_id,
             'product_name' => $item->product_name,
@@ -245,8 +342,8 @@ class OrderService
         ]);
 
         // Calculate revenue breakdown
-        $totalBasePrice = $order->items->sum(fn($item) => $item->base_price * $item->quantity);
-        $totalMarkup = $order->items->sum(fn($item) => $item->markup_amount * $item->quantity);
+        $totalBasePrice = $order->items->sum(fn ($item) => $item->base_price * $item->quantity);
+        $totalMarkup = $order->items->sum(fn ($item) => $item->markup_amount * $item->quantity);
 
         $customerData['revenue'] = [
             'seller_payout' => $totalBasePrice,
@@ -263,13 +360,13 @@ class OrderService
     public function getOrderForSeller(Order $order, int $sellerId): array
     {
         $order->load([
-            'items' => fn($q) => $q->where('seller_id', $sellerId),
+            'items' => fn ($q) => $q->where('seller_id', $sellerId),
             'items.product',
             'shippingAddress',
             'user',
         ]);
 
-        $sellerItems = $order->items->filter(fn($item) => $item->seller_id === $sellerId);
+        $sellerItems = $order->items->filter(fn ($item) => $item->seller_id === $sellerId);
 
         return [
             'id' => $order->id,
@@ -277,7 +374,7 @@ class OrderService
             'customer_name' => $order->user?->name,
             'status' => $order->status,
             'created_at' => $order->created_at->toISOString(),
-            'items' => $sellerItems->map(fn($item) => [
+            'items' => $sellerItems->map(fn ($item) => [
                 'id' => $item->id,
                 'product_name' => $item->product_name,
                 'variant_name' => $item->variant_name,
@@ -294,17 +391,59 @@ class OrderService
                 'address' => $order->shippingAddress->full_address,
                 'phone' => $order->shippingAddress->phone,
             ] : null,
-            'seller_total' => $sellerItems->sum(fn($item) => $item->base_price * $item->quantity),
+            'seller_total' => $sellerItems->sum(fn ($item) => $item->base_price * $item->quantity),
         ];
     }
 
     /**
-     * Send order confirmation email
+     * Send order confirmation notifications
      */
     public function sendOrderConfirmation(Order $order): void
     {
-        // TODO: Implement email sending
-        // Mail::to($order->user)->send(new OrderConfirmation($order));
+        if (! $order->user) {
+            return;
+        }
+
+        $notificationService = app(NotificationService::class);
+
+        // Send order confirmation to customer
+        $notificationService->sendToUser(
+            $order->user,
+            new OrderConfirmationNotification($order),
+            'customer'
+        );
+
+        // Send new order alerts to admins
+        $notificationService->sendToAdmins(
+            new NewOrderAlertMail($order),
+            'admin.new_order'
+        );
+
+        // Notify sellers of new order
+        $this->notifySellersNewOrder($order);
+    }
+
+    /**
+     * Notify sellers when a new order is placed
+     */
+    protected function notifySellersNewOrder(Order $order): void
+    {
+        $order->load('items.seller.user');
+        $notificationService = app(NotificationService::class);
+
+        // Group items by seller
+        $sellerItems = $order->items->groupBy('seller_id');
+
+        foreach ($sellerItems as $sellerId => $items) {
+            $seller = Seller::with('user')->find($sellerId);
+            if ($seller && $seller->user) {
+                $notificationService->sendToUser(
+                    $seller->user,
+                    new NewOrderNotification($order, $items),
+                    'seller'
+                );
+            }
+        }
     }
 
     /**
@@ -312,7 +451,7 @@ class OrderService
      */
     public function cancelOrder(Order $order, string $reason, ?User $cancelledBy = null): Order
     {
-        if (!$order->canBeCancelled()) {
+        if (! $order->canBeCancelled()) {
             throw new \Exception('This order cannot be cancelled');
         }
 

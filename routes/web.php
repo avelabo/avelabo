@@ -6,10 +6,12 @@ use App\Http\Controllers\Admin\ContactMessageController;
 use App\Http\Controllers\Admin\CouponController as AdminCouponController;
 use App\Http\Controllers\Admin\CurrencyController as AdminCurrencyController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\EmailSettingsController as AdminEmailSettingsController;
 use App\Http\Controllers\Admin\ImportDataSourceController;
 use App\Http\Controllers\Admin\ImportTaskController;
 use App\Http\Controllers\Admin\KycController;
 use App\Http\Controllers\Admin\MarkupTemplateController;
+use App\Http\Controllers\Admin\NotificationLogController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\PageContentController;
 use App\Http\Controllers\Admin\PaymentGatewayController as AdminPaymentGatewayController;
@@ -424,6 +426,22 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     // Settings
     Route::get('/settings', [AdminSettingsController::class, 'index'])->name('settings');
     Route::post('/settings', [AdminSettingsController::class, 'update'])->name('settings.update');
+
+    // Email Settings
+    Route::get('/email-settings', [AdminEmailSettingsController::class, 'index'])->name('email-settings.index');
+    Route::post('/email-settings', [AdminEmailSettingsController::class, 'update'])->name('email-settings.update');
+    Route::post('/email-settings/global', [AdminEmailSettingsController::class, 'updateGlobal'])->name('email-settings.update-global');
+    Route::patch('/email-settings/{emailSetting}/toggle', [AdminEmailSettingsController::class, 'toggle'])->name('email-settings.toggle');
+
+    // Notification Logs
+    Route::prefix('notification-logs')->name('notification-logs.')->group(function () {
+        Route::get('/', [NotificationLogController::class, 'index'])->name('index');
+        Route::get('/{notificationLog}', [NotificationLogController::class, 'show'])->name('show');
+        Route::post('/{notificationLog}/retry', [NotificationLogController::class, 'retry'])->name('retry');
+        Route::post('/retry-all', [NotificationLogController::class, 'retryAll'])->name('retry-all');
+        Route::delete('/{notificationLog}', [NotificationLogController::class, 'destroy'])->name('destroy');
+        Route::post('/clear-old', [NotificationLogController::class, 'clearOld'])->name('clear-old');
+    });
 
     // Trash Bin
     Route::prefix('trash')->name('trash.')->group(function () {

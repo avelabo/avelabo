@@ -104,7 +104,11 @@ export default function Sidebar({ isOpen, isMobileOpen, onClose }) {
         {
             name: 'Settings',
             icon: 'settings',
-            href: '/admin/settings',
+            children: [
+                { name: 'Site Settings', href: '/admin/settings' },
+                { name: 'Email Settings', href: '/admin/email-settings' },
+                { name: 'Notification Logs', href: '/admin/notification-logs' },
+            ],
         },
         {
             name: 'Trash Bin',

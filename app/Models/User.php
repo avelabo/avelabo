@@ -90,6 +90,16 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(Wishlist::class);
     }
 
+    public function notificationPreferences(): HasMany
+    {
+        return $this->hasMany(NotificationPreference::class);
+    }
+
+    public function routeNotificationForSms($notification): ?string
+    {
+        return $this->phone;
+    }
+
     public function scopeActive($query)
     {
         return $query->where('status', 'active');
@@ -131,7 +141,7 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function isCustomer(): bool
     {
-        return !$this->isAdmin();
+        return ! $this->isAdmin();
     }
 
     public function getActiveCartAttribute(): ?Cart

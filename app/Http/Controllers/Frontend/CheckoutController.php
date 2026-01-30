@@ -195,6 +195,9 @@ class CheckoutController extends Controller
 
                 Log::info('Order created successfully', ['order_id' => $order->id, 'order_number' => $order->order_number]);
 
+                // Send order confirmation notifications
+                $this->orderService->sendOrderConfirmation($order);
+
                 session(['checkout_payment_gateway' => $validated['payment_gateway_id']]);
 
                 return redirect()->route('payment.initiate', $order);
@@ -370,6 +373,9 @@ class CheckoutController extends Controller
             );
 
             Log::info('Order created successfully', ['order_id' => $order->id, 'order_number' => $order->order_number]);
+
+            // Send order confirmation notifications
+            $this->orderService->sendOrderConfirmation($order);
 
             // Store payment gateway selection and clear checkout data
             session(['checkout_payment_gateway' => $checkoutData['payment_gateway_id']]);

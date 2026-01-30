@@ -3,11 +3,15 @@
 namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
+use App\Mail\Admin\PaymentFailureAlertMail;
 use App\Models\Cart;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\PaymentGateway;
+use App\Notifications\Customer\PaymentFailedNotification;
+use App\Notifications\Customer\TanPaymentInstructionsNotification;
 use App\Services\CartService;
+use App\Services\NotificationService;
 use App\Services\OrderService;
 use App\Services\PaymentGateway\PaymentGatewayFactory;
 use Illuminate\Http\Request;
@@ -18,7 +22,8 @@ class PaymentController extends Controller
 {
     public function __construct(
         protected OrderService $orderService,
-        protected CartService $cartService
+        protected CartService $cartService,
+        protected NotificationService $notificationService
     ) {}
 
     /**
@@ -116,6 +121,22 @@ class PaymentController extends Controller
 
                 // TAN-based flow (OneKhusa) — show pending payment page
                 if (! empty($response->data['timed_account_number'])) {
+                    // Send TAN payment instructions to customer
+                    if ($order->user) {
+                        $tanData = [
+                            'timed_account_number' => $response->data['timed_account_number'],
+                            'expiry_date' => $response->data['expiry_date'] ?? null,
+                            'expiry_in_minutes' => $response->data['expiry_in_minutes'] ?? 15,
+                            'reference_number' => $response->data['reference_number'] ?? $response->transactionId,
+                        ];
+
+                        $this->notificationService->sendToUser(
+                            $order->user,
+                            new TanPaymentInstructionsNotification($order, $tanData),
+                            'customer'
+                        );
+                    }
+
                     return redirect()->route('payment.pending', $order);
                 }
 
@@ -131,6 +152,21 @@ class PaymentController extends Controller
                 'failure_reason' => $response->message,
                 'failed_at' => now(),
             ]);
+
+            // Send payment failure notification to customer
+            if ($order->user) {
+                $this->notificationService->sendToUser(
+                    $order->user,
+                    new PaymentFailedNotification($order, $response->message),
+                    'customer'
+                );
+            }
+
+            // Alert admins of payment failure
+            $this->notificationService->sendToAdmins(
+                new PaymentFailureAlertMail($order, $payment, $response->message),
+                'admin.payment_failure'
+            );
 
             return redirect()->route('checkout')
                 ->with('error', $response->message);
