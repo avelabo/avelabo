@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\EmailConfigController as AdminEmailConfigControll
 use App\Http\Controllers\Admin\ImportDataSourceController;
 use App\Http\Controllers\Admin\ImportTaskController;
 use App\Http\Controllers\Admin\KycController;
+use App\Http\Controllers\Admin\MailingListController;
 use App\Http\Controllers\Admin\MarkupTemplateController;
 use App\Http\Controllers\Admin\NotificationLogController;
 use App\Http\Controllers\Admin\NotificationSettingsController as AdminNotificationSettingsController;
@@ -38,6 +39,7 @@ use App\Http\Controllers\Frontend\CheckoutController;
 use App\Http\Controllers\Frontend\ContactController;
 use App\Http\Controllers\Frontend\CouponController as FrontendCouponController;
 use App\Http\Controllers\Frontend\HomeController;
+use App\Http\Controllers\Frontend\NewsletterController;
 use App\Http\Controllers\Frontend\OrderController as CustomerOrderController;
 use App\Http\Controllers\Frontend\PageController;
 use App\Http\Controllers\Frontend\PaymentController;
@@ -123,6 +125,10 @@ Route::get('/about', function () {
 
 Route::get('/contact', [ContactController::class, 'index'])->name('contact');
 Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
+
+// Newsletter
+Route::post('/newsletter/subscribe', [NewsletterController::class, 'subscribe'])->name('newsletter.subscribe');
+Route::post('/newsletter/unsubscribe', [NewsletterController::class, 'unsubscribe'])->name('newsletter.unsubscribe');
 
 Route::get('/blog', function () {
     return Inertia::render('Frontend/Blog');
@@ -447,6 +453,21 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
         Route::post('/retry-all', [NotificationLogController::class, 'retryAll'])->name('retry-all');
         Route::delete('/{notificationLog}', [NotificationLogController::class, 'destroy'])->name('destroy');
         Route::post('/clear-old', [NotificationLogController::class, 'clearOld'])->name('clear-old');
+    });
+
+    // Mailing List
+    Route::prefix('mailing-list')->name('mailing-list.')->group(function () {
+        Route::get('/', [MailingListController::class, 'index'])->name('index');
+        Route::post('/', [MailingListController::class, 'store'])->name('store');
+        Route::put('/{subscriber}', [MailingListController::class, 'update'])->name('update');
+        Route::delete('/{subscriber}', [MailingListController::class, 'destroy'])->name('destroy');
+        Route::patch('/{subscriber}/toggle', [MailingListController::class, 'toggle'])->name('toggle');
+        Route::post('/import-users', [MailingListController::class, 'importFromUsers'])->name('import-users');
+        Route::post('/import-file', [MailingListController::class, 'importFromFile'])->name('import-file');
+        Route::get('/export', [MailingListController::class, 'export'])->name('export');
+        Route::post('/settings', [MailingListController::class, 'updateSettings'])->name('settings');
+        Route::post('/bulk-action', [MailingListController::class, 'bulkAction'])->name('bulk-action');
+        Route::get('/unsubscribed-users', [MailingListController::class, 'getUnsubscribedUsers'])->name('unsubscribed-users');
     });
 
     // Trash Bin
