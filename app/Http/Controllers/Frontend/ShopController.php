@@ -31,13 +31,21 @@ class ShopController extends Controller
             ->active()
             ->inStock();
 
-        // Search
+        // Search with prefix matching (e.g., "jim" finds "jimmy choo")
         if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('description', 'like', "%{$search}%")
-                    ->orWhere('short_description', 'like', "%{$search}%");
+            $search = trim($request->search);
+
+            // Build prefix query for full-text search (uses GIN index)
+            $words = preg_split('/\s+/', $search, -1, PREG_SPLIT_NO_EMPTY);
+            $prefixedWords = array_map(fn ($w) => preg_replace('/[^\w]/', '', $w).':*', $words);
+            $tsQuery = implode(' & ', $prefixedWords);
+
+            $query->where(function ($q) use ($search, $tsQuery) {
+                // Full-text search with prefix matching (indexed, fast)
+                $q->whereRaw("search_vector @@ to_tsquery('english', ?)", [$tsQuery])
+                    // Fallback: substring match for non-indexed edge cases
+                    ->orWhere('name', 'ilike', "%{$search}%")
+                    ->orWhere('short_description', 'ilike', "%{$search}%");
             });
         }
 

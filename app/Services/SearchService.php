@@ -16,6 +16,11 @@ class SearchService
     protected const SIMILARITY_THRESHOLD = 0.3;
 
     /**
+     * Lower threshold for short queries (3 chars or less).
+     */
+    protected const SHORT_QUERY_THRESHOLD = 0.2;
+
+    /**
      * Perform a unified search across products, categories, and brands.
      * Uses full-text search first, falls back to fuzzy matching if no results.
      *
@@ -64,52 +69,88 @@ class SearchService
     }
 
     /**
-     * Search for products using PostgreSQL full-text search.
+     * Search for products using PostgreSQL full-text search with prefix matching.
      */
     public function searchProducts(string $query, int $limit = 10): array
     {
+        $prefixQuery = $this->buildPrefixQuery($query);
+
         $results = DB::select("
             SELECT id, name, slug, short_description, base_price,
-                   ts_rank(search_vector, plainto_tsquery('english', ?)) AS rank
+                   ts_rank(search_vector, to_tsquery('english', ?)) AS rank
             FROM products
-            WHERE search_vector @@ plainto_tsquery('english', ?)
+            WHERE search_vector @@ to_tsquery('english', ?)
               AND status = 'active'
               AND deleted_at IS NULL
             ORDER BY rank DESC
             LIMIT ?
-        ", [$query, $query, $limit]);
+        ", [$prefixQuery, $prefixQuery, $limit]);
 
         return $this->formatProductResults($results);
     }
 
     /**
-     * Fuzzy search for products using trigram similarity.
+     * Build a prefix-enabled tsquery string from user input.
+     * Converts "jimmy choo" to "jimmy:* & choo:*" for prefix matching.
+     */
+    protected function buildPrefixQuery(string $query): string
+    {
+        $words = preg_split('/\s+/', trim($query), -1, PREG_SPLIT_NO_EMPTY);
+
+        $prefixedWords = array_map(function ($word) {
+            $word = preg_replace('/[^\w]/', '', $word);
+
+            return $word.':*';
+        }, $words);
+
+        return implode(' & ', $prefixedWords);
+    }
+
+    /**
+     * Fuzzy search for products using trigram similarity and ILIKE prefix.
      */
     public function fuzzySearchProducts(string $query, int $limit = 10): array
     {
+        $threshold = $this->getSimilarityThreshold($query);
+        $likePattern = $query.'%';
+
         $results = DB::select("
             SELECT id, name, slug, short_description, base_price,
                    GREATEST(
                        similarity(name, ?),
-                       similarity(COALESCE(short_description, ''), ?)
+                       similarity(COALESCE(short_description, ''), ?),
+                       CASE WHEN name ILIKE ? THEN 0.9 ELSE 0 END
                    ) AS rank
             FROM products
             WHERE (
                 similarity(name, ?) > ?
                 OR similarity(COALESCE(short_description, ''), ?) > ?
+                OR name ILIKE ?
             )
               AND status = 'active'
               AND deleted_at IS NULL
             ORDER BY rank DESC
             LIMIT ?
         ", [
-            $query, $query,
-            $query, self::SIMILARITY_THRESHOLD,
-            $query, self::SIMILARITY_THRESHOLD,
+            $query, $query, $likePattern,
+            $query, $threshold,
+            $query, $threshold,
+            $likePattern,
             $limit,
         ]);
 
         return $this->formatProductResults($results);
+    }
+
+    /**
+     * Get similarity threshold based on query length.
+     * Shorter queries need lower thresholds to find partial matches.
+     */
+    protected function getSimilarityThreshold(string $query): float
+    {
+        return strlen(trim($query)) <= 3
+            ? self::SHORT_QUERY_THRESHOLD
+            : self::SIMILARITY_THRESHOLD;
     }
 
     /**
@@ -152,37 +193,48 @@ class SearchService
     }
 
     /**
-     * Search for categories using PostgreSQL full-text search.
+     * Search for categories using PostgreSQL full-text search with prefix matching.
      */
     public function searchCategories(string $query, int $limit = 5): array
     {
+        $prefixQuery = $this->buildPrefixQuery($query);
+
         $results = DB::select("
             SELECT id, name, slug, image,
-                   ts_rank(search_vector, plainto_tsquery('english', ?)) AS rank
+                   ts_rank(search_vector, to_tsquery('english', ?)) AS rank
             FROM categories
-            WHERE search_vector @@ plainto_tsquery('english', ?)
+            WHERE search_vector @@ to_tsquery('english', ?)
               AND is_active = true
             ORDER BY rank DESC
             LIMIT ?
-        ", [$query, $query, $limit]);
+        ", [$prefixQuery, $prefixQuery, $limit]);
 
         return $this->formatCategoryResults($results);
     }
 
     /**
-     * Fuzzy search for categories using trigram similarity.
+     * Fuzzy search for categories using trigram similarity and ILIKE prefix.
      */
     public function fuzzySearchCategories(string $query, int $limit = 5): array
     {
+        $threshold = $this->getSimilarityThreshold($query);
+        $likePattern = $query.'%';
+
         $results = DB::select('
             SELECT id, name, slug, image,
-                   similarity(name, ?) AS rank
+                   GREATEST(
+                       similarity(name, ?),
+                       CASE WHEN name ILIKE ? THEN 0.9 ELSE 0 END
+                   ) AS rank
             FROM categories
-            WHERE similarity(name, ?) > ?
+            WHERE (
+                similarity(name, ?) > ?
+                OR name ILIKE ?
+            )
               AND is_active = true
             ORDER BY rank DESC
             LIMIT ?
-        ', [$query, $query, self::SIMILARITY_THRESHOLD, $limit]);
+        ', [$query, $likePattern, $query, $threshold, $likePattern, $limit]);
 
         return $this->formatCategoryResults($results);
     }
@@ -223,37 +275,48 @@ class SearchService
     }
 
     /**
-     * Search for brands using PostgreSQL full-text search.
+     * Search for brands using PostgreSQL full-text search with prefix matching.
      */
     public function searchBrands(string $query, int $limit = 5): array
     {
+        $prefixQuery = $this->buildPrefixQuery($query);
+
         $results = DB::select("
             SELECT id, name, slug, logo,
-                   ts_rank(search_vector, plainto_tsquery('english', ?)) AS rank
+                   ts_rank(search_vector, to_tsquery('english', ?)) AS rank
             FROM brands
-            WHERE search_vector @@ plainto_tsquery('english', ?)
+            WHERE search_vector @@ to_tsquery('english', ?)
               AND is_active = true
             ORDER BY rank DESC
             LIMIT ?
-        ", [$query, $query, $limit]);
+        ", [$prefixQuery, $prefixQuery, $limit]);
 
         return $this->formatBrandResults($results);
     }
 
     /**
-     * Fuzzy search for brands using trigram similarity.
+     * Fuzzy search for brands using trigram similarity and ILIKE prefix.
      */
     public function fuzzySearchBrands(string $query, int $limit = 5): array
     {
+        $threshold = $this->getSimilarityThreshold($query);
+        $likePattern = $query.'%';
+
         $results = DB::select('
             SELECT id, name, slug, logo,
-                   similarity(name, ?) AS rank
+                   GREATEST(
+                       similarity(name, ?),
+                       CASE WHEN name ILIKE ? THEN 0.9 ELSE 0 END
+                   ) AS rank
             FROM brands
-            WHERE similarity(name, ?) > ?
+            WHERE (
+                similarity(name, ?) > ?
+                OR name ILIKE ?
+            )
               AND is_active = true
             ORDER BY rank DESC
             LIMIT ?
-        ', [$query, $query, self::SIMILARITY_THRESHOLD, $limit]);
+        ', [$query, $likePattern, $query, $threshold, $likePattern, $limit]);
 
         return $this->formatBrandResults($results);
     }
@@ -302,11 +365,13 @@ class SearchService
             return false;
         }
 
+        $prefixQuery = $this->buildPrefixQuery($query);
+
         $productCount = DB::selectOne("
             SELECT COUNT(*) as count FROM products
-            WHERE search_vector @@ plainto_tsquery('english', ?)
+            WHERE search_vector @@ to_tsquery('english', ?)
               AND status = 'active' AND deleted_at IS NULL
-        ", [$query])->count;
+        ", [$prefixQuery])->count;
 
         if ($productCount > 0) {
             return true;
@@ -314,9 +379,9 @@ class SearchService
 
         $categoryCount = DB::selectOne("
             SELECT COUNT(*) as count FROM categories
-            WHERE search_vector @@ plainto_tsquery('english', ?)
+            WHERE search_vector @@ to_tsquery('english', ?)
               AND is_active = true
-        ", [$query])->count;
+        ", [$prefixQuery])->count;
 
         if ($categoryCount > 0) {
             return true;
@@ -324,9 +389,9 @@ class SearchService
 
         $brandCount = DB::selectOne("
             SELECT COUNT(*) as count FROM brands
-            WHERE search_vector @@ plainto_tsquery('english', ?)
+            WHERE search_vector @@ to_tsquery('english', ?)
               AND is_active = true
-        ", [$query])->count;
+        ", [$prefixQuery])->count;
 
         return $brandCount > 0;
     }
