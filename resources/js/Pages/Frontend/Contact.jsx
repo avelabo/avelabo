@@ -100,9 +100,9 @@ export default function Contact({ contactInfo = {}, flash = {} }) {
                 <div className="max-w-7xl mx-auto px-4">
                     <div className="bg-gradient-to-r from-brand to-brand-dark rounded-2xl overflow-hidden h-80 flex items-center justify-center text-white">
                         <div className="text-center">
-                            <span className="material-icons text-6xl mb-4 block opacity-80">location_on</span>
-                            <h3 className="text-2xl font-bold mb-2">We're in Malawi</h3>
-                            <p className="opacity-80">Serving customers across the country</p>
+                            <span className="material-icons text-6xl mb-4 block !text-white opacity-80">location_on</span>
+                            <h3 className="text-2xl font-bold mb-2 !text-white">We're in Malawi</h3>
+                            <p className="!text-white opacity-80">Serving customers across the country</p>
                         </div>
                     </div>
                 </div>
