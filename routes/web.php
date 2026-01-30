@@ -123,6 +123,18 @@ Route::get('/about', function () {
     return Inertia::render('Frontend/About');
 })->name('about');
 
+Route::get('/how-it-works', function () {
+    return Inertia::render('Frontend/HowItWorks');
+})->name('how-it-works');
+
+Route::get('/the-magic', function () {
+    return Inertia::render('Frontend/TheMagic');
+})->name('the-magic');
+
+Route::get('/trust-and-safety', function () {
+    return Inertia::render('Frontend/TrustAndSafety');
+})->name('trust-and-safety');
+
 Route::get('/contact', [ContactController::class, 'index'])->name('contact');
 Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
 
