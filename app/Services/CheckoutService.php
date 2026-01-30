@@ -185,10 +185,11 @@ class CheckoutService
         UserAddress $shippingAddress,
         ?string $notes = null
     ): Order {
-        $cartTotals = $this->cartService->calculateTotals($cart);
-
-        // Get default currency (MWK)
+        // Get default currency (MWK) - all orders are processed in MWK
         $currency = Currency::where('code', 'MWK')->first();
+
+        // Calculate cart totals in MWK to ensure correct amount is sent to payment gateway
+        $cartTotals = $this->cartService->calculateTotals($cart, 'MWK');
 
         return Order::create([
             'user_id' => $user->id,
@@ -219,23 +220,24 @@ class CheckoutService
         // Get default currency
         $currency = Currency::where('code', 'MWK')->first();
 
-        // Calculate cart totals to get per-item discounts
-        $cartTotals = $this->cartService->calculateTotals($cart);
+        // Calculate cart totals in MWK to get per-item discounts
+        $cartTotals = $this->cartService->calculateTotals($cart, 'MWK');
         $itemDiscounts = collect($cartTotals['items'])->keyBy('id');
 
         foreach ($cart->items as $cartItem) {
             $product = $cartItem->product;
             $variant = $cartItem->variant;
 
-            // Get pricing breakdown
+            // Get pricing breakdown in MWK (all orders are processed in MWK)
             $basePrice = $product->base_price;
-            $displayPrice = $this->priceService->getDisplayPrice($product);
+            $priceData = $this->priceService->getPrice($product, 'MWK');
+            $displayPrice = $priceData['amount'];
             $markupAmount = $displayPrice - $basePrice;
 
             // Handle variant pricing if applicable
             if ($variant) {
                 $basePrice = $variant->price ?? $product->base_price;
-                $variantPriceData = $this->priceService->getVariantPrice($variant);
+                $variantPriceData = $this->priceService->getVariantPrice($variant, 'MWK');
                 $displayPrice = $variantPriceData['amount'];
                 $markupAmount = $displayPrice - $basePrice;
             }

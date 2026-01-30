@@ -204,10 +204,16 @@ class CartService
 
     /**
      * Calculate cart totals with display prices and discounts
+     *
+     * @param  Cart  $cart  The cart to calculate
+     * @param  string|null  $targetCurrency  Override currency (null = customer's preferred currency)
      */
-    public function calculateTotals(Cart $cart): array
+    public function calculateTotals(Cart $cart, ?string $targetCurrency = null): array
     {
         $cart->load(['items.product.seller', 'items.product.images', 'items.variant', 'coupon']);
+
+        // Determine target currency
+        $currency = $targetCurrency ?? $this->getCustomerCurrencyCode();
 
         $subtotal = 0;
         $promotionDiscount = 0;
@@ -241,10 +247,10 @@ class CartService
                 continue;
             }
 
-            // Get current display price (with currency conversion)
+            // Get current display price in target currency
             $unitPrice = $variant
-                ? $this->priceService->getVariantPrice($variant)['amount']
-                : $this->priceService->getPrice($product)['amount'];
+                ? $this->priceService->getVariantPrice($variant, $currency)['amount']
+                : $this->priceService->getPrice($product, $currency)['amount'];
 
             // Get promotion discount for this product
             $discountInfo = $this->discountService->getProductDiscount($product, $unitPrice);
@@ -306,9 +312,6 @@ class CartService
         $discountTotal = $promotionDiscount + $couponDiscount;
         $total = $subtotal - $discountTotal + $shipping + $tax;
 
-        // Get customer's preferred currency
-        $customerCurrency = $this->getCustomerCurrencyCode();
-
         return [
             'items' => $itemsData,
             'item_count' => $cart->items->sum('quantity'),
@@ -320,7 +323,7 @@ class CartService
             'shipping' => $shipping,
             'tax' => $tax,
             'total' => $total,
-            'currency' => $customerCurrency,
+            'currency' => $currency,
             'coupon' => $cart->coupon ? [
                 'code' => $cart->coupon->code,
                 'name' => $cart->coupon->name,
