@@ -98,31 +98,12 @@ class CheckoutService
 
     /**
      * Get or create user address
-     * If address_id is provided, use existing address
-     * Otherwise create a new address
+     * If address_id is provided, update and use that existing address
+     * If no address_id, create a new address (user clicked "Add New Address")
      */
     public function getOrCreateAddress(User $user, array $addressData, string $type = 'billing'): UserAddress
     {
         $isBilling = $type === 'billing';
-
-        // If an existing address ID is provided, use that address
-        if (! empty($addressData['address_id'])) {
-            $existingAddress = UserAddress::where('id', $addressData['address_id'])
-                ->where('user_id', $user->id)
-                ->first();
-
-            if ($existingAddress) {
-                // Update coordinates if new ones are provided
-                if (isset($addressData['coordinates']) && is_array($addressData['coordinates'])) {
-                    $existingAddress->update([
-                        'latitude' => $addressData['coordinates']['lat'] ?? $existingAddress->latitude,
-                        'longitude' => $addressData['coordinates']['lng'] ?? $existingAddress->longitude,
-                    ]);
-                }
-
-                return $existingAddress;
-            }
-        }
 
         // Extract coordinates if provided
         $latitude = null;
@@ -132,7 +113,7 @@ class CheckoutService
             $longitude = $addressData['coordinates']['lng'] ?? null;
         }
 
-        // Build address attributes for comparison and creation
+        // Build address attributes
         $addressAttributes = [
             'first_name' => $addressData['first_name'] ?? '',
             'last_name' => $addressData['last_name'] ?? '',
@@ -144,68 +125,37 @@ class CheckoutService
             'region_name' => $addressData['state'] ?? null,
             'postal_code' => $addressData['postal_code'] ?? null,
             'country_id' => $addressData['country_id'] ?? null,
+            'latitude' => $latitude,
+            'longitude' => $longitude,
         ];
 
-        // Check if a similar address already exists for this user
-        $existingAddress = UserAddress::where('user_id', $user->id)
-            ->where('city_id', $addressAttributes['city_id'])
-            ->where('address_line_1', $addressAttributes['address_line_1'])
-            ->where('first_name', $addressAttributes['first_name'])
-            ->where('last_name', $addressAttributes['last_name'])
-            ->first();
+        // If an existing address ID is provided, update and use that address
+        if (! empty($addressData['address_id'])) {
+            $existingAddress = UserAddress::where('id', $addressData['address_id'])
+                ->where('user_id', $user->id)
+                ->first();
 
-        if ($existingAddress) {
-            // Update with any new data (including city, coordinates, phone, etc.)
-            $existingAddress->update([
-                'phone' => $addressAttributes['phone'] ?? $existingAddress->phone,
-                'address_line_1' => $addressAttributes['address_line_1'] ?: $existingAddress->address_line_1,
-                'address_line_2' => $addressAttributes['address_line_2'] ?? $existingAddress->address_line_2,
-                'city_id' => $addressAttributes['city_id'] ?? $existingAddress->city_id,
-                'city_name' => $addressAttributes['city_name'] ?: $existingAddress->city_name,
-                'region_name' => $addressAttributes['region_name'] ?? $existingAddress->region_name,
-                'country_id' => $addressAttributes['country_id'] ?? $existingAddress->country_id,
-                'latitude' => $latitude ?? $existingAddress->latitude,
-                'longitude' => $longitude ?? $existingAddress->longitude,
-            ]);
+            if ($existingAddress) {
+                $existingAddress->update($addressAttributes);
 
-            return $existingAddress;
+                return $existingAddress;
+            }
         }
 
+        // No address_id provided - user is creating a new address
         // Reset is_default for other addresses of this type
         UserAddress::where('user_id', $user->id)
             ->where('is_billing', $isBilling)
             ->update(['is_default' => false]);
 
-        // Create new address
+        // Create new address as the new default
         return UserAddress::create([
             'user_id' => $user->id,
             'is_billing' => $isBilling,
             'is_default' => true,
-            'label' => $this->generateAddressLabel($user, $addressAttributes['city_name'], $isBilling),
+            'label' => $isBilling ? 'Billing Address' : 'Delivery Address',
             ...$addressAttributes,
-            'latitude' => $latitude,
-            'longitude' => $longitude,
         ]);
-    }
-
-    /**
-     * Generate a unique label for the address
-     */
-    protected function generateAddressLabel(User $user, string $cityName, bool $isBilling): string
-    {
-        $baseLabel = $isBilling ? 'Billing' : 'Delivery';
-        $cityPart = $cityName ? " - {$cityName}" : '';
-
-        // Check if a similar label already exists
-        $existingCount = UserAddress::where('user_id', $user->id)
-            ->where('label', 'like', "{$baseLabel}%")
-            ->count();
-
-        if ($existingCount === 0) {
-            return "{$baseLabel}{$cityPart}";
-        }
-
-        return "{$baseLabel}{$cityPart} ".($existingCount + 1);
     }
 
     /**

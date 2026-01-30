@@ -131,6 +131,7 @@ class CheckoutController extends Controller
         try {
             $rules = [
                 // Billing info
+                'billing.address_id' => 'nullable|exists:user_addresses,id',
                 'billing.first_name' => 'required|string|max:100',
                 'billing.last_name' => 'required|string|max:100',
                 'billing.email' => 'required|email|max:255',

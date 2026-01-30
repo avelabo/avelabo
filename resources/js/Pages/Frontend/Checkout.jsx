@@ -270,14 +270,20 @@ export default function Checkout({ cart, paymentGateways = [], countries = [], m
     const [selectedSavedAddress, setSelectedSavedAddress] = useState(null);
     const [showNewAddressForm, setShowNewAddressForm] = useState(false);
 
+    // Billing address state
+    const [selectedBillingAddress, setSelectedBillingAddress] = useState(null);
+    const [showNewBillingForm, setShowNewBillingForm] = useState(false);
+
     // Check if billing country is Malawi
     const [billingIsMalawi, setBillingIsMalawi] = useState(false);
 
-    // Show all saved addresses - they can be used for delivery
+    // Filter addresses by type
+    const savedBillingAddresses = savedAddresses.filter(addr => addr.is_billing);
     const savedShippingAddresses = savedAddresses;
 
     const { data, setData, post, processing, errors } = useForm({
         billing: {
+            address_id: null,
             first_name: user?.name?.split(' ')[0] || '',
             last_name: user?.name?.split(' ').slice(1).join(' ') || '',
             email: user?.email || '',
@@ -388,6 +394,62 @@ export default function Checkout({ cart, paymentGateways = [], countries = [], m
             }
         }
     }, [user, savedShippingAddresses.length]);
+
+    // Handle selecting a saved billing address
+    const handleSelectBillingAddress = (address) => {
+        setSelectedBillingAddress(address);
+        setShowNewBillingForm(false);
+
+        // Populate the billing data with the saved address
+        setData('billing', {
+            ...data.billing,
+            address_id: address.id,
+            first_name: address.first_name || '',
+            last_name: address.last_name || '',
+            email: user?.email || data.billing.email || '',
+            phone: address.phone || '',
+            address_line_1: address.address_line_1 || '',
+            address_line_2: address.address_line_2 || '',
+            city: address.city || '',
+            city_id: address.city_id || '',
+            state: address.state || '',
+            postal_code: address.postal_code || '',
+            country_id: address.country_id || malawi?.id || '',
+        });
+    };
+
+    // Handle creating a new billing address (clear the selection)
+    const handleCreateNewBillingAddress = () => {
+        setSelectedBillingAddress(null);
+        setShowNewBillingForm(true);
+
+        // Reset to user details for new address entry
+        setData('billing', {
+            ...data.billing,
+            address_id: null,
+            first_name: user?.name?.split(' ')[0] || '',
+            last_name: user?.name?.split(' ').slice(1).join(' ') || '',
+            email: user?.email || '',
+            phone: user?.phone || '',
+            address_line_1: '',
+            address_line_2: '',
+            city: '',
+            city_id: '',
+            state: '',
+            postal_code: '',
+            country_id: malawi?.id || '',
+        });
+    };
+
+    // Auto-select default billing address for returning users, or populate from user details
+    useEffect(() => {
+        if (user && savedBillingAddresses.length > 0 && !selectedBillingAddress) {
+            const defaultAddress = savedBillingAddresses.find(addr => addr.is_default) || savedBillingAddresses[0];
+            if (defaultAddress) {
+                handleSelectBillingAddress(defaultAddress);
+            }
+        }
+    }, [user, savedBillingAddresses.length]);
 
     const loginForm = useForm({
         email: '',
@@ -672,6 +734,122 @@ export default function Checkout({ cart, paymentGateways = [], countries = [], m
                                 <div className="bg-surface p-6 lg:p-8 rounded-xl border border-border-light">
                                     <h4 className="text-lg font-bold text-heading mb-6">Payer Details</h4>
 
+                                    {/* Saved Billing Addresses Section - Only for logged-in users with saved billing addresses */}
+                                    {user && savedBillingAddresses.length > 0 && (
+                                        <div className="mb-6 relative overflow-hidden">
+                                            {/* Toggle Control - Always visible */}
+                                            <div className="mb-4">
+                                                <div className="inline-flex rounded-lg bg-gray-100 p-1 w-full sm:w-auto">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setShowNewBillingForm(false);
+                                                            const defaultAddress = savedBillingAddresses.find(addr => addr.is_default) || savedBillingAddresses[0];
+                                                            if (defaultAddress) {
+                                                                handleSelectBillingAddress(defaultAddress);
+                                                            }
+                                                        }}
+                                                        className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium rounded-md transition-all duration-200 ${
+                                                            !showNewBillingForm
+                                                                ? 'bg-white text-heading shadow-sm ring-1 ring-gray-200'
+                                                                : 'text-muted hover:text-body'
+                                                        }`}
+                                                    >
+                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                                                        </svg>
+                                                        Saved Details
+                                                        <span className={`px-1.5 py-0.5 text-xs rounded-full transition-colors ${
+                                                            !showNewBillingForm ? 'bg-brand/10 text-brand' : 'bg-gray-200 text-muted'
+                                                        }`}>
+                                                            {savedBillingAddresses.length}
+                                                        </span>
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={handleCreateNewBillingAddress}
+                                                        className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium rounded-md transition-all duration-200 ${
+                                                            showNewBillingForm
+                                                                ? 'bg-white text-heading shadow-sm ring-1 ring-gray-200'
+                                                                : 'text-muted hover:text-body'
+                                                        }`}
+                                                    >
+                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                                        </svg>
+                                                        New Details
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            {/* Saved Billing Addresses List */}
+                                            <div className={`transition-all duration-300 ease-in-out ${
+                                                showNewBillingForm
+                                                    ? 'opacity-0 max-h-0 -translate-y-4 pointer-events-none'
+                                                    : 'opacity-100 max-h-[1000px] translate-y-0'
+                                            }`}>
+                                                <div className="space-y-2">
+                                                    {savedBillingAddresses.map((address, index) => {
+                                                        const isSelected = selectedBillingAddress?.id === address.id;
+                                                        const countryInfo = countries.find(c => c.id === address.country_id);
+
+                                                        return (
+                                                            <button
+                                                                key={address.id}
+                                                                type="button"
+                                                                onClick={() => handleSelectBillingAddress(address)}
+                                                                style={{ animationDelay: `${index * 50}ms` }}
+                                                                className={`w-full text-left p-4 rounded-lg border transition-all duration-200 ${
+                                                                    isSelected
+                                                                        ? 'border-brand bg-brand/5 ring-1 ring-brand shadow-sm'
+                                                                        : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm'
+                                                                }`}
+                                                            >
+                                                                <div className="flex items-start gap-3">
+                                                                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-all duration-200 ${
+                                                                        isSelected ? 'border-brand bg-brand scale-110' : 'border-gray-300'
+                                                                    }`}>
+                                                                        <svg className={`w-3 h-3 text-white transition-all duration-200 ${isSelected ? 'opacity-100 scale-100' : 'opacity-0 scale-0'}`} fill="currentColor" viewBox="0 0 20 20">
+                                                                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                                                        </svg>
+                                                                    </div>
+                                                                    <div className="flex-1 min-w-0">
+                                                                        <div className="flex items-center gap-2 mb-1">
+                                                                            <span className="font-medium text-heading text-sm">
+                                                                                {address.full_name}
+                                                                            </span>
+                                                                            {address.is_default && (
+                                                                                <span className="px-1.5 py-0.5 text-xs bg-brand/10 text-brand rounded font-medium">
+                                                                                    Default
+                                                                                </span>
+                                                                            )}
+                                                                        </div>
+                                                                        <p className="text-sm text-body">
+                                                                            {countryInfo?.name || 'Unknown Country'}
+                                                                            {address.city && ` • ${address.city}`}
+                                                                        </p>
+                                                                        {address.address_line_1 && (
+                                                                            <p className="text-xs text-muted mt-0.5 truncate">
+                                                                                {address.address_line_1}
+                                                                            </p>
+                                                                        )}
+                                                                        {address.phone && (
+                                                                            <p className="text-xs text-muted mt-0.5">
+                                                                                {address.phone}
+                                                                            </p>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Billing Form - Show when no saved addresses, creating new, or selected address needs editing */}
+                                    <div className={`${user && savedBillingAddresses.length > 0 && !showNewBillingForm ? 'hidden' : ''}`}>
                                     {/* Contact Info */}
                                     <div className="grid md:grid-cols-2 gap-4 mb-4">
                                         <div>
@@ -710,22 +888,28 @@ export default function Checkout({ cart, paymentGateways = [], countries = [], m
 
                                     {/* Name */}
                                     <div className="grid md:grid-cols-2 gap-4 mb-4">
-                                        <input
-                                            type="text"
-                                            value={data.billing.first_name}
-                                            onChange={(e) => handleBillingChange('first_name', e.target.value)}
-                                            placeholder="First name *"
-                                            required
-                                            className={`w-full border rounded-md px-4 py-3 text-sm focus:border-brand focus:outline-none ${errors['billing.first_name'] ? 'border-red-500' : 'border-gray-200'}`}
-                                        />
-                                        <input
-                                            type="text"
-                                            value={data.billing.last_name}
-                                            onChange={(e) => handleBillingChange('last_name', e.target.value)}
-                                            placeholder="Last name *"
-                                            required
-                                            className={`w-full border rounded-md px-4 py-3 text-sm focus:border-brand focus:outline-none ${errors['billing.last_name'] ? 'border-red-500' : 'border-gray-200'}`}
-                                        />
+                                        <div>
+                                            <input
+                                                type="text"
+                                                value={data.billing.first_name}
+                                                onChange={(e) => handleBillingChange('first_name', e.target.value)}
+                                                placeholder="First name *"
+                                                required
+                                                className={`w-full border rounded-md px-4 py-3 text-sm focus:border-brand focus:outline-none ${errors['billing.first_name'] ? 'border-red-500' : 'border-gray-200'}`}
+                                            />
+                                            <p className="text-xs text-muted mt-1">As it appears on your ID</p>
+                                        </div>
+                                        <div>
+                                            <input
+                                                type="text"
+                                                value={data.billing.last_name}
+                                                onChange={(e) => handleBillingChange('last_name', e.target.value)}
+                                                placeholder="Last name *"
+                                                required
+                                                className={`w-full border rounded-md px-4 py-3 text-sm focus:border-brand focus:outline-none ${errors['billing.last_name'] ? 'border-red-500' : 'border-gray-200'}`}
+                                            />
+                                            <p className="text-xs text-muted mt-1">Your surname or family name</p>
+                                        </div>
                                     </div>
 
                                     {/* Country Selection */}
@@ -743,26 +927,33 @@ export default function Checkout({ cart, paymentGateways = [], countries = [], m
                                                 </option>
                                             ))}
                                         </select>
+                                        <p className="text-xs text-muted mt-1">Country where your payment method is registered</p>
                                     </div>
 
                                     {/* Address - Only show for non-Malawi billing */}
                                     {!billingIsMalawi && (
                                         <div className="grid md:grid-cols-2 gap-4 mb-4">
-                                            <input
-                                                type="text"
-                                                value={data.billing.address_line_1}
-                                                onChange={(e) => handleBillingChange('address_line_1', e.target.value)}
-                                                placeholder="Street Address *"
-                                                required
-                                                className={`w-full border rounded-md px-4 py-3 text-sm focus:border-brand focus:outline-none ${errors['billing.address_line_1'] ? 'border-red-500' : 'border-gray-200'}`}
-                                            />
-                                            <input
-                                                type="text"
-                                                value={data.billing.address_line_2}
-                                                onChange={(e) => handleBillingChange('address_line_2', e.target.value)}
-                                                placeholder="Apartment, suite, etc. (optional)"
-                                                className="w-full border border-gray-200 rounded-md px-4 py-3 text-sm focus:border-brand focus:outline-none"
-                                            />
+                                            <div>
+                                                <input
+                                                    type="text"
+                                                    value={data.billing.address_line_1}
+                                                    onChange={(e) => handleBillingChange('address_line_1', e.target.value)}
+                                                    placeholder="Street Address *"
+                                                    required
+                                                    className={`w-full border rounded-md px-4 py-3 text-sm focus:border-brand focus:outline-none ${errors['billing.address_line_1'] ? 'border-red-500' : 'border-gray-200'}`}
+                                                />
+                                                <p className="text-xs text-muted mt-1">House/building number and street name</p>
+                                            </div>
+                                            <div>
+                                                <input
+                                                    type="text"
+                                                    value={data.billing.address_line_2}
+                                                    onChange={(e) => handleBillingChange('address_line_2', e.target.value)}
+                                                    placeholder="Apartment, suite, etc. (optional)"
+                                                    className="w-full border border-gray-200 rounded-md px-4 py-3 text-sm focus:border-brand focus:outline-none"
+                                                />
+                                                <p className="text-xs text-muted mt-1">Unit, floor, or building details</p>
+                                            </div>
                                         </div>
                                     )}
 
@@ -770,54 +961,70 @@ export default function Checkout({ cart, paymentGateways = [], countries = [], m
                                     {billingIsMalawi ? (
                                         /* Malawi: Show city dropdown */
                                         <div className="grid md:grid-cols-2 gap-4 mb-4">
-                                            <select
-                                                value={data.billing.city_id}
-                                                onChange={(e) => handleBillingCitySelect(parseInt(e.target.value))}
-                                                className={`w-full border rounded-md px-4 py-3 text-sm focus:border-brand focus:outline-none bg-white ${errors['billing.city_id'] ? 'border-red-500' : 'border-gray-200'}`}
-                                            >
-                                                <option value="">Select City</option>
-                                                {deliveryCities.map((city) => (
-                                                    <option key={city.id} value={city.id}>
-                                                        {city.name} ({city.region_name})
-                                                    </option>
-                                                ))}
-                                            </select>
-                                            <input
-                                                type="text"
-                                                value={data.billing.postal_code}
-                                                onChange={(e) => handleBillingChange('postal_code', e.target.value)}
-                                                placeholder="Postal Code (optional)"
-                                                className="w-full border border-gray-200 rounded-md px-4 py-3 text-sm focus:border-brand focus:outline-none"
-                                            />
+                                            <div>
+                                                <select
+                                                    value={data.billing.city_id}
+                                                    onChange={(e) => handleBillingCitySelect(parseInt(e.target.value))}
+                                                    className={`w-full border rounded-md px-4 py-3 text-sm focus:border-brand focus:outline-none bg-white ${errors['billing.city_id'] ? 'border-red-500' : 'border-gray-200'}`}
+                                                >
+                                                    <option value="">Select City</option>
+                                                    {deliveryCities.map((city) => (
+                                                        <option key={city.id} value={city.id}>
+                                                            {city.name} ({city.region_name})
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                                <p className="text-xs text-muted mt-1">Your town or city in Malawi</p>
+                                            </div>
+                                            <div>
+                                                <input
+                                                    type="text"
+                                                    value={data.billing.postal_code}
+                                                    onChange={(e) => handleBillingChange('postal_code', e.target.value)}
+                                                    placeholder="Postal Code (optional)"
+                                                    className="w-full border border-gray-200 rounded-md px-4 py-3 text-sm focus:border-brand focus:outline-none"
+                                                />
+                                                <p className="text-xs text-muted mt-1">If you have a PO Box number</p>
+                                            </div>
                                         </div>
                                     ) : (
                                         /* Other countries: Show text fields */
                                         <div className="grid md:grid-cols-3 gap-4 mb-4">
-                                            <input
-                                                type="text"
-                                                value={data.billing.city}
-                                                onChange={(e) => handleBillingChange('city', e.target.value)}
-                                                placeholder="City *"
-                                                className={`w-full border rounded-md px-4 py-3 text-sm focus:border-brand focus:outline-none ${errors['billing.city'] ? 'border-red-500' : 'border-gray-200'}`}
-                                            />
-                                            <input
-                                                type="text"
-                                                value={data.billing.state}
-                                                onChange={(e) => handleBillingChange('state', e.target.value)}
-                                                placeholder="State / Province"
-                                                className="w-full border border-gray-200 rounded-md px-4 py-3 text-sm focus:border-brand focus:outline-none"
-                                            />
-                                            <input
-                                                type="text"
-                                                value={data.billing.postal_code}
-                                                onChange={(e) => handleBillingChange('postal_code', e.target.value)}
-                                                placeholder="Postal Code"
-                                                className="w-full border border-gray-200 rounded-md px-4 py-3 text-sm focus:border-brand focus:outline-none"
-                                            />
+                                            <div>
+                                                <input
+                                                    type="text"
+                                                    value={data.billing.city}
+                                                    onChange={(e) => handleBillingChange('city', e.target.value)}
+                                                    placeholder="City *"
+                                                    className={`w-full border rounded-md px-4 py-3 text-sm focus:border-brand focus:outline-none ${errors['billing.city'] ? 'border-red-500' : 'border-gray-200'}`}
+                                                />
+                                                <p className="text-xs text-muted mt-1">Town or city</p>
+                                            </div>
+                                            <div>
+                                                <input
+                                                    type="text"
+                                                    value={data.billing.state}
+                                                    onChange={(e) => handleBillingChange('state', e.target.value)}
+                                                    placeholder="State / Province"
+                                                    className="w-full border border-gray-200 rounded-md px-4 py-3 text-sm focus:border-brand focus:outline-none"
+                                                />
+                                                <p className="text-xs text-muted mt-1">State, province, or region</p>
+                                            </div>
+                                            <div>
+                                                <input
+                                                    type="text"
+                                                    value={data.billing.postal_code}
+                                                    onChange={(e) => handleBillingChange('postal_code', e.target.value)}
+                                                    placeholder="Postal Code"
+                                                    className="w-full border border-gray-200 rounded-md px-4 py-3 text-sm focus:border-brand focus:outline-none"
+                                                />
+                                                <p className="text-xs text-muted mt-1">ZIP or postal code</p>
+                                            </div>
                                         </div>
                                     )}
+                                    </div>
 
-                                    {/* Additional Notes */}
+                                    {/* Additional Notes - Always visible */}
                                     <div>
                                         <textarea
                                             value={data.notes}
@@ -856,97 +1063,122 @@ export default function Checkout({ cart, paymentGateways = [], countries = [], m
 
                                     {/* Saved Addresses Section - Only for logged-in users with saved addresses */}
                                     {user && savedShippingAddresses.length > 0 && (
-                                        <div className="mb-6">
-                                            <div className="flex items-center justify-between mb-3">
-                                                <p className="text-sm font-medium text-heading">Your Saved Addresses</p>
-                                                <button
-                                                    type="button"
-                                                    onClick={handleCreateNewAddress}
-                                                    className="text-xs text-brand hover:text-brand-dark font-medium flex items-center gap-1"
-                                                >
-                                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                                                    </svg>
-                                                    Add New Address
-                                                </button>
+                                        <div className="mb-6 relative overflow-hidden">
+                                            {/* Toggle Control - Always visible */}
+                                            <div className="mb-4">
+                                                <div className="inline-flex rounded-lg bg-gray-100 p-1 w-full sm:w-auto">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setShowNewAddressForm(false);
+                                                            const defaultAddress = savedShippingAddresses.find(addr => addr.is_default) || savedShippingAddresses[0];
+                                                            if (defaultAddress) {
+                                                                handleSelectSavedAddress(defaultAddress);
+                                                            }
+                                                        }}
+                                                        className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium rounded-md transition-all duration-200 ${
+                                                            !showNewAddressForm
+                                                                ? 'bg-white text-heading shadow-sm ring-1 ring-gray-200'
+                                                                : 'text-muted hover:text-body'
+                                                        }`}
+                                                    >
+                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                                                        </svg>
+                                                        Saved Addresses
+                                                        <span className={`px-1.5 py-0.5 text-xs rounded-full transition-colors ${
+                                                            !showNewAddressForm ? 'bg-brand/10 text-brand' : 'bg-gray-200 text-muted'
+                                                        }`}>
+                                                            {savedShippingAddresses.length}
+                                                        </span>
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={handleCreateNewAddress}
+                                                        className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium rounded-md transition-all duration-200 ${
+                                                            showNewAddressForm
+                                                                ? 'bg-white text-heading shadow-sm ring-1 ring-gray-200'
+                                                                : 'text-muted hover:text-body'
+                                                        }`}
+                                                    >
+                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                                        </svg>
+                                                        New Address
+                                                    </button>
+                                                </div>
                                             </div>
 
-                                            <div className="space-y-2">
-                                                {savedShippingAddresses.map((address) => {
-                                                    const isSelected = selectedSavedAddress?.id === address.id;
-                                                    const cityInfo = deliveryCities.find(c => c.id === address.city_id);
+                                            {/* Saved Addresses List */}
+                                            <div className={`transition-all duration-300 ease-in-out ${
+                                                showNewAddressForm
+                                                    ? 'opacity-0 max-h-0 -translate-y-4 pointer-events-none'
+                                                    : 'opacity-100 max-h-[1000px] translate-y-0'
+                                            }`}>
+                                                <div className="space-y-2">
+                                                    {savedShippingAddresses.map((address, index) => {
+                                                        const isSelected = selectedSavedAddress?.id === address.id;
+                                                        const cityInfo = deliveryCities.find(c => c.id === address.city_id);
 
-                                                    return (
-                                                        <button
-                                                            key={address.id}
-                                                            type="button"
-                                                            onClick={() => handleSelectSavedAddress(address)}
-                                                            className={`w-full text-left p-4 rounded-lg border transition-all ${
-                                                                isSelected
-                                                                    ? 'border-brand bg-brand/5 ring-1 ring-brand'
-                                                                    : 'border-gray-200 bg-white hover:border-gray-300'
-                                                            }`}
-                                                        >
-                                                            <div className="flex items-start gap-3">
-                                                                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 ${
-                                                                    isSelected ? 'border-brand bg-brand' : 'border-gray-300'
-                                                                }`}>
-                                                                    {isSelected && (
-                                                                        <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                                        return (
+                                                            <button
+                                                                key={address.id}
+                                                                type="button"
+                                                                onClick={() => handleSelectSavedAddress(address)}
+                                                                style={{ animationDelay: `${index * 50}ms` }}
+                                                                className={`w-full text-left p-4 rounded-lg border transition-all duration-200 ${
+                                                                    isSelected
+                                                                        ? 'border-brand bg-brand/5 ring-1 ring-brand shadow-sm'
+                                                                        : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm'
+                                                                }`}
+                                                            >
+                                                                <div className="flex items-start gap-3">
+                                                                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-all duration-200 ${
+                                                                        isSelected ? 'border-brand bg-brand scale-110' : 'border-gray-300'
+                                                                    }`}>
+                                                                        <svg className={`w-3 h-3 text-white transition-all duration-200 ${isSelected ? 'opacity-100 scale-100' : 'opacity-0 scale-0'}`} fill="currentColor" viewBox="0 0 20 20">
                                                                             <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                                                                         </svg>
-                                                                    )}
-                                                                </div>
-                                                                <div className="flex-1 min-w-0">
-                                                                    <div className="flex items-center gap-2 mb-1">
-                                                                        <span className="font-medium text-heading text-sm">
-                                                                            {address.full_name}
-                                                                        </span>
-                                                                        {address.is_default && (
-                                                                            <span className="px-1.5 py-0.5 text-xs bg-brand/10 text-brand rounded font-medium">
-                                                                                Default
+                                                                    </div>
+                                                                    <div className="flex-1 min-w-0">
+                                                                        <div className="flex items-center gap-2 mb-1">
+                                                                            <span className="font-medium text-heading text-sm">
+                                                                                {address.full_name}
                                                                             </span>
+                                                                            {address.is_default && (
+                                                                                <span className="px-1.5 py-0.5 text-xs bg-brand/10 text-brand rounded font-medium">
+                                                                                    Default
+                                                                                </span>
+                                                                            )}
+                                                                            {address.has_coordinates && (
+                                                                                <span className="px-1.5 py-0.5 text-xs bg-green-100 text-green-700 rounded font-medium flex items-center gap-0.5">
+                                                                                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                                                                                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                                                                                    </svg>
+                                                                                    GPS
+                                                                                </span>
+                                                                            )}
+                                                                        </div>
+                                                                        <p className="text-sm text-body">
+                                                                            {cityInfo?.name || address.city}, {address.state}
+                                                                        </p>
+                                                                        {address.address_line_1 && (
+                                                                            <p className="text-xs text-muted mt-0.5 truncate">
+                                                                                {address.address_line_1}
+                                                                            </p>
                                                                         )}
-                                                                        {address.has_coordinates && (
-                                                                            <span className="px-1.5 py-0.5 text-xs bg-green-100 text-green-700 rounded font-medium flex items-center gap-0.5">
-                                                                                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
-                                                                                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
-                                                                                </svg>
-                                                                                GPS
-                                                                            </span>
+                                                                        {address.phone && (
+                                                                            <p className="text-xs text-muted mt-0.5">
+                                                                                {address.phone}
+                                                                            </p>
                                                                         )}
                                                                     </div>
-                                                                    <p className="text-sm text-body">
-                                                                        {cityInfo?.name || address.city}, {address.state}
-                                                                    </p>
-                                                                    {address.address_line_1 && (
-                                                                        <p className="text-xs text-muted mt-0.5 truncate">
-                                                                            {address.address_line_1}
-                                                                        </p>
-                                                                    )}
-                                                                    {address.phone && (
-                                                                        <p className="text-xs text-muted mt-0.5">
-                                                                            {address.phone}
-                                                                        </p>
-                                                                    )}
                                                                 </div>
-                                                            </div>
-                                                        </button>
-                                                    );
-                                                })}
-                                            </div>
-
-                                            {/* Divider when showing new address form */}
-                                            {showNewAddressForm && (
-                                                <div className="relative my-5">
-                                                    <div className="absolute inset-0 flex items-center">
-                                                        <div className="w-full border-t border-gray-200"></div>
-                                                    </div>
-                                                    <div className="relative flex justify-center">
-                                                        <span className="px-3 bg-surface text-sm text-muted">New Address</span>
-                                                    </div>
+                                                            </button>
+                                                        );
+                                                    })}
                                                 </div>
-                                            )}
+                                            </div>
                                         </div>
                                     )}
 
