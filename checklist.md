@@ -1,8 +1,20 @@
 ## Breakdown
-These are the baseline requirements/features I want to have for a working application for Avelabo
+These are the baseline requirements/features I want to have for a working application for Avelabo.
+Features are defined per version and sometimes grouped per layer of functionality, sometimes by non-fui
+Features can be moved from one version to the next depending on timelines and current workload.
 
+## V0.2
 
-## Business Logic Layer
+# Non-Functional (Code)
+- Move notification logic to events 
+
+# Business Logic Layer
+- WhatsApp Notifications
+- Web push notifications (UI as well)
+
+## V0.1 (Go Live)
+
+# Business Logic Layer
 
 - Product, Category, Brand listing - Working
 - Data Importation Mgt. - Working (improvements can be done)
@@ -38,8 +50,8 @@ These are the baseline requirements/features I want to have for a working applic
 - About Page, How we are able to provide, How it works, How to become a seller, Trust and Reliability -
 - Privacy Policy, Refund Policy, Return Policy, Terms and Policies, Support ..under the help -
 
-#Miscellanous
+## Miscellanous
 
 
-# Nice to haves (Probably wont do)
+## Nice to haves (Probably wont do)
 
