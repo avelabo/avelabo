@@ -7,11 +7,13 @@ Features can be moved from one version to the next depending on timelines and cu
 
 # Non-Functional (Code)
 - Move notification logic to events 
+- 
 
 # Business Logic Layer
 - Subscribe/Unsubscribe options to (marketing, promotions, you cannot unsubscribe to notifications)
 - WhatsApp Notifications
 - Web push notifications (UI as well)
+- Add breakdown of amounts on order that are currently now, due to the design of the system luckily we can calculate finsihed tarnsactions to fill in those fields after the fact
 
 
 ## V0.1.1
