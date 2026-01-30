@@ -1,22 +1,36 @@
 import { Link, usePage } from '@inertiajs/react';
 import { useState } from 'react';
+import axios from 'axios';
 
 export default function Footer() {
     const { siteSettings } = usePage().props;
     const [email, setEmail] = useState('');
     const [subscribing, setSubscribing] = useState(false);
+    const [message, setMessage] = useState(null);
 
     const settings = siteSettings || {};
 
-    const handleSubscribe = (e) => {
+    const handleSubscribe = async (e) => {
         e.preventDefault();
         if (!email) return;
+
         setSubscribing(true);
-        // TODO: Implement newsletter subscription
-        setTimeout(() => {
-            setSubscribing(false);
+        setMessage(null);
+
+        try {
+            const response = await axios.post(route('newsletter.subscribe'), { email });
+            setMessage({ type: 'success', text: response.data.message });
             setEmail('');
-        }, 1000);
+        } catch (error) {
+            const errorMessage = error.response?.data?.message
+                || error.response?.data?.errors?.email?.[0]
+                || 'Something went wrong. Please try again.';
+            setMessage({ type: 'error', text: errorMessage });
+        } finally {
+            setSubscribing(false);
+            // Clear message after 5 seconds
+            setTimeout(() => setMessage(null), 5000);
+        }
     };
 
     return (
@@ -50,47 +64,58 @@ export default function Footer() {
                         </div>
 
                         {/* Newsletter Form */}
-                        <form onSubmit={handleSubscribe} className="flex w-full lg:w-auto">
-                            <div className="relative flex-1 lg:flex-initial">
-                                <input
-                                    type="email"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    placeholder="Enter your email address"
+                        <div className="w-full lg:w-auto">
+                            <form onSubmit={handleSubscribe} className="flex">
+                                <div className="relative flex-1 lg:flex-initial">
+                                    <input
+                                        type="email"
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        placeholder="Enter your email address"
+                                        className="
+                                            w-full lg:w-80 xl:w-96 px-6 py-4 pr-4
+                                            bg-white text-[#2a2a2a] placeholder:text-gray-400
+                                            rounded-l-xl border-0
+                                            focus:outline-none focus:ring-2 focus:ring-[#2a2a2a]/20
+                                        "
+                                    />
+                                </div>
+                                <button
+                                    type="submit"
+                                    disabled={subscribing}
                                     className="
-                                        w-full lg:w-80 xl:w-96 px-6 py-4 pr-4
-                                        bg-white text-[#2a2a2a] placeholder:text-gray-400
-                                        rounded-l-xl border-0
-                                        focus:outline-none focus:ring-2 focus:ring-[#2a2a2a]/20
+                                        bg-[#2a2a2a] hover:bg-[#1a1a1a] text-white
+                                        px-6 lg:px-8 py-4 rounded-r-xl
+                                        font-semibold transition-all duration-200
+                                        flex items-center gap-2
+                                        disabled:opacity-70
                                     "
-                                />
-                            </div>
-                            <button
-                                type="submit"
-                                disabled={subscribing}
-                                className="
-                                    bg-[#2a2a2a] hover:bg-[#1a1a1a] text-white
-                                    px-6 lg:px-8 py-4 rounded-r-xl
-                                    font-semibold transition-all duration-200
-                                    flex items-center gap-2
-                                    disabled:opacity-70
-                                "
-                            >
-                                {subscribing ? (
-                                    <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
-                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                                    </svg>
-                                ) : (
-                                    <>
-                                        <span className="hidden sm:inline">Subscribe</span>
-                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                                >
+                                    {subscribing ? (
+                                        <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                                         </svg>
-                                    </>
-                                )}
-                            </button>
-                        </form>
+                                    ) : (
+                                        <>
+                                            <span className="hidden sm:inline">Subscribe</span>
+                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                                            </svg>
+                                        </>
+                                    )}
+                                </button>
+                            </form>
+                            {message && (
+                                <div className={`mt-3 px-4 py-2 rounded-lg text-sm ${
+                                    message.type === 'success'
+                                        ? 'bg-green-600/20 text-green-900'
+                                        : 'bg-red-600/20 text-red-900'
+                                }`}>
+                                    {message.text}
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>

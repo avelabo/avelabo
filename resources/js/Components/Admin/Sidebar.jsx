@@ -102,6 +102,13 @@ export default function Sidebar({ isOpen, isMobileOpen, onClose }) {
             href: '/admin/currencies',
         },
         {
+            name: 'Marketing',
+            icon: 'campaign',
+            children: [
+                { name: 'Mailing List', href: '/admin/mailing-list' },
+            ],
+        },
+        {
             name: 'Settings',
             icon: 'settings',
             children: [
