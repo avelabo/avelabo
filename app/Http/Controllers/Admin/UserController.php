@@ -67,6 +67,156 @@ class UserController extends Controller
         ]);
     }
 
+    public function admins(Request $request)
+    {
+        $query = User::query()
+            ->with(['roles:id,name,slug'])
+            ->whereHas('roles', fn ($q) => $q->where('slug', 'admin'));
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'ilike', "%{$search}%")
+                    ->orWhere('email', 'ilike', "%{$search}%")
+                    ->orWhere('phone', 'ilike', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        $sortField = $request->get('sort', 'created_at');
+        $sortDirection = $request->get('direction', 'desc');
+        $query->orderBy($sortField, $sortDirection);
+
+        $users = $query->paginate(15)->withQueryString();
+
+        $users->through(fn ($user) => [
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'phone' => $user->phone,
+            'status' => $user->status,
+            'email_verified_at' => $user->email_verified_at?->format('M d, Y'),
+            'roles' => $user->roles->pluck('name')->toArray(),
+            'created_at' => $user->created_at->format('M d, Y'),
+            'last_login_at' => $user->last_login_at?->format('M d, Y H:i'),
+        ]);
+
+        $roles = Role::all(['id', 'name', 'slug']);
+
+        return Inertia::render('Admin/Users/Admins', [
+            'users' => $users,
+            'roles' => $roles,
+            'filters' => $request->only(['search', 'status', 'sort', 'direction']),
+        ]);
+    }
+
+    public function sellers(Request $request)
+    {
+        $query = User::query()
+            ->with(['roles:id,name,slug', 'seller:id,user_id,shop_name,status,rating'])
+            ->whereHas('seller');
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'ilike', "%{$search}%")
+                    ->orWhere('email', 'ilike', "%{$search}%")
+                    ->orWhere('phone', 'ilike', "%{$search}%")
+                    ->orWhereHas('seller', fn ($sq) => $sq->where('shop_name', 'ilike', "%{$search}%"));
+            });
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('seller_status')) {
+            $query->whereHas('seller', fn ($q) => $q->where('status', $request->seller_status));
+        }
+
+        $sortField = $request->get('sort', 'created_at');
+        $sortDirection = $request->get('direction', 'desc');
+        $query->orderBy($sortField, $sortDirection);
+
+        $users = $query->paginate(15)->withQueryString();
+
+        $users->through(fn ($user) => [
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'phone' => $user->phone,
+            'status' => $user->status,
+            'email_verified_at' => $user->email_verified_at?->format('M d, Y'),
+            'roles' => $user->roles->pluck('name')->toArray(),
+            'seller' => $user->seller ? [
+                'id' => $user->seller->id,
+                'shop_name' => $user->seller->shop_name,
+                'status' => $user->seller->status,
+                'rating' => $user->seller->rating,
+            ] : null,
+            'created_at' => $user->created_at->format('M d, Y'),
+            'last_login_at' => $user->last_login_at?->format('M d, Y H:i'),
+        ]);
+
+        return Inertia::render('Admin/Users/Sellers', [
+            'users' => $users,
+            'filters' => $request->only(['search', 'status', 'seller_status', 'sort', 'direction']),
+        ]);
+    }
+
+    public function customers(Request $request)
+    {
+        $query = User::query()
+            ->with(['roles:id,name,slug'])
+            ->whereHas('roles', fn ($q) => $q->where('slug', 'customer'))
+            ->whereDoesntHave('seller');
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'ilike', "%{$search}%")
+                    ->orWhere('email', 'ilike', "%{$search}%")
+                    ->orWhere('phone', 'ilike', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        $sortField = $request->get('sort', 'created_at');
+        $sortDirection = $request->get('direction', 'desc');
+        $query->orderBy($sortField, $sortDirection);
+
+        $users = $query->paginate(15)->withQueryString();
+
+        $users->through(function ($user) {
+            $totalOrders = $user->orders()->count();
+            $totalSpent = $user->orders()->whereNotNull('paid_at')->sum('total');
+
+            return [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'phone' => $user->phone,
+                'status' => $user->status,
+                'email_verified_at' => $user->email_verified_at?->format('M d, Y'),
+                'total_orders' => $totalOrders,
+                'total_spent' => (float) $totalSpent,
+                'created_at' => $user->created_at->format('M d, Y'),
+                'last_login_at' => $user->last_login_at?->format('M d, Y H:i'),
+            ];
+        });
+
+        return Inertia::render('Admin/Users/Customers', [
+            'users' => $users,
+            'filters' => $request->only(['search', 'status', 'sort', 'direction']),
+        ]);
+    }
+
     public function show(User $user)
     {
         $user->load([

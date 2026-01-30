@@ -376,6 +376,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 
     // Users
     Route::get('/users', [AdminUserController::class, 'index'])->name('users.index');
+    Route::get('/users/admins', [AdminUserController::class, 'admins'])->name('users.admins');
+    Route::get('/users/sellers', [AdminUserController::class, 'sellers'])->name('users.sellers');
+    Route::get('/users/customers', [AdminUserController::class, 'customers'])->name('users.customers');
     Route::get('/users/{user}', [AdminUserController::class, 'show'])->name('users.show');
     Route::put('/users/{user}', [AdminUserController::class, 'update'])->name('users.update');
     Route::patch('/users/{user}/status', [AdminUserController::class, 'updateStatus'])->name('users.update-status');

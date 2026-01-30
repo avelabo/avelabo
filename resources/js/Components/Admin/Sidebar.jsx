@@ -11,15 +11,11 @@ export default function Sidebar({ isOpen, isMobileOpen, onClose }) {
             href: '/admin',
         },
         {
-            name: 'KYC Verifications',
-            icon: 'verified_user',
-            href: '/admin/kyc',
-        },
-        {
             name: 'Sellers',
             icon: 'store',
             children: [
                 { name: 'All Sellers', href: '/admin/sellers' },
+                { name: 'KYC Verifications', href: '/admin/kyc' },
                 { name: 'Markup Templates', href: '/admin/markup-templates' },
             ],
         },
@@ -29,6 +25,7 @@ export default function Sidebar({ isOpen, isMobileOpen, onClose }) {
             children: [
                 { name: 'Product List', href: '/admin/products' },
                 { name: 'Add Product', href: '/admin/products/create' },
+                { name: 'Reviews', href: '/admin/reviews' },
             ],
         },
         {
@@ -72,34 +69,22 @@ export default function Sidebar({ isOpen, isMobileOpen, onClose }) {
             ],
         },
         {
-            name: 'Contact Messages',
-            icon: 'mail',
-            href: '/admin/contact-messages',
-        },
-        {
             name: 'Users',
             icon: 'people',
-            href: '/admin/users',
+            children: [
+                { name: 'Admins', href: '/admin/users/admins' },
+                { name: 'Sellers', href: '/admin/users/sellers' },
+                { name: 'Customers', href: '/admin/users/customers' },
+            ],
         },
         {
-            name: 'Transaction',
-            icon: 'account_balance',
-            href: '/admin/transactions',
-        },
-        {
-            name: 'Reviews',
-            icon: 'star',
-            href: '/admin/reviews',
-        },
-        {
-            name: 'Payment Gateways',
-            icon: 'payments',
-            href: '/admin/payment-gateways',
-        },
-        {
-            name: 'Currencies',
-            icon: 'currency_exchange',
-            href: '/admin/currencies',
+            name: 'Finance',
+            icon: 'account_balance_wallet',
+            children: [
+                { name: 'Transactions', href: '/admin/transactions' },
+                { name: 'Payment Gateways', href: '/admin/payment-gateways' },
+                { name: 'Currencies', href: '/admin/currencies' },
+            ],
         },
         {
             name: 'Marketing',

@@ -22,6 +22,7 @@ Features can be moved from one version to the next depending on timelines and cu
     - (email or sms or both, you can choose)
     - (you can select one user from or multiple or all)
     - You can send to email or to sms 
+- Assigning products discounts/promotion based on price of product in a particular category 
 
 ## V0.1 (Go Live)
 
@@ -47,18 +48,16 @@ Features can be moved from one version to the next depending on timelines and cu
 - Markup Applied on Prods - Working
 - Tag Management - Working (Need to create a way to tag on importation)
 - Content Management (About, Privacy Policy, Refund Policy, Return Policy, Terms and Policies)
+- Mailing List - Working 
 - Assigning products or product categories discounts/promotions  - Working (improvements can be done)
-- Assigning products discounts/promotion based on price of product in a particular category 
-
-
 ## UI
 
 - Home (New, Featured, Essentials, ...) - Working (changes to breakdown by essentials etc)
 - Shop, Cart, Checkout  - Working
 - Payment Flow - Working (clean up and finalization needed)
 - In-App/Browser Notifications -
-- About Page, How we are able to provide, How it works, How to become a seller, Trust and Reliability -
-- Privacy Policy, Refund Policy, Return Policy, Terms and Policies, Support ..under the help -
+- Pages (About, What is the magic, How it works, How to become a seller, Trust and Reliability) -
+- Pages (Privacy Policy, Refund Policy, Return Policy, Terms and Policies, Support) ..under the help -
 
 ## Miscellanous
 - Finalize validation errors esp. in the frontend

@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Models\Cart;
 use App\Models\Category;
+use App\Models\ContactMessage;
 use App\Models\Currency;
 use App\Models\Setting;
 use App\Models\Wishlist;
@@ -79,6 +80,7 @@ class HandleInertiaRequests extends Middleware
                 ->limit(12)
                 ->get(['id', 'name', 'slug', 'icon']),
             'siteSettings' => fn () => Setting::public()->pluck('value', 'key'),
+            'adminCounts' => fn () => $this->getAdminCounts($request),
         ];
     }
 
@@ -109,5 +111,18 @@ class HandleInertiaRequests extends Middleware
         }
 
         return 0;
+    }
+
+    private function getAdminCounts(Request $request): ?array
+    {
+        $user = $request->user();
+
+        if (! $user || $user->role !== 'admin') {
+            return null;
+        }
+
+        return [
+            'unread_messages' => ContactMessage::where('status', 'new')->count(),
+        ];
     }
 }

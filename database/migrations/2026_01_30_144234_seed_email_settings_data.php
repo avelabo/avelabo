@@ -1,16 +1,19 @@
 <?php
 
-namespace Database\Seeders;
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Support\Facades\DB;
 
-use App\Models\EmailSetting;
-use Illuminate\Database\Seeder;
-
-class EmailSettingsSeeder extends Seeder
+return new class extends Migration
 {
-    public function run(): void
+    /**
+     * Seed email settings control data required for the notification system.
+     */
+    public function up(): void
     {
+        $now = now();
+
         $emailSettings = [
-            // Customer Emails (14)
+            // Customer Emails
             [
                 'email_type' => 'customer.email_verification',
                 'name' => 'Email Verification',
@@ -166,7 +169,7 @@ class EmailSettingsSeeder extends Seeder
                 'is_critical' => false,
             ],
 
-            // Seller Emails (6)
+            // Seller Emails
             [
                 'email_type' => 'seller.kyc_approved',
                 'name' => 'KYC Approved',
@@ -234,7 +237,7 @@ class EmailSettingsSeeder extends Seeder
                 'is_critical' => false,
             ],
 
-            // Admin Emails (6)
+            // Admin Emails
             [
                 'email_type' => 'admin.new_seller_registration',
                 'name' => 'New Seller Registration',
@@ -304,10 +307,18 @@ class EmailSettingsSeeder extends Seeder
         ];
 
         foreach ($emailSettings as $setting) {
-            EmailSetting::updateOrCreate(
+            DB::table('email_settings')->updateOrInsert(
                 ['email_type' => $setting['email_type']],
-                $setting
+                array_merge($setting, ['created_at' => $now, 'updated_at' => $now])
             );
         }
     }
-}
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        DB::table('email_settings')->delete();
+    }
+};

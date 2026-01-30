@@ -279,10 +279,17 @@ class CheckoutService
             );
         }
 
-        // Update order totals
+        // Update order totals from items
+        $subtotal = $order->items()->sum(DB::raw('display_price * quantity'));
+        $totalPromotionDiscount = $order->items()->sum('promotion_discount');
+        $totalCouponDiscount = $order->items()->sum('coupon_discount');
+        $totalLineAmount = $order->items()->sum('line_total');
+
         $order->update([
-            'subtotal' => $order->items()->sum(DB::raw('display_price * quantity')),
-            'total' => $order->items()->sum('line_total') + $order->shipping_amount + $order->tax_amount,
+            'subtotal' => $subtotal,
+            'promotion_discount_amount' => $totalPromotionDiscount,
+            'discount_amount' => $totalCouponDiscount,
+            'total' => $totalLineAmount + $order->shipping_amount + $order->tax_amount,
         ]);
     }
 

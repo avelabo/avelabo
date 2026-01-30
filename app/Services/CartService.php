@@ -13,7 +13,8 @@ use Illuminate\Support\Facades\DB;
 class CartService
 {
     public function __construct(
-        protected PriceService $priceService
+        protected PriceService $priceService,
+        protected DiscountService $discountService
     ) {}
 
     /**
@@ -202,13 +203,14 @@ class CartService
     }
 
     /**
-     * Calculate cart totals with display prices
+     * Calculate cart totals with display prices and discounts
      */
     public function calculateTotals(Cart $cart): array
     {
-        $cart->load(['items.product.seller', 'items.product.images', 'items.variant']);
+        $cart->load(['items.product.seller', 'items.product.images', 'items.variant', 'coupon']);
 
         $subtotal = 0;
+        $promotionDiscount = 0;
         $itemsData = [];
 
         foreach ($cart->items as $item) {
@@ -227,10 +229,13 @@ class CartService
                     'unit_price' => 0,
                     'quantity' => $item->quantity,
                     'line_total' => 0,
+                    'promotion_discount' => 0,
+                    'coupon_discount' => 0,
                     'seller_id' => null,
                     'seller_name' => null,
                     'in_stock' => false,
                     'unavailable' => true,
+                    'product' => null,
                 ];
 
                 continue;
@@ -241,8 +246,18 @@ class CartService
                 ? $this->priceService->getVariantPrice($variant)['amount']
                 : $this->priceService->getPrice($product)['amount'];
 
-            $lineTotal = $unitPrice * $item->quantity;
-            $subtotal += $lineTotal;
+            // Get promotion discount for this product
+            $discountInfo = $this->discountService->getProductDiscount($product, $unitPrice);
+            $itemPromoDiscount = 0;
+
+            if ($discountInfo['has_discount']) {
+                // Apply promotion discount per item
+                $itemPromoDiscount = $discountInfo['discount_amount'] * $item->quantity;
+                $promotionDiscount += $itemPromoDiscount;
+            }
+
+            $lineTotal = ($unitPrice * $item->quantity) - $itemPromoDiscount;
+            $subtotal += $unitPrice * $item->quantity;
 
             $itemsData[] = [
                 'id' => $item->id,
@@ -254,17 +269,42 @@ class CartService
                 'unit_price' => $unitPrice,
                 'quantity' => $item->quantity,
                 'line_total' => $lineTotal,
+                'promotion_discount' => $itemPromoDiscount,
+                'coupon_discount' => 0, // Will be calculated after coupon check
                 'seller_id' => $product->seller_id,
                 'seller_name' => $product->seller?->business_name,
                 'in_stock' => $this->isInStock($product, $variant, $item->quantity),
                 'unavailable' => false,
+                'product' => $product,
             ];
         }
+
+        // Calculate coupon discount if coupon is applied
+        $couponDiscount = 0;
+        if ($cart->coupon) {
+            $couponResult = $this->discountService->calculateCouponDiscount($cart->coupon, $itemsData);
+            $couponDiscount = $couponResult['discount_amount'];
+
+            // Apply coupon discount per item
+            foreach ($itemsData as &$itemData) {
+                $itemCouponDiscount = $couponResult['item_discounts'][$itemData['id']] ?? 0;
+                $itemData['coupon_discount'] = $itemCouponDiscount;
+                $itemData['line_total'] -= $itemCouponDiscount;
+            }
+            unset($itemData);
+        }
+
+        // Remove product reference from items (not needed in frontend)
+        foreach ($itemsData as &$itemData) {
+            unset($itemData['product']);
+        }
+        unset($itemData);
 
         // For now, no shipping calculation or tax
         $shipping = 0;
         $tax = 0;
-        $total = $subtotal + $shipping + $tax;
+        $discountTotal = $promotionDiscount + $couponDiscount;
+        $total = $subtotal - $discountTotal + $shipping + $tax;
 
         // Get customer's preferred currency
         $customerCurrency = $this->getCustomerCurrencyCode();
@@ -273,10 +313,18 @@ class CartService
             'items' => $itemsData,
             'item_count' => $cart->items->sum('quantity'),
             'subtotal' => $subtotal,
+            'promotion_discount' => $promotionDiscount,
+            'coupon_discount' => $couponDiscount,
+            'discount_total' => $discountTotal,
+            'discount_amount' => $discountTotal, // Alias for frontend compatibility
             'shipping' => $shipping,
             'tax' => $tax,
             'total' => $total,
             'currency' => $customerCurrency,
+            'coupon' => $cart->coupon ? [
+                'code' => $cart->coupon->code,
+                'name' => $cart->coupon->name,
+            ] : null,
         ];
     }
 

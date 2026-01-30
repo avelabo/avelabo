@@ -11,41 +11,25 @@ class DatabaseSeeder extends Seeder
 
     /**
      * Seed the application's database.
+     *
+     * Note: Core control data (countries, regions, cities, currencies, roles,
+     * permissions, admin user, payment gateways, settings, markup templates,
+     * attributes, categories, email settings) are seeded via migrations.
+     * See: database/migrations/2026_01_28_081016_seed_control_data.php
+     *      database/migrations/2026_01_30_144234_seed_email_settings_data.php
+     *
+     * This seeder only creates test/development data.
      */
     public function run(): void
     {
         $this->call([
-            // Geographic data (order matters)
-            CountrySeeder::class,
-            RegionSeeder::class,
-            CitySeeder::class,
-
-            // Currency data
-            CurrencySeeder::class,
-
-            // Role & Permission data
-            RolePermissionSeeder::class,
-
-            // Create admin and test users
-            AdminUserSeeder::class,
-
-            // Catalog data
-            CategorySeeder::class,
-            AttributeSeeder::class,
-
-            // Payment gateways
-            PaymentGatewaySeeder::class,
-
-            // Application settings
-            SettingSeeder::class,
-
-            // Test sellers
+            // Test sellers (development only)
             SellerSeeder::class,
 
-            // Test products
+            // Test products (development only)
             ProductSeeder::class,
 
-            // Homepage sliders
+            // Homepage sliders (development only)
             SliderSeeder::class,
         ]);
     }

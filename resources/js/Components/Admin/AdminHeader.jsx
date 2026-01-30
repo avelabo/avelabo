@@ -1,9 +1,11 @@
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
 export default function AdminHeader({ onMenuToggle, onDarkModeToggle, darkMode }) {
+    const { adminCounts } = usePage().props;
     const [notificationsOpen, setNotificationsOpen] = useState(false);
     const [profileOpen, setProfileOpen] = useState(false);
+    const unreadMessages = adminCounts?.unread_messages || 0;
 
     const notifications = [
         { id: 1, title: 'Your order is placed', description: 'Consectetur adipiscing elit', time: '3 min ago', type: 'order' },
@@ -68,6 +70,19 @@ export default function AdminHeader({ onMenuToggle, onDarkModeToggle, darkMode }
                     >
                         <span className="material-icons">fullscreen</span>
                     </button>
+
+                    {/* Contact Messages */}
+                    <Link
+                        href="/admin/contact-messages"
+                        className="relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10"
+                    >
+                        <span className="material-icons">mail</span>
+                        {unreadMessages > 0 && (
+                            <span className="absolute top-0 right-0 w-5 h-5 bg-danger text-white text-xs rounded-full flex items-center justify-center">
+                                {unreadMessages > 99 ? '99+' : unreadMessages}
+                            </span>
+                        )}
+                    </Link>
 
                     {/* Notifications */}
                     <div className="relative">

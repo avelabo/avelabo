@@ -105,6 +105,10 @@
     @viteReactRefresh
     @vite(['resources/css/app.css', 'resources/js/app.jsx'])
     @inertiaHead
+
+    @production
+    <script defer src="https://cloud.umami.is/script.js" data-website-id="eb75f302-367c-4488-a8c5-a3a4562436d7"></script>
+    @endproduction
 </head>
 <body class="bg-gray-50 antialiased font-lato">
     @inertia
