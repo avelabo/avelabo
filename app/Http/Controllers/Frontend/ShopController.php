@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
-use App\Services\DiscountService;
 use App\Services\PriceService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -100,12 +99,22 @@ class ShopController extends Controller
             $query->featured();
         }
 
-        // On sale filter (via active promotions)
+        // On sale filter (via active promotions) - optimized to avoid loading all products
         if ($request->boolean('on_sale')) {
-            $discountService = app(DiscountService::class);
-            $allProducts = Product::active()->inStock()->get();
-            $onSaleIds = $discountService->getProductIdsWithActivePromotions($allProducts);
-            $query->whereIn('id', $onSaleIds);
+            $query->where(function ($q) {
+                // Products with active product-level promotions
+                $q->whereHas('promotions', function ($promo) {
+                    $promo->where('is_active', true)
+                        ->where('start_date', '<=', now())
+                        ->where('end_date', '>=', now());
+                })
+                // Or products in categories with active promotions
+                    ->orWhereHas('category.promotions', function ($promo) {
+                        $promo->where('is_active', true)
+                            ->where('start_date', '<=', now())
+                            ->where('end_date', '>=', now());
+                    });
+            });
         }
 
         // Sorting
@@ -138,68 +147,79 @@ class ShopController extends Controller
         // Transform products for card display
         $products->through(fn ($product) => $product->toCardArray());
 
-        // Get categories for sidebar with active product counts
-        $categories = Category::with(['children' => function ($query) {
-            $query->active()->ordered();
-        }])
-            ->whereNull('parent_id')
-            ->active()
-            ->ordered()
-            ->get()
-            ->map(function ($category) {
-                // Count active, in-stock products for this category
-                $productCount = Product::where('category_id', $category->id)
-                    ->active()
-                    ->inStock()
-                    ->count();
+        // Get all category product counts in a SINGLE query (optimized)
+        $categoryCounts = cache()->remember('shop_category_counts', now()->addMinutes(5), function () {
+            return Product::query()
+                ->active()
+                ->inStock()
+                ->selectRaw('category_id, COUNT(*) as count')
+                ->groupBy('category_id')
+                ->pluck('count', 'category_id');
+        });
 
+        // Get categories for sidebar (single query with eager load)
+        $categories = cache()->remember('shop_categories_structure', now()->addMinutes(10), function () {
+            return Category::with(['children' => function ($query) {
+                $query->active()->ordered();
+            }])
+                ->whereNull('parent_id')
+                ->active()
+                ->ordered()
+                ->get();
+        })->map(function ($category) use ($categoryCounts) {
+            // Get direct count from pre-fetched data
+            $directCount = $categoryCounts[$category->id] ?? 0;
+
+            // Map children with their counts
+            $childrenData = $category->children->map(function ($child) use ($categoryCounts) {
                 return [
-                    'id' => $category->id,
-                    'name' => $category->name,
-                    'slug' => $category->slug,
-                    'icon' => $category->icon,
-                    'products_count' => $productCount,
-                    'children' => $category->children->map(function ($child) {
-                        $childProductCount = Product::where('category_id', $child->id)
-                            ->active()
-                            ->inStock()
-                            ->count();
-
-                        return [
-                            'id' => $child->id,
-                            'name' => $child->name,
-                            'slug' => $child->slug,
-                            'products_count' => $childProductCount,
-                        ];
-                    }),
+                    'id' => $child->id,
+                    'name' => $child->name,
+                    'slug' => $child->slug,
+                    'products_count' => $categoryCounts[$child->id] ?? 0,
                 ];
             });
 
-        // Get brands for filter
-        $brands = Brand::active()
-            ->withCount(['products' => function ($query) {
-                $query->active()->inStock();
-            }])
-            ->orderBy('name')
-            ->get(['id', 'name', 'slug'])
-            ->filter(fn ($brand) => $brand->products_count > 0)
-            ->values();
+            // Total = direct + all children
+            $totalCount = $directCount + $childrenData->sum('products_count');
 
-        // Get price range (using display price = base_price + markup)
-        $displayPriceExpr = 'products.base_price + COALESCE((
-            SELECT spm.markup_amount FROM seller_price_markups spm
-            WHERE spm.seller_id = products.seller_id
-              AND spm.is_active = true
-              AND products.base_price >= spm.min_price
-              AND products.base_price <= spm.max_price
-            LIMIT 1
-        ), 0)';
-        $priceRange = [
-            'min' => Product::active()->inStock()->selectRaw("MIN({$displayPriceExpr}) as min_price")->value('min_price') ?? 0,
-            'max' => Product::active()->inStock()->selectRaw("MAX({$displayPriceExpr}) as max_price")->value('max_price') ?? 10000,
-        ];
+            return [
+                'id' => $category->id,
+                'name' => $category->name,
+                'slug' => $category->slug,
+                'icon' => $category->icon,
+                'products_count' => $totalCount,
+                'children' => $childrenData,
+            ];
+        });
 
-        // Featured/Deal products for sidebar
+        // Get brands with counts in a single optimized query
+        $brands = cache()->remember('shop_brands_with_counts', now()->addMinutes(5), function () {
+            return Brand::active()
+                ->whereHas('products', function ($query) {
+                    $query->active()->inStock();
+                })
+                ->withCount(['products' => function ($query) {
+                    $query->active()->inStock();
+                }])
+                ->orderBy('name')
+                ->get(['id', 'name', 'slug']);
+        });
+
+        // Get price range in a SINGLE query (optimized from 2 queries)
+        $priceRange = cache()->remember('shop_price_range', now()->addMinutes(5), function () use ($displayPriceSql) {
+            $result = Product::active()
+                ->inStock()
+                ->selectRaw("MIN({$displayPriceSql}) as min_price, MAX({$displayPriceSql}) as max_price")
+                ->first();
+
+            return [
+                'min' => (int) ($result->min_price ?? 0),
+                'max' => (int) ($result->max_price ?? 10000),
+            ];
+        });
+
+        // Featured products for sidebar
         $featuredProducts = Product::with(['images'])
             ->active()
             ->inStock()
