@@ -62,17 +62,19 @@ export default function Shop({ products, categories, brands, priceRange, feature
                 </div>
             </div>
 
-            {/* Page Header */}
-            <div className="bg-surface-raised border-b border-border-light">
-                <div className="container mx-auto px-4 py-8">
-                    <h1 className="text-2xl lg:text-3xl font-bold text-heading mb-2">
-                        {currentCategory ? currentCategory.name : 'Shop'}
-                    </h1>
-                    <p className="text-body">
-                        Browse our collection of quality products
-                    </p>
+            {/* Page Header - Only show when no active filters */}
+            {!hasActiveFilters && (
+                <div className="bg-surface-raised border-b border-border-light">
+                    <div className="container mx-auto px-4 py-8">
+                        <h1 className="text-2xl lg:text-3xl font-bold text-heading mb-2">
+                            {currentCategory ? currentCategory.name : 'Shop'}
+                        </h1>
+                        <p className="text-body">
+                            Browse our collection of quality products
+                        </p>
+                    </div>
                 </div>
-            </div>
+            )}
 
             {/* Active Filters Bar - Prominent display for non-tech-savvy users */}
             {hasActiveFilters && (
