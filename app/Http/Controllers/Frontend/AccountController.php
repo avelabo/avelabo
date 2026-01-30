@@ -257,7 +257,8 @@ class AccountController extends Controller
     protected function transformOrder(Order $order, bool $includeHistory = false): array
     {
         $data = [
-            'id' => $order->order_number,
+            'id' => $order->id,
+            'order_number' => $order->order_number,
             'date' => $order->created_at->format('F j, Y'),
             'status' => ucfirst($order->status),
             'total' => $this->formatCurrency($order->total, $order->currency),
