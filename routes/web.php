@@ -6,12 +6,13 @@ use App\Http\Controllers\Admin\ContactMessageController;
 use App\Http\Controllers\Admin\CouponController as AdminCouponController;
 use App\Http\Controllers\Admin\CurrencyController as AdminCurrencyController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
-use App\Http\Controllers\Admin\EmailSettingsController as AdminEmailSettingsController;
+use App\Http\Controllers\Admin\EmailConfigController as AdminEmailConfigController;
 use App\Http\Controllers\Admin\ImportDataSourceController;
 use App\Http\Controllers\Admin\ImportTaskController;
 use App\Http\Controllers\Admin\KycController;
 use App\Http\Controllers\Admin\MarkupTemplateController;
 use App\Http\Controllers\Admin\NotificationLogController;
+use App\Http\Controllers\Admin\NotificationSettingsController as AdminNotificationSettingsController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\PageContentController;
 use App\Http\Controllers\Admin\PaymentGatewayController as AdminPaymentGatewayController;
@@ -427,11 +428,16 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::get('/settings', [AdminSettingsController::class, 'index'])->name('settings');
     Route::post('/settings', [AdminSettingsController::class, 'update'])->name('settings.update');
 
-    // Email Settings
-    Route::get('/email-settings', [AdminEmailSettingsController::class, 'index'])->name('email-settings.index');
-    Route::post('/email-settings', [AdminEmailSettingsController::class, 'update'])->name('email-settings.update');
-    Route::post('/email-settings/global', [AdminEmailSettingsController::class, 'updateGlobal'])->name('email-settings.update-global');
-    Route::patch('/email-settings/{emailSetting}/toggle', [AdminEmailSettingsController::class, 'toggle'])->name('email-settings.toggle');
+    // Email Configuration (Provider Settings)
+    Route::get('/email-config', [AdminEmailConfigController::class, 'index'])->name('email-config.index');
+    Route::post('/email-config', [AdminEmailConfigController::class, 'update'])->name('email-config.update');
+    Route::post('/email-config/test', [AdminEmailConfigController::class, 'testConnection'])->name('email-config.test');
+
+    // Notification Settings (Email/SMS toggles per notification type)
+    Route::get('/notification-settings', [AdminNotificationSettingsController::class, 'index'])->name('notification-settings.index');
+    Route::post('/notification-settings', [AdminNotificationSettingsController::class, 'update'])->name('notification-settings.update');
+    Route::post('/notification-settings/global', [AdminNotificationSettingsController::class, 'updateGlobal'])->name('notification-settings.update-global');
+    Route::patch('/notification-settings/{emailSetting}/toggle', [AdminNotificationSettingsController::class, 'toggle'])->name('notification-settings.toggle');
 
     // Notification Logs
     Route::prefix('notification-logs')->name('notification-logs.')->group(function () {

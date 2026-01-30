@@ -10,7 +10,7 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
-class EmailSettingsController extends Controller
+class NotificationSettingsController extends Controller
 {
     public function index(): Response
     {
@@ -22,15 +22,24 @@ class EmailSettingsController extends Controller
         $globalSettings = [
             'email_queue_enabled' => Setting::get('email_queue_enabled', false),
             'sms_provider' => Setting::get('sms_provider', 'null'),
+            'mail_provider' => Setting::get('mail_provider', 'log'),
         ];
 
-        return Inertia::render('Admin/EmailSettings/Index', [
+        return Inertia::render('Admin/NotificationSettings/Index', [
             'emailSettings' => $emailSettings,
             'globalSettings' => $globalSettings,
             'categories' => [
                 'customer' => 'Customer Emails',
                 'seller' => 'Seller Emails',
                 'admin' => 'Admin Alerts',
+            ],
+            'mailProviders' => [
+                'log' => 'Log (Development)',
+                'smtp' => 'SMTP',
+                'mailgun' => 'Mailgun',
+                'postmark' => 'Postmark',
+                'resend' => 'Resend',
+                'ses' => 'Amazon SES',
             ],
         ]);
     }
@@ -55,7 +64,7 @@ class EmailSettingsController extends Controller
             ]);
         }
 
-        return redirect()->back()->with('success', 'Email settings updated successfully.');
+        return redirect()->back()->with('success', 'Notification settings updated successfully.');
     }
 
     public function updateGlobal(Request $request): RedirectResponse
@@ -63,6 +72,7 @@ class EmailSettingsController extends Controller
         $validated = $request->validate([
             'email_queue_enabled' => ['boolean'],
             'sms_provider' => ['string', 'in:null,tnm,airtel'],
+            'mail_provider' => ['string', 'in:log,smtp,mailgun,postmark,resend,ses'],
         ]);
 
         if (isset($validated['email_queue_enabled'])) {
@@ -73,7 +83,11 @@ class EmailSettingsController extends Controller
             Setting::set('sms_provider', $validated['sms_provider'], 'string', 'email');
         }
 
-        return redirect()->back()->with('success', 'Global email settings updated successfully.');
+        if (isset($validated['mail_provider'])) {
+            Setting::set('mail_provider', $validated['mail_provider'], 'string', 'email_config');
+        }
+
+        return redirect()->back()->with('success', 'Global notification settings updated successfully.');
     }
 
     public function toggle(EmailSetting $emailSetting, Request $request): RedirectResponse

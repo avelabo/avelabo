@@ -2,12 +2,12 @@ import { Head, router } from '@inertiajs/react';
 import AdminLayout from '@/Layouts/AdminLayout';
 import { useState } from 'react';
 
-export default function EmailSettings({ emailSettings = {}, globalSettings = {}, categories = {} }) {
+export default function NotificationSettings({ emailSettings = {}, globalSettings = {}, categories = {}, mailProviders = {} }) {
     const [activeCategory, setActiveCategory] = useState('customer');
     const [saving, setSaving] = useState(false);
 
     const handleToggle = (setting, field) => {
-        router.patch(route('admin.email-settings.toggle', setting.id), {
+        router.patch(route('admin.notification-settings.toggle', setting.id), {
             field: field,
         }, {
             preserveScroll: true,
@@ -16,7 +16,7 @@ export default function EmailSettings({ emailSettings = {}, globalSettings = {},
 
     const handleGlobalToggle = (field, value) => {
         setSaving(true);
-        router.post(route('admin.email-settings.update-global'), {
+        router.post(route('admin.notification-settings.update-global'), {
             [field]: value,
         }, {
             preserveScroll: true,
@@ -36,12 +36,12 @@ export default function EmailSettings({ emailSettings = {}, globalSettings = {},
 
     return (
         <AdminLayout>
-            <Head title="Email Settings" />
+            <Head title="Notification Settings" />
 
             <section className="content-main p-4 lg:p-8">
                 <div className="mb-8">
                     <h2 className="text-3xl font-quicksand font-bold text-heading dark:text-white">
-                        Email Settings
+                        Notification Settings
                     </h2>
                     <p className="text-body mt-1">Manage email notifications and SMS settings</p>
                 </div>
@@ -55,14 +55,17 @@ export default function EmailSettings({ emailSettings = {}, globalSettings = {},
                         </h3>
                     </div>
                     <div className="p-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-6">
                             {/* Queue Setting */}
-                            <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                                <div>
-                                    <h4 className="font-medium text-heading dark:text-white">Queue Emails</h4>
-                                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                                        Send emails via queue for better performance
-                                    </p>
+                            <div className="flex items-center justify-between p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-100 dark:border-amber-800">
+                                <div className="flex items-center gap-3">
+                                    <span className="material-icons text-amber-600 dark:text-amber-400">schedule_send</span>
+                                    <div>
+                                        <h4 className="font-medium text-heading dark:text-white">Queue Notifications</h4>
+                                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                                            Send emails and SMS via queue for better performance
+                                        </p>
+                                    </div>
                                 </div>
                                 <button
                                     type="button"
@@ -80,24 +83,46 @@ export default function EmailSettings({ emailSettings = {}, globalSettings = {},
                                 </button>
                             </div>
 
-                            {/* SMS Provider */}
-                            <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                                <div>
-                                    <h4 className="font-medium text-heading dark:text-white">SMS Provider</h4>
-                                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                                        Select active SMS gateway
-                                    </p>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {/* Email Provider */}
+                                <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                                    <div>
+                                        <h4 className="font-medium text-heading dark:text-white">Email Provider</h4>
+                                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                                            Select mail service for emails
+                                        </p>
+                                    </div>
+                                    <select
+                                        value={globalSettings.mail_provider || 'log'}
+                                        onChange={(e) => handleGlobalToggle('mail_provider', e.target.value)}
+                                        disabled={saving}
+                                        className="rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-sm focus:border-brand focus:ring-brand"
+                                    >
+                                        {Object.entries(mailProviders).map(([value, label]) => (
+                                            <option key={value} value={value}>{label}</option>
+                                        ))}
+                                    </select>
                                 </div>
-                                <select
-                                    value={globalSettings.sms_provider || 'null'}
-                                    onChange={(e) => handleGlobalToggle('sms_provider', e.target.value)}
-                                    disabled={saving}
-                                    className="rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-sm focus:border-brand focus:ring-brand"
-                                >
-                                    <option value="null">Disabled (Log Only)</option>
-                                    <option value="tnm">TNM Mpamba</option>
-                                    <option value="airtel">Airtel Money</option>
-                                </select>
+
+                                {/* SMS Provider */}
+                                <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                                    <div>
+                                        <h4 className="font-medium text-heading dark:text-white">SMS Provider</h4>
+                                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                                            Select gateway for SMS
+                                        </p>
+                                    </div>
+                                    <select
+                                        value={globalSettings.sms_provider || 'null'}
+                                        onChange={(e) => handleGlobalToggle('sms_provider', e.target.value)}
+                                        disabled={saving}
+                                        className="rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-sm focus:border-brand focus:ring-brand"
+                                    >
+                                        <option value="null">Disabled (Log Only)</option>
+                                        <option value="tnm">TNM Mpamba</option>
+                                        <option value="airtel">Airtel Money</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -229,7 +254,7 @@ export default function EmailSettings({ emailSettings = {}, globalSettings = {},
                                     {getCategorySettings(activeCategory).length === 0 && (
                                         <div className="text-center py-12 text-gray-500 dark:text-gray-400">
                                             <span className="material-icons text-4xl mb-2">email</span>
-                                            <p>No email settings in this category</p>
+                                            <p>No notification settings in this category</p>
                                         </div>
                                     )}
                                 </div>
