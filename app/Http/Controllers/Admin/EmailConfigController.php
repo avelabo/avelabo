@@ -198,7 +198,7 @@ class EmailConfigController extends Controller
     {
         $token = $settings->get('postmark_token')?->getRawOriginal('value');
         if ($token) {
-            Config::set('services.postmark.token', Crypt::decryptString($token));
+            Config::set('services.postmark.key', Crypt::decryptString($token));
         }
     }
 

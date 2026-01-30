@@ -1,10 +1,13 @@
-import { Head, useForm } from '@inertiajs/react';
+import { Head, useForm, router, usePage } from '@inertiajs/react';
 import AdminLayout from '@/Layouts/AdminLayout';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function EmailConfig({ config = {}, providers = {} }) {
+    const { flash } = usePage().props;
     const [testing, setTesting] = useState(false);
     const [testEmail, setTestEmail] = useState('');
+    const [message, setMessage] = useState(null);
+    const [testMessage, setTestMessage] = useState(null);
 
     const { data, setData, post, processing, errors, recentlySuccessful } = useForm({
         mail_provider: config.mail_provider || 'log',
@@ -31,6 +34,29 @@ export default function EmailConfig({ config = {}, providers = {} }) {
         ses_region: config.ses_region || 'us-east-1',
     });
 
+    useEffect(() => {
+        if (flash?.success) {
+            // Check if it's a test email message
+            if (flash.success.toLowerCase().includes('test email')) {
+                setTestMessage({ type: 'success', text: flash.success });
+                setTimeout(() => setTestMessage(null), 5000);
+            } else {
+                setMessage({ type: 'success', text: flash.success });
+                setTimeout(() => setMessage(null), 5000);
+            }
+        }
+        if (flash?.error) {
+            // Check if it's a test email error
+            if (flash.error.toLowerCase().includes('test email')) {
+                setTestMessage({ type: 'error', text: flash.error });
+                setTimeout(() => setTestMessage(null), 10000);
+            } else {
+                setMessage({ type: 'error', text: flash.error });
+                setTimeout(() => setMessage(null), 10000);
+            }
+        }
+    }, [flash]);
+
     const handleSubmit = (e) => {
         e.preventDefault();
         post(route('admin.email-config.update'), {
@@ -41,8 +67,9 @@ export default function EmailConfig({ config = {}, providers = {} }) {
     const handleTestEmail = () => {
         if (!testEmail) return;
         setTesting(true);
-        post(route('admin.email-config.test'), {
-            data: { test_email: testEmail },
+        router.post(route('admin.email-config.test'), {
+            test_email: testEmail,
+        }, {
             preserveScroll: true,
             onFinish: () => setTesting(false),
         });
@@ -68,6 +95,27 @@ export default function EmailConfig({ config = {}, providers = {} }) {
                     </h2>
                     <p className="text-body mt-1">Configure your email delivery provider settings</p>
                 </div>
+
+                {/* Flash Messages */}
+                {message && (
+                    <div className={`mb-6 p-4 rounded-lg flex items-center gap-3 ${
+                        message.type === 'success'
+                            ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-800 dark:text-green-200'
+                            : 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-200'
+                    }`}>
+                        <span className="material-icons">
+                            {message.type === 'success' ? 'check_circle' : 'error'}
+                        </span>
+                        <span>{message.text}</span>
+                        <button
+                            type="button"
+                            onClick={() => setMessage(null)}
+                            className="ml-auto"
+                        >
+                            <span className="material-icons text-lg">close</span>
+                        </button>
+                    </div>
+                )}
 
                 <form onSubmit={handleSubmit}>
                     {/* Provider Selection */}
@@ -315,6 +363,9 @@ export default function EmailConfig({ config = {}, providers = {} }) {
                                             <option value="api.mailgun.net">US Region</option>
                                             <option value="api.eu.mailgun.net">EU Region</option>
                                         </select>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                            Endpoint: {data.mailgun_endpoint}
+                                        </p>
                                         {errors.mailgun_endpoint && (
                                             <p className="text-red-500 text-sm mt-1">{errors.mailgun_endpoint}</p>
                                         )}
@@ -480,6 +531,27 @@ export default function EmailConfig({ config = {}, providers = {} }) {
                         </h3>
                     </div>
                     <div className="p-6">
+                        {/* Test Email Messages */}
+                        {testMessage && (
+                            <div className={`mb-4 p-4 rounded-lg flex items-center gap-3 ${
+                                testMessage.type === 'success'
+                                    ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-800 dark:text-green-200'
+                                    : 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-200'
+                            }`}>
+                                <span className="material-icons">
+                                    {testMessage.type === 'success' ? 'check_circle' : 'error'}
+                                </span>
+                                <span className="flex-1">{testMessage.text}</span>
+                                <button
+                                    type="button"
+                                    onClick={() => setTestMessage(null)}
+                                    className="shrink-0"
+                                >
+                                    <span className="material-icons text-lg">close</span>
+                                </button>
+                            </div>
+                        )}
+
                         <p className="text-gray-600 dark:text-gray-400 mb-4">
                             Send a test email to verify your configuration is working correctly.
                         </p>

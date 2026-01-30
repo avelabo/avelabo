@@ -9,8 +9,15 @@ Features can be moved from one version to the next depending on timelines and cu
 - Move notification logic to events 
 
 # Business Logic Layer
+- Subscribe/Unsubscribe options to (marketing, promotions, you cannot unsubscribe to notifications)
 - WhatsApp Notifications
 - Web push notifications (UI as well)
+
+
+## V0.1.1
+
+#Misc
+- Email logo using Google Profile or BIMI
 
 ## V0.1 (Go Live)
 
@@ -40,7 +47,6 @@ Features can be moved from one version to the next depending on timelines and cu
 - Assigning products discounts/promotion based on price of product in a particular category 
 
 
-
 ## UI
 
 - Home (New, Featured, Essentials, ...) - Working (changes to breakdown by essentials etc)
@@ -51,7 +57,10 @@ Features can be moved from one version to the next depending on timelines and cu
 - Privacy Policy, Refund Policy, Return Policy, Terms and Policies, Support ..under the help -
 
 ## Miscellanous
-
+- Finalize validation errors esp. in the frontend
+(if they can be field based evene better)
+- Analyze how useEffect is being used and vet usage against best practices
+- Analyze useEffect usage and identify race conditions
 
 ## Nice to haves (Probably wont do)
 

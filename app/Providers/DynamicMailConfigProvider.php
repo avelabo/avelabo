@@ -119,9 +119,9 @@ class DynamicMailConfigProvider extends ServiceProvider
         $token = $settings->get('postmark_token')?->getRawOriginal('value');
         if ($token) {
             try {
-                Config::set('services.postmark.token', Crypt::decryptString($token));
+                Config::set('services.postmark.key', Crypt::decryptString($token));
             } catch (\Exception $e) {
-                Config::set('services.postmark.token', $token);
+                Config::set('services.postmark.key', $token);
             }
         }
     }
