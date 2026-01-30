@@ -18,6 +18,10 @@ Features can be moved from one version to the next depending on timelines and cu
 
 #Misc
 - Email logo using Google Profile or BIMI
+- Bulk Message Sender 
+    - (email or sms or both, you can choose)
+    - (you can select one user from or multiple or all)
+    - You can send to email or to sms 
 
 ## V0.1 (Go Live)
 
@@ -32,11 +36,11 @@ Features can be moved from one version to the next depending on timelines and cu
 - Discounts/Promotion Management - Exists (Not tested thoroughly)
 - Discount/Promotion Push 2 Comms 
 - Discount/Promotion connected to particular coupon  
-- Order Management
-- Order Placement and Updates push 2 comms
+- Order Management 
+- Order Placement and Updates push 2 comms  - Working
 - Refund Management 
 - Invoice Management  - Working (improvements can be done)
-- Reviews and Ratings
+- Reviews and Ratings - Deferred
 - Currency Management - Working (improvements can be done)
 - Currency Conversion Mgt - Working (improvements can be done)
 - Markup Management (multi-currency) - Working (improvements can be done)
