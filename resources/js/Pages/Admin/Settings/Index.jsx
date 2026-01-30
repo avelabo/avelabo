@@ -283,6 +283,18 @@ export default function Settings({ settings = {} }) {
                                                     </div>
                                                     <div>
                                                         <label className="block text-sm font-medium text-heading dark:text-white mb-2">
+                                                            LinkedIn URL
+                                                        </label>
+                                                        <input
+                                                            type="url"
+                                                            value={getValue('social_linkedin')}
+                                                            onChange={(e) => setValue('social_linkedin', e.target.value)}
+                                                            className="w-full px-4 py-3 bg-gray-100 dark:bg-gray-700 border-0 rounded-lg focus:ring-2 focus:ring-brand text-sm dark:text-white"
+                                                            placeholder="https://linkedin.com/company/yourcompany"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-heading dark:text-white mb-2">
                                                             YouTube URL
                                                         </label>
                                                         <input
@@ -291,6 +303,18 @@ export default function Settings({ settings = {} }) {
                                                             onChange={(e) => setValue('social_youtube', e.target.value)}
                                                             className="w-full px-4 py-3 bg-gray-100 dark:bg-gray-700 border-0 rounded-lg focus:ring-2 focus:ring-brand text-sm dark:text-white"
                                                             placeholder="https://youtube.com/yourchannel"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-heading dark:text-white mb-2">
+                                                            TikTok URL
+                                                        </label>
+                                                        <input
+                                                            type="url"
+                                                            value={getValue('social_tiktok')}
+                                                            onChange={(e) => setValue('social_tiktok', e.target.value)}
+                                                            className="w-full px-4 py-3 bg-gray-100 dark:bg-gray-700 border-0 rounded-lg focus:ring-2 focus:ring-brand text-sm dark:text-white"
+                                                            placeholder="https://tiktok.com/@yourhandle"
                                                         />
                                                     </div>
                                                     <div>
