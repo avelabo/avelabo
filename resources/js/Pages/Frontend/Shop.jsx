@@ -204,55 +204,78 @@ export default function Shop({ products, categories, brands, priceRange, feature
                     <div className="flex flex-col lg:flex-row gap-8">
                         {/* Sidebar */}
                         <aside className={`w-full lg:w-[280px] flex-shrink-0 ${showMobileFilters ? 'block' : 'hidden lg:block'}`}>
-                            <div className="lg:sticky lg:top-24 space-y-6">
+                            <div className="lg:sticky lg:top-24 space-y-4">
                                 {/* Category Filter */}
-                                <div className="bg-surface rounded-xl border border-border-light p-5">
-                                    <h3 className="font-semibold text-heading mb-4 flex items-center justify-between">
-                                        Categories
+                                <div className="bg-surface rounded-xl border border-border-light overflow-hidden">
+                                    <div className="px-5 py-4 border-b border-border-light flex items-center justify-between">
+                                        <h3 className="font-semibold text-heading text-sm">Categories</h3>
                                         {filters?.category && (
                                             <button
                                                 onClick={() => handleFilterChange('category', null)}
-                                                className="text-xs text-muted hover:text-brand"
+                                                className="text-xs text-muted hover:text-danger transition-colors"
                                             >
                                                 Clear
                                             </button>
                                         )}
-                                    </h3>
-                                    <CategoryFilter
-                                        categories={categories}
-                                        activeCategory={filters?.category}
-                                        onCategoryChange={(slug) => handleFilterChange('category', slug)}
-                                    />
+                                    </div>
+                                    <div className="p-3">
+                                        <CategoryFilter
+                                            categories={categories}
+                                            activeCategory={filters?.category}
+                                            onCategoryChange={(slug) => handleFilterChange('category', slug)}
+                                            maxVisible={8}
+                                        />
+                                    </div>
                                 </div>
 
                                 {/* Price Range Filter */}
-                                <div className="bg-surface rounded-xl border border-border-light p-5">
-                                    <h3 className="font-semibold text-heading mb-4">Price Range</h3>
-                                    <PriceRangeFilter
-                                        min={priceRange?.min || 0}
-                                        max={priceRange?.max || 10000}
-                                        currentMax={filters?.max_price}
-                                        onApply={handlePriceFilter}
-                                    />
+                                <div className="bg-surface rounded-xl border border-border-light overflow-hidden">
+                                    <div className="px-5 py-4 border-b border-border-light">
+                                        <h3 className="font-semibold text-heading text-sm">Price Range</h3>
+                                    </div>
+                                    <div className="p-5">
+                                        <PriceRangeFilter
+                                            min={priceRange?.min || 0}
+                                            max={priceRange?.max || 10000}
+                                            currentMin={filters?.min_price}
+                                            currentMax={filters?.max_price}
+                                            onApply={handlePriceFilter}
+                                        />
+                                    </div>
                                 </div>
 
                                 {/* Brand Filter */}
                                 {brands?.length > 0 && (
-                                    <div className="bg-surface rounded-xl border border-border-light p-5">
-                                        <h3 className="font-semibold text-heading mb-4">Brands</h3>
-                                        <BrandFilter
-                                            brands={brands}
-                                            activeBrand={filters?.brand}
-                                            onBrandChange={(brandId) => handleFilterChange('brand', brandId)}
-                                        />
+                                    <div className="bg-surface rounded-xl border border-border-light overflow-hidden">
+                                        <div className="px-5 py-4 border-b border-border-light flex items-center justify-between">
+                                            <h3 className="font-semibold text-heading text-sm">Brands</h3>
+                                            {filters?.brand && (
+                                                <button
+                                                    onClick={() => handleFilterChange('brand', null)}
+                                                    className="text-xs text-muted hover:text-danger transition-colors"
+                                                >
+                                                    Clear
+                                                </button>
+                                            )}
+                                        </div>
+                                        <div className="p-3">
+                                            <BrandFilter
+                                                brands={brands}
+                                                activeBrand={filters?.brand}
+                                                onBrandChange={(brandId) => handleFilterChange('brand', brandId)}
+                                                maxVisible={6}
+                                            />
+                                        </div>
                                     </div>
                                 )}
 
                                 {/* Featured Products Widget */}
                                 {featuredProducts?.length > 0 && (
-                                    <div className="bg-surface rounded-xl border border-border-light p-5">
-                                        <h3 className="font-semibold text-heading mb-4">Featured Products</h3>
-                                        <div className="space-y-4">
+                                    <div className="bg-surface rounded-xl border border-border-light overflow-hidden">
+                                        <div className="px-5 py-4 border-b border-border-light">
+                                            <h3 className="font-semibold text-heading text-sm">Featured</h3>
+                                        </div>
+                                        <div className="p-4 space-y-3">
                                             {featuredProducts.slice(0, 3).map((product) => (
                                                 <ProductListItem
                                                     key={product.id}
