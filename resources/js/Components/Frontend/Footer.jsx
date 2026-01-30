@@ -1,12 +1,14 @@
 import { Link, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import axios from 'axios';
+import NewsletterSuccessModal from '@/Components/Frontend/NewsletterSuccessModal';
 
 export default function Footer() {
     const { siteSettings } = usePage().props;
     const [email, setEmail] = useState('');
     const [subscribing, setSubscribing] = useState(false);
-    const [message, setMessage] = useState(null);
+    const [errorMessage, setErrorMessage] = useState(null);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
 
     const settings = siteSettings || {};
 
@@ -15,21 +17,21 @@ export default function Footer() {
         if (!email) return;
 
         setSubscribing(true);
-        setMessage(null);
+        setErrorMessage(null);
 
         try {
-            const response = await axios.post(route('newsletter.subscribe'), { email });
-            setMessage({ type: 'success', text: response.data.message });
+            await axios.post(route('newsletter.subscribe'), { email });
             setEmail('');
+            setShowSuccessModal(true);
         } catch (error) {
-            const errorMessage = error.response?.data?.message
+            const message = error.response?.data?.message
                 || error.response?.data?.errors?.email?.[0]
                 || 'Something went wrong. Please try again.';
-            setMessage({ type: 'error', text: errorMessage });
+            setErrorMessage(message);
+            // Clear error after 5 seconds
+            setTimeout(() => setErrorMessage(null), 5000);
         } finally {
             setSubscribing(false);
-            // Clear message after 5 seconds
-            setTimeout(() => setMessage(null), 5000);
         }
     };
 
@@ -106,13 +108,9 @@ export default function Footer() {
                                     )}
                                 </button>
                             </form>
-                            {message && (
-                                <div className={`mt-3 px-4 py-2 rounded-lg text-sm ${
-                                    message.type === 'success'
-                                        ? 'bg-green-600/20 text-green-900'
-                                        : 'bg-red-600/20 text-red-900'
-                                }`}>
-                                    {message.text}
+                            {errorMessage && (
+                                <div className="mt-3 px-4 py-2 rounded-lg text-sm bg-red-600/20 text-red-900">
+                                    {errorMessage}
                                 </div>
                             )}
                         </div>
@@ -363,6 +361,12 @@ export default function Footer() {
                     </div>
                 </div>
             </div>
+
+            {/* Newsletter Success Modal */}
+            <NewsletterSuccessModal
+                isOpen={showSuccessModal}
+                onClose={() => setShowSuccessModal(false)}
+            />
         </footer>
     );
 }
