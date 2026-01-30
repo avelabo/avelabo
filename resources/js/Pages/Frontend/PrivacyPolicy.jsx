@@ -1,7 +1,11 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import FrontendLayout from '@/Layouts/FrontendLayout';
 
 export default function PrivacyPolicy({ pageContent = {}, categories = [] }) {
+    const { siteSettings } = usePage().props;
+    const settings = siteSettings || {};
+    const supportEmail = settings.site_support_email || 'support@avelabo.com';
+
     const content = pageContent.content || {};
 
     const sections = content.sections || [
@@ -45,11 +49,11 @@ export default function PrivacyPolicy({ pageContent = {}, categories = [] }) {
         },
         {
             title: 'Your Rights',
-            content: 'You have the right to access, update, or delete your personal information. Contact us at privacy@avelabo.com for any requests.',
+            content: `You have the right to access, update, or delete your personal information. Contact us at ${supportEmail} for any requests.`,
         },
         {
             title: 'Contact Us',
-            content: 'If you have questions about this Privacy Policy, please contact us at privacy@avelabo.com or through our contact page.',
+            content: `If you have questions about this Privacy Policy, please contact us at ${supportEmail} or through our contact page.`,
         },
     ];
 

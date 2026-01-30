@@ -1,9 +1,12 @@
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import FrontendLayout from '@/Layouts/FrontendLayout';
 import FormAlert from '@/Components/Frontend/FormAlert';
 import { useToast } from '@/Contexts/ToastContext';
 
 export default function Contact({ contactInfo = {}, flash = {} }) {
+    const { siteSettings } = usePage().props;
+    const settings = siteSettings || {};
+
     const { data, setData, post, processing, errors, reset } = useForm({
         name: '',
         email: '',
@@ -11,30 +14,6 @@ export default function Contact({ contactInfo = {}, flash = {} }) {
         subject: '',
         message: ''
     });
-
-    const offices = contactInfo.offices || [
-        {
-            name: 'Main Office',
-            address: 'Area 3, Lilongwe',
-            city: 'Lilongwe, Malawi',
-            phone: '+265 999 123 456',
-            email: 'info@avelabo.com',
-        },
-        {
-            name: 'Blantyre Office',
-            address: 'Ginnery Corner',
-            city: 'Blantyre, Malawi',
-            phone: '+265 888 123 456',
-            email: 'blantyre@avelabo.com',
-        },
-        {
-            name: 'Mzuzu Office',
-            address: 'Katoto',
-            city: 'Mzuzu, Malawi',
-            phone: '+265 111 123 456',
-            email: 'mzuzu@avelabo.com',
-        },
-    ];
 
     const toast = useToast();
 
@@ -129,23 +108,39 @@ export default function Contact({ contactInfo = {}, flash = {} }) {
                 </div>
             </section>
 
-            {/* Location Cards & Contact Form */}
+            {/* Contact Info & Contact Form */}
             <section className="pb-12 lg:pb-20">
                 <div className="max-w-7xl mx-auto px-4">
                     <div className="max-w-5xl mx-auto">
-                        {/* Location Cards */}
+                        {/* Contact Info Cards */}
                         <div className="grid md:grid-cols-3 gap-6 mb-16">
-                            {offices.map((office, index) => (
-                                <div key={index} className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-lg transition-all">
-                                    <h4 className="text-brand font-quicksand font-bold text-lg mb-4">{office.name}</h4>
-                                    <address className="not-italic text-gray-500 text-sm leading-7 mb-4">
-                                        {office.address}<br />
-                                        {office.city}<br />
-                                        <strong className="text-heading">Phone:</strong> {office.phone}<br />
-                                        <strong className="text-heading">Email:</strong> {office.email}
-                                    </address>
+                            <div className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-lg transition-all">
+                                <div className="w-12 h-12 bg-brand/10 rounded-xl flex items-center justify-center mb-4">
+                                    <i className="fi fi-rs-marker text-brand text-xl"></i>
                                 </div>
-                            ))}
+                                <h4 className="text-heading font-quicksand font-bold text-lg mb-2">Our Location</h4>
+                                <p className="text-gray-500 text-sm">{contactInfo.address || settings.site_address}</p>
+                            </div>
+                            <div className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-lg transition-all">
+                                <div className="w-12 h-12 bg-brand/10 rounded-xl flex items-center justify-center mb-4">
+                                    <i className="fi fi-rs-phone-call text-brand text-xl"></i>
+                                </div>
+                                <h4 className="text-heading font-quicksand font-bold text-lg mb-2">Phone</h4>
+                                <p className="text-gray-500 text-sm">{contactInfo.phone || settings.site_phone}</p>
+                                {(contactInfo.phone_2 || settings.site_phone_2) && (
+                                    <p className="text-gray-500 text-sm">{contactInfo.phone_2 || settings.site_phone_2}</p>
+                                )}
+                            </div>
+                            <div className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-lg transition-all">
+                                <div className="w-12 h-12 bg-brand/10 rounded-xl flex items-center justify-center mb-4">
+                                    <i className="fi fi-rs-envelope text-brand text-xl"></i>
+                                </div>
+                                <h4 className="text-heading font-quicksand font-bold text-lg mb-2">Email</h4>
+                                <p className="text-gray-500 text-sm">{contactInfo.email || settings.site_email}</p>
+                                {(contactInfo.support_email || settings.site_support_email) && (
+                                    <p className="text-gray-500 text-sm">{contactInfo.support_email || settings.site_support_email}</p>
+                                )}
+                            </div>
                         </div>
 
                         {/* Flash Message */}
@@ -248,21 +243,21 @@ export default function Contact({ contactInfo = {}, flash = {} }) {
                                             <i className="fi fi-rs-phone-call mt-1"></i>
                                             <div>
                                                 <p className="font-semibold">Phone</p>
-                                                <p className="text-white/80">{contactInfo.support_phone || '+265 999 123 456'}</p>
+                                                <p className="text-white/80">{contactInfo.phone || settings.site_phone}</p>
                                             </div>
                                         </div>
                                         <div className="flex items-start gap-3">
                                             <i className="fi fi-rs-envelope mt-1"></i>
                                             <div>
                                                 <p className="font-semibold">Email</p>
-                                                <p className="text-white/80">{contactInfo.support_email || 'support@avelabo.com'}</p>
+                                                <p className="text-white/80">{contactInfo.support_email || settings.site_support_email}</p>
                                             </div>
                                         </div>
                                         <div className="flex items-start gap-3">
                                             <i className="fi fi-rs-clock mt-1"></i>
                                             <div>
                                                 <p className="font-semibold">Working Hours</p>
-                                                <p className="text-white/80">Mon - Sat: 8:00 AM - 6:00 PM</p>
+                                                <p className="text-white/80">{contactInfo.hours || settings.site_hours}</p>
                                             </div>
                                         </div>
                                     </div>
@@ -271,18 +266,26 @@ export default function Contact({ contactInfo = {}, flash = {} }) {
                                 <div className="bg-gray-50 rounded-xl p-6">
                                     <h4 className="font-bold text-heading mb-4">Follow Us</h4>
                                     <div className="flex gap-3">
-                                        <a href="#" className="w-10 h-10 bg-brand text-white rounded-full flex items-center justify-center hover:bg-brand-dark transition-colors">
-                                            <i className="fi fi-brands-facebook"></i>
-                                        </a>
-                                        <a href="#" className="w-10 h-10 bg-brand text-white rounded-full flex items-center justify-center hover:bg-brand-dark transition-colors">
-                                            <i className="fi fi-brands-twitter"></i>
-                                        </a>
-                                        <a href="#" className="w-10 h-10 bg-brand text-white rounded-full flex items-center justify-center hover:bg-brand-dark transition-colors">
-                                            <i className="fi fi-brands-instagram"></i>
-                                        </a>
-                                        <a href="#" className="w-10 h-10 bg-brand text-white rounded-full flex items-center justify-center hover:bg-brand-dark transition-colors">
-                                            <i className="fi fi-brands-whatsapp"></i>
-                                        </a>
+                                        {settings.social_facebook && (
+                                            <a href={settings.social_facebook} target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-brand text-white rounded-full flex items-center justify-center hover:bg-brand-dark transition-colors">
+                                                <i className="fi fi-brands-facebook"></i>
+                                            </a>
+                                        )}
+                                        {settings.social_twitter && (
+                                            <a href={settings.social_twitter} target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-brand text-white rounded-full flex items-center justify-center hover:bg-brand-dark transition-colors">
+                                                <i className="fi fi-brands-twitter"></i>
+                                            </a>
+                                        )}
+                                        {settings.social_instagram && (
+                                            <a href={settings.social_instagram} target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-brand text-white rounded-full flex items-center justify-center hover:bg-brand-dark transition-colors">
+                                                <i className="fi fi-brands-instagram"></i>
+                                            </a>
+                                        )}
+                                        {settings.social_whatsapp && (
+                                            <a href={`https://wa.me/${settings.social_whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-brand text-white rounded-full flex items-center justify-center hover:bg-brand-dark transition-colors">
+                                                <i className="fi fi-brands-whatsapp"></i>
+                                            </a>
+                                        )}
                                     </div>
                                 </div>
                             </div>

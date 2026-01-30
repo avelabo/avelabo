@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Frontend;
 use App\Http\Controllers\Controller;
 use App\Mail\Admin\NewContactMessageMail;
 use App\Models\ContactMessage;
+use App\Models\Setting;
 use App\Notifications\Customer\ContactFormConfirmationNotification;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
@@ -19,31 +20,12 @@ class ContactController extends Controller
     {
         return Inertia::render('Frontend/Contact', [
             'contactInfo' => [
-                'offices' => [
-                    [
-                        'name' => 'Main Office',
-                        'address' => 'Area 3, Lilongwe',
-                        'city' => 'Lilongwe, Malawi',
-                        'phone' => '+265 999 123 456',
-                        'email' => 'info@avelabo.com',
-                    ],
-                    [
-                        'name' => 'Blantyre Office',
-                        'address' => 'Ginnery Corner',
-                        'city' => 'Blantyre, Malawi',
-                        'phone' => '+265 888 123 456',
-                        'email' => 'blantyre@avelabo.com',
-                    ],
-                    [
-                        'name' => 'Mzuzu Office',
-                        'address' => 'Katoto',
-                        'city' => 'Mzuzu, Malawi',
-                        'phone' => '+265 111 123 456',
-                        'email' => 'mzuzu@avelabo.com',
-                    ],
-                ],
-                'support_email' => 'support@avelabo.com',
-                'support_phone' => '+265 999 123 456',
+                'email' => Setting::get('site_email'),
+                'support_email' => Setting::get('site_support_email'),
+                'phone' => Setting::get('site_phone'),
+                'phone_2' => Setting::get('site_phone_2'),
+                'address' => Setting::get('site_address'),
+                'hours' => Setting::get('site_hours'),
             ],
         ]);
     }
