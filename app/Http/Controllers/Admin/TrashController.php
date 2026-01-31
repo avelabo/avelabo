@@ -65,7 +65,7 @@ class TrashController extends Controller
 
         if ($filter === 'all' || $filter === 'sellers') {
             $sellers = Seller::onlyTrashed()
-                ->with(['user:id,name,email'])
+                ->with(['user:id,first_name,last_name,email'])
                 ->withCount(['products', 'orders', 'bankAccounts', 'priceMarkups'])
                 ->get()
                 ->map(fn ($s) => [
@@ -89,7 +89,7 @@ class TrashController extends Controller
 
         if ($filter === 'all' || $filter === 'orders') {
             $orders = Order::onlyTrashed()
-                ->with(['user:id,name,email', 'seller:id,shop_name'])
+                ->with(['user:id,first_name,last_name,email', 'seller:id,shop_name'])
                 ->withCount(['items', 'statusHistory', 'payments', 'refunds'])
                 ->get()
                 ->map(fn ($o) => [

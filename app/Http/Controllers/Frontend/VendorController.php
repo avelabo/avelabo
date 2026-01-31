@@ -17,7 +17,7 @@ class VendorController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Seller::with(['country:id,name', 'user:id,name'])
+        $query = Seller::with(['country:id,name', 'user:id,first_name,last_name'])
             ->active()
             ->withCount(['products' => fn ($q) => $q->active()->inStock()]);
 
@@ -74,7 +74,7 @@ class VendorController extends Controller
      */
     public function show(Request $request, string $slug)
     {
-        $seller = Seller::with(['country:id,name', 'user:id,name,email'])
+        $seller = Seller::with(['country:id,name', 'user:id,first_name,last_name,email'])
             ->where('slug', $slug)
             ->active()
             ->firstOrFail();

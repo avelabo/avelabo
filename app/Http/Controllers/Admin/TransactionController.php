@@ -23,7 +23,7 @@ class TransactionController extends Controller
     {
         $query = Payment::with([
             'order:id,order_number,user_id,total,status',
-            'order.user:id,name,email',
+            'order.user:id,first_name,last_name,email',
             'gateway:id,name,slug,display_name,logo',
             'currency:id,code,symbol',
         ]);
@@ -91,7 +91,7 @@ class TransactionController extends Controller
     public function show(Payment $payment)
     {
         $payment->load([
-            'order.user:id,name,email,phone',
+            'order.user:id,first_name,last_name,email,phone',
             'order.items.product:id,name,slug',
             'order.shippingAddress',
             'gateway:id,name,slug,display_name,logo',

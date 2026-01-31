@@ -106,7 +106,7 @@ class DashboardController extends Controller
         });
 
         // Latest Orders
-        $latestOrders = Order::with(['user:id,name,email', 'shippingAddress:id,city_name,region_name'])
+        $latestOrders = Order::with(['user:id,first_name,last_name,email', 'shippingAddress:id,city_name,region_name'])
             ->latest()
             ->take(5)
             ->get()
@@ -125,13 +125,13 @@ class DashboardController extends Controller
         $newMembers = User::whereDoesntHave('roles', fn ($q) => $q->where('slug', 'admin'))
             ->latest()
             ->take(5)
-            ->get(['id', 'name', 'email', 'created_at'])
+            ->get(['id', 'first_name', 'last_name', 'email', 'created_at'])
             ->map(fn ($user) => [
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
                 'joined' => $user->created_at->diffForHumans(),
-                'initials' => collect(explode(' ', $user->name))->map(fn ($n) => strtoupper(substr($n, 0, 1)))->take(2)->join(''),
+                'initials' => strtoupper(substr($user->first_name, 0, 1)).strtoupper(substr($user->last_name, 0, 1)),
             ]);
 
         // Top Selling Products

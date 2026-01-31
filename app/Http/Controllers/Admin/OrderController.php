@@ -29,7 +29,7 @@ class OrderController extends Controller
     public function index(Request $request)
     {
         $query = Order::with([
-            'user:id,name,email',
+            'user:id,first_name,last_name,email',
             'items.seller:id,business_name',
             'currency:id,code,symbol',
             'latestPayment',
@@ -118,7 +118,7 @@ class OrderController extends Controller
     public function show(Order $order)
     {
         $order->load([
-            'user:id,name,email,phone',
+            'user:id,first_name,last_name,email,phone',
             'items.product:id,name,slug',
             'items.variant',
             'items.seller:id,business_name,user_id',

@@ -26,23 +26,23 @@ class OrderController extends Controller
 
         // Get orders that contain items from this seller
         $query = Order::whereHas('items', function ($q) use ($seller) {
-                $q->where('seller_id', $seller->id);
-            })
+            $q->where('seller_id', $seller->id);
+        })
             ->with([
-                'user:id,name,email',
-                'currency:id,code,symbol',
-                'items' => function ($q) use ($seller) {
-                    $q->where('seller_id', $seller->id)
-                      ->with('product:id,name,slug');
-                },
-            ]);
+            'user:id,first_name,last_name,email',
+            'currency:id,code,symbol',
+            'items' => function ($q) use ($seller) {
+                $q->where('seller_id', $seller->id)
+                    ->with('product:id,name,slug');
+            },
+        ]);
 
         // Search filter
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('order_number', 'like', "%{$search}%")
-                    ->orWhereHas('user', fn($u) => $u->where('name', 'like', "%{$search}%"));
+                    ->orWhereHas('user', fn ($u) => $u->where('name', 'like', "%{$search}%"));
             });
         }
 
@@ -51,7 +51,7 @@ class OrderController extends Controller
             $status = $request->status;
             $query->whereHas('items', function ($q) use ($seller, $status) {
                 $q->where('seller_id', $seller->id)
-                  ->where('status', $status);
+                    ->where('status', $status);
             });
         }
 
@@ -97,15 +97,15 @@ class OrderController extends Controller
         // Check if seller has items in this order
         $hasItems = $order->items()->where('seller_id', $seller->id)->exists();
 
-        if (!$hasItems) {
+        if (! $hasItems) {
             abort(403, 'You do not have items in this order.');
         }
 
         $order->load([
-            'user:id,name,email,phone',
+            'user:id,first_name,last_name,email,phone',
             'items' => function ($q) use ($seller) {
                 $q->where('seller_id', $seller->id)
-                  ->with(['product:id,name,slug', 'variant']);
+                    ->with(['product:id,name,slug', 'variant']);
             },
             'shippingAddress',
             'currency',
@@ -147,7 +147,7 @@ class OrderController extends Controller
 
         // Validate status transition
         $availableStatuses = $this->getAvailableStatusesForItem($item->status);
-        if (!in_array($validated['status'], $availableStatuses)) {
+        if (! in_array($validated['status'], $availableStatuses)) {
             return back()->with('error', 'Invalid status transition.');
         }
 
@@ -156,10 +156,10 @@ class OrderController extends Controller
 
         if ($validated['status'] === 'shipped') {
             $updateData['shipped_at'] = now();
-            if (!empty($validated['tracking_number'])) {
+            if (! empty($validated['tracking_number'])) {
                 $updateData['tracking_number'] = $validated['tracking_number'];
             }
-            if (!empty($validated['tracking_carrier'])) {
+            if (! empty($validated['tracking_carrier'])) {
                 $updateData['tracking_carrier'] = $validated['tracking_carrier'];
             }
         } elseif ($validated['status'] === 'delivered') {
@@ -211,10 +211,10 @@ class OrderController extends Controller
 
         if ($validated['status'] === 'shipped') {
             $updateData['shipped_at'] = now();
-            if (!empty($validated['tracking_number'])) {
+            if (! empty($validated['tracking_number'])) {
                 $updateData['tracking_number'] = $validated['tracking_number'];
             }
-            if (!empty($validated['tracking_carrier'])) {
+            if (! empty($validated['tracking_carrier'])) {
                 $updateData['tracking_carrier'] = $validated['tracking_carrier'];
             }
         } elseif ($validated['status'] === 'delivered') {
@@ -253,27 +253,31 @@ class OrderController extends Controller
                 'status' => 'delivered',
                 'delivered_at' => now(),
             ]);
+
             return;
         }
 
         // If all items are shipped or delivered
-        if ($statuses->every(fn($s) => in_array($s, ['shipped', 'delivered']))) {
+        if ($statuses->every(fn ($s) => in_array($s, ['shipped', 'delivered']))) {
             $order->update([
                 'status' => 'shipped',
                 'shipped_at' => $order->shipped_at ?? now(),
             ]);
+
             return;
         }
 
         // If some items are shipped
         if ($statuses->contains('shipped') || $statuses->contains('delivered')) {
             $order->update(['status' => 'partially_shipped']);
+
             return;
         }
 
         // If all items are processing or cancelled
-        if ($statuses->every(fn($s) => in_array($s, ['processing', 'cancelled']))) {
+        if ($statuses->every(fn ($s) => in_array($s, ['processing', 'cancelled']))) {
             $order->update(['status' => 'processing']);
+
             return;
         }
 
@@ -283,6 +287,7 @@ class OrderController extends Controller
                 'status' => 'cancelled',
                 'cancelled_at' => now(),
             ]);
+
             return;
         }
     }

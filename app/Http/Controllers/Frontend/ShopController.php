@@ -293,7 +293,7 @@ class ShopController extends Controller
             'variants.attributes.attribute',
             'variants.attributes.attributeValue',
             'reviews' => function ($query) {
-                $query->with('user:id,name')->latest()->take(5);
+                $query->with('user:id,first_name,last_name')->latest()->take(5);
             },
         ])
             ->where('slug', $slug)

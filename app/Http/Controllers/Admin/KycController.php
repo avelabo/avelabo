@@ -20,7 +20,7 @@ class KycController extends Controller
      */
     public function index(Request $request)
     {
-        $kycs = SellerKyc::with(['seller:id,shop_name,user_id', 'seller.user:id,name,email'])
+        $kycs = SellerKyc::with(['seller:id,shop_name,user_id', 'seller.user:id,first_name,last_name,email'])
             ->when($request->status, fn ($q, $status) => $q->where('status', $status))
             ->when($request->search, function ($query, $search) {
                 $query->whereHas('seller', function ($q) use ($search) {
@@ -64,8 +64,8 @@ class KycController extends Controller
     {
         $kyc->load([
             'seller:id,shop_name,description,business_type,business_name,business_registration_number,status,created_at',
-            'seller.user:id,name,email,phone,created_at',
-            'reviewer:id,name',
+            'seller.user:id,first_name,last_name,email,phone,created_at',
+            'reviewer:id,first_name,last_name',
         ]);
 
         // Build document URLs - handle case where private disk doesn't support temporary URLs

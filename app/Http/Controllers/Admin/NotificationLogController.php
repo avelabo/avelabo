@@ -18,7 +18,7 @@ class NotificationLogController extends Controller
 
     public function index(Request $request): Response
     {
-        $query = NotificationLog::with('user:id,name,email')
+        $query = NotificationLog::with('user:id,first_name,last_name,email')
             ->latest();
 
         // Filter by status
@@ -80,7 +80,7 @@ class NotificationLogController extends Controller
 
     public function show(NotificationLog $notificationLog): Response
     {
-        $notificationLog->load('user:id,name,email');
+        $notificationLog->load('user:id,first_name,last_name,email');
 
         return Inertia::render('Admin/NotificationLogs/Show', [
             'log' => $notificationLog,

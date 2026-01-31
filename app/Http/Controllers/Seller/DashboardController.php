@@ -106,7 +106,7 @@ class DashboardController extends Controller
 
         // Get recent orders
         $recentOrders = Order::where('seller_id', $seller->id)
-            ->with(['user:id,name,email', 'shippingAddress:id,city_name,region_name'])
+            ->with(['user:id,first_name,last_name,email', 'shippingAddress:id,city_name,region_name'])
             ->latest()
             ->take(5)
             ->get()

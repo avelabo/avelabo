@@ -21,7 +21,7 @@ class SellerController extends Controller
      */
     public function index(Request $request)
     {
-        $sellers = Seller::with(['user:id,name,email'])
+        $sellers = Seller::with(['user:id,first_name,last_name,email'])
             ->withCount(['products', 'orders'])
             ->when($request->status, fn ($q, $status) => $q->where('status', $status))
             ->when($request->search, function ($query, $search) {
@@ -68,8 +68,8 @@ class SellerController extends Controller
         // Get users who are not already sellers
         $availableUsers = User::whereDoesntHave('seller')
             ->where('status', 'active')
-            ->orderBy('name')
-            ->get(['id', 'name', 'email']);
+            ->orderBy('first_name')
+            ->get(['id', 'first_name', 'last_name', 'email']);
 
         return Inertia::render('Admin/Sellers/Create', [
             'currencies' => $currencies,
@@ -125,7 +125,7 @@ class SellerController extends Controller
     public function show(Seller $seller)
     {
         $seller->load([
-            'user:id,name,email,phone,created_at',
+            'user:id,first_name,last_name,email,phone,created_at',
             'kyc',
             'bankAccounts',
             'priceMarkups',

@@ -20,7 +20,7 @@ class MailingListController extends Controller
     public function index(Request $request): Response
     {
         $query = MailingListSubscriber::query()
-            ->with('user:id,name,email');
+            ->with('user:id,first_name,last_name,email');
 
         // Search filter
         if ($search = $request->input('search')) {
