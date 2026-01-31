@@ -2,7 +2,7 @@ import { Link, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
 export default function MobileMenu({ isOpen, onClose }) {
-    const { headerCategories, counts, siteSettings } = usePage().props;
+    const { headerCategories, counts, siteSettings, auth } = usePage().props;
     const [categoriesOpen, setCategoriesOpen] = useState(false);
 
     const categories = headerCategories || [];
@@ -138,7 +138,7 @@ export default function MobileMenu({ isOpen, onClose }) {
                             </li>
                             <li>
                                 <Link href="/account" className="block py-2 text-heading hover:text-brand" onClick={onClose}>
-                                    Account
+                                    {auth?.user ? `${auth.user.first_name.length > 10 ? auth.user.first_name.slice(0, 10) + '…' : auth.user.first_name}'s Account` : 'Sign in'}
                                 </Link>
                             </li>
                         </ul>
