@@ -1,4 +1,5 @@
 import { Head, Link, useForm } from '@inertiajs/react';
+import { useState } from 'react';
 import GuestLayout from '@/Layouts/GuestLayout';
 import FormAlert from '@/Components/Frontend/FormAlert';
 
@@ -8,6 +9,8 @@ export default function Login({ status, canResetPassword }) {
         password: '',
         remember: false,
     });
+
+    const [showPassword, setShowPassword] = useState(false);
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -20,114 +23,156 @@ export default function Login({ status, canResetPassword }) {
         <GuestLayout>
             <Head title="Sign In" />
 
-            <div className="w-full max-w-md mx-auto">
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 p-8">
-                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Welcome Back</h2>
-                    <p className="text-gray-600 dark:text-gray-400 mb-6">Sign in to your account to continue</p>
+            <div>
+                {/* Header */}
+                <div className="text-center mb-8">
+                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                        Welcome back
+                    </h1>
+                    <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                        Sign in to continue shopping
+                    </p>
+                </div>
 
-                    {status && (
-                        <FormAlert type="success" message={status} className="mb-4" />
-                    )}
+                {/* Status Messages */}
+                {status && (
+                    <FormAlert type="success" message={status} className="mb-6" />
+                )}
 
-                    {(errors.email || errors.password || errors.error) && (
-                        <FormAlert 
-                            type="error" 
-                            title="Login Failed"
-                            message={errors.error || (errors.email && !errors.password ? errors.email : null)}
-                            errors={!errors.error ? { 
-                                ...(errors.email && errors.password ? { email: errors.email } : {}),
-                                ...(errors.password ? { password: errors.password } : {})
-                            } : null}
-                            className="mb-4" 
+                {(errors.email || errors.password || errors.error) && (
+                    <FormAlert
+                        type="error"
+                        title="Unable to sign in"
+                        message={errors.error || (errors.email && !errors.password ? errors.email : null)}
+                        errors={!errors.error ? {
+                            ...(errors.email && errors.password ? { email: errors.email } : {}),
+                            ...(errors.password ? { password: errors.password } : {})
+                        } : null}
+                        className="mb-6"
+                    />
+                )}
+
+                {/* Form */}
+                <form onSubmit={handleSubmit} className="space-y-5">
+                    {/* Email Field */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Email
+                        </label>
+                        <input
+                            type="email"
+                            className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm outline-none transition-all focus:border-brand focus:ring-2 focus:ring-brand/10 dark:text-white placeholder:text-gray-400"
+                            placeholder="you@example.com"
+                            value={data.email}
+                            onChange={e => setData('email', e.target.value)}
+                            required
+                            autoFocus
+                            autoComplete="email"
                         />
-                    )}
+                    </div>
 
-                    <form onSubmit={handleSubmit}>
-                        <div className="mb-4">
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                Email Address
-                            </label>
-                            <input
-                                type="email"
-                                className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg outline-none text-sm focus:ring-2 focus:ring-brand focus:border-transparent dark:text-white"
-                                placeholder="Enter your email"
-                                value={data.email}
-                                onChange={e => setData('email', e.target.value)}
-                                required
-                                autoFocus
-                            />
-                            {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
-                        </div>
-
-                        <div className="mb-4">
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    {/* Password Field */}
+                    <div>
+                        <div className="flex items-center justify-between mb-2">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                 Password
                             </label>
-                            <input
-                                type="password"
-                                className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg outline-none text-sm focus:ring-2 focus:ring-brand focus:border-transparent dark:text-white"
-                                placeholder="Enter your password"
-                                value={data.password}
-                                onChange={e => setData('password', e.target.value)}
-                                required
-                            />
-                            {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
-                        </div>
-
-                        <div className="flex items-center justify-between mb-6">
-                            <label className="flex items-center gap-2 cursor-pointer">
-                                <input
-                                    type="checkbox"
-                                    className="w-4 h-4 rounded border-gray-300 text-brand focus:ring-brand"
-                                    checked={data.remember}
-                                    onChange={e => setData('remember', e.target.checked)}
-                                />
-                                <span className="text-sm text-gray-600 dark:text-gray-400">Remember me</span>
-                            </label>
                             {canResetPassword && (
-                                <Link href={route('password.request')} className="text-sm text-brand hover:text-brand-dark">
+                                <Link
+                                    href={route('password.request')}
+                                    className="text-xs text-brand-2 hover:underline"
+                                >
                                     Forgot password?
                                 </Link>
                             )}
                         </div>
-
-                        <button
-                            type="submit"
-                            className="w-full py-3 bg-brand hover:bg-brand-dark text-white rounded-lg font-medium text-sm transition-colors disabled:opacity-50"
-                            disabled={processing}
-                        >
-                            {processing ? 'Signing in...' : 'Sign In'}
-                        </button>
-                    </form>
-
-                    <div className="mt-6 text-center">
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                            Don't have an account?{' '}
-                            <Link href={route('register')} className="text-brand hover:text-brand-dark font-medium">
-                                Create Account
-                            </Link>
-                        </p>
-                    </div>
-
-                    <div className="mt-6">
                         <div className="relative">
-                            <div className="absolute inset-0 flex items-center">
-                                <div className="w-full border-t border-gray-200 dark:border-gray-700"></div>
-                            </div>
-                            <div className="relative flex justify-center text-sm">
-                                <span className="px-2 bg-white dark:bg-gray-800 text-gray-500">Are you a seller?</span>
-                            </div>
-                        </div>
-                        <div className="mt-4">
-                            <Link
-                                href={route('vendor.guide')}
-                                className="flex items-center justify-center gap-2 w-full py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg text-sm font-medium transition-colors"
+                            <input
+                                type={showPassword ? 'text' : 'password'}
+                                className="w-full px-4 py-3 pr-12 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm outline-none transition-all focus:border-brand focus:ring-2 focus:ring-brand/10 dark:text-white placeholder:text-gray-400"
+                                placeholder="Enter your password"
+                                value={data.password}
+                                onChange={e => setData('password', e.target.value)}
+                                required
+                                autoComplete="current-password"
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                             >
-                                <span className="material-icons text-lg">storefront</span>
-                                Become a Seller
-                            </Link>
+                                <span className="material-icons text-xl">
+                                    {showPassword ? 'visibility_off' : 'visibility'}
+                                </span>
+                            </button>
                         </div>
                     </div>
+
+                    {/* Remember Me */}
+                    <label className="flex items-center gap-3 cursor-pointer">
+                        <input
+                            type="checkbox"
+                            checked={data.remember}
+                            onChange={e => setData('remember', e.target.checked)}
+                            className="w-4 h-4 rounded border-gray-300 text-brand focus:ring-brand"
+                        />
+                        <span className="text-sm text-gray-600 dark:text-gray-400">
+                            Keep me signed in
+                        </span>
+                    </label>
+
+                    {/* Cloudflare Turnstile */}
+                    <div className="cf-turnstile" data-sitekey="0x4AAAAAACV9ozEnuPEDz7Ec"></div>
+
+                    {/* Submit Button */}
+                    <button
+                        type="submit"
+                        disabled={processing}
+                        className="w-full py-3.5 bg-brand hover:bg-brand-dark text-white rounded-lg font-semibold text-sm transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                        {processing ? (
+                            <>
+                                <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                </svg>
+                                <span>Signing in...</span>
+                            </>
+                        ) : (
+                            <span>Sign in</span>
+                        )}
+                    </button>
+                </form>
+
+                {/* Create Account */}
+                <p className="mt-8 text-center text-sm text-gray-500 dark:text-gray-400">
+                    Don't have an account?{' '}
+                    <Link href={route('register')} className="text-brand font-semibold hover:underline">
+                        Create account
+                    </Link>
+                </p>
+
+                {/* Seller CTA */}
+                <div className="mt-8 pt-6 border-t border-gray-100 dark:border-gray-800">
+                    <Link
+                        href={route('vendor.guide')}
+                        className="flex items-center gap-3 p-4 rounded-xl bg-[#f1b945]/15 hover:bg-[#f1b945]/25 dark:bg-[#f1b945]/10 dark:hover:bg-[#f1b945]/20 transition-colors group"
+                    >
+                        <div className="w-10 h-10 rounded-lg bg-[#f1b945] flex items-center justify-center">
+                            <span className="material-icons text-white">storefront</span>
+                        </div>
+                        <div className="flex-1">
+                            <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                                Want to sell on Avelabo?
+                            </p>
+                            <p className="text-xs text-gray-600 dark:text-gray-400">
+                                Learn how to become a seller
+                            </p>
+                        </div>
+                        <span className="material-icons text-[#f1b945] group-hover:translate-x-1 transition-transform">
+                            arrow_forward
+                        </span>
+                    </Link>
                 </div>
             </div>
         </GuestLayout>

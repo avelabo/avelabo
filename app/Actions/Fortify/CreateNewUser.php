@@ -2,8 +2,8 @@
 
 namespace App\Actions\Fortify;
 
-use App\Models\User;
 use App\Models\Role;
+use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
@@ -21,7 +21,8 @@ class CreateNewUser implements CreatesNewUsers
     public function create(array $input): User
     {
         Validator::make($input, [
-            'name' => ['required', 'string', 'max:255'],
+            'first_name' => ['required', 'string', 'max:255'],
+            'last_name' => ['required', 'string', 'max:255'],
             'email' => [
                 'required',
                 'string',
@@ -29,14 +30,17 @@ class CreateNewUser implements CreatesNewUsers
                 'max:255',
                 Rule::unique(User::class),
             ],
+            'phone' => ['nullable', 'string', 'max:20'],
             'password' => $this->passwordRules(),
         ])->validate();
 
         $user = User::create([
-            'name' => $input['name'],
+            'first_name' => $input['first_name'],
+            'last_name' => $input['last_name'],
             'email' => $input['email'],
+            'phone' => $input['phone'] ?? null,
             'password' => Hash::make($input['password']),
-            'is_active' => true,
+            'status' => 'active',
         ]);
 
         // Assign customer role by default

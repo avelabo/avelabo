@@ -21,7 +21,8 @@ class User extends Authenticatable implements MustVerifyEmail
     use HasFactory, Notifiable, SoftDeletes;
 
     protected $fillable = [
-        'name',
+        'first_name',
+        'last_name',
         'email',
         'password',
         'phone',
@@ -32,6 +33,13 @@ class User extends Authenticatable implements MustVerifyEmail
         'status',
         'last_login_at',
     ];
+
+    protected $appends = ['name'];
+
+    public function getNameAttribute(): string
+    {
+        return trim("{$this->first_name} {$this->last_name}");
+    }
 
     protected $hidden = [
         'password',
