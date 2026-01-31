@@ -188,7 +188,7 @@ export default function Footer() {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 lg:gap-8">
 
                         {/* Logo & About */}
-                        <div className="lg:col-span-4">
+                        <div className="lg:col-span-3">
                             <Link href="/" className="inline-block mb-6">
                                 <img
                                     src="/images/logo/logo-alt-white-web-mid.png"
@@ -252,9 +252,21 @@ export default function Footer() {
                             <span className="block text-white font-bold text-lg mb-5">Company</span>
                             <ul className="space-y-3">
                                 <li><Link href="/about" className="text-white/70 hover:text-[#f1b945] transition-colors">About Us</Link></li>
+                                <li><Link href="/the-magic" className="text-white/70 hover:text-[#f1b945] transition-colors">How It Works</Link></li>
+                                <li><Link href="/trust-and-safety" className="text-white/70 hover:text-[#f1b945] transition-colors">Trust & Safety</Link></li>
                                 <li><Link href="/contact" className="text-white/70 hover:text-[#f1b945] transition-colors">Contact</Link></li>
+                            </ul>
+                        </div>
+
+                        {/* Help & Policies */}
+                        <div className="lg:col-span-2">
+                            <span className="block text-white font-bold text-lg mb-5">Help & Policies</span>
+                            <ul className="space-y-3">
+                                <li><Link href="/help-and-support" className="text-white/70 hover:text-[#f1b945] transition-colors">Help & Support</Link></li>
+                                <li><Link href="/refund-policy" className="text-white/70 hover:text-[#f1b945] transition-colors">Refund Policy</Link></li>
+                                <li><Link href="/return-policy" className="text-white/70 hover:text-[#f1b945] transition-colors">Return Policy</Link></li>
                                 <li><Link href="/privacy-policy" className="text-white/70 hover:text-[#f1b945] transition-colors">Privacy Policy</Link></li>
-                                <li><Link href="/purchase-guide" className="text-white/70 hover:text-[#f1b945] transition-colors">Purchase Guide</Link></li>
+                                <li><Link href="/terms-and-conditions" className="text-white/70 hover:text-[#f1b945] transition-colors">Terms & Conditions</Link></li>
                             </ul>
                         </div>
 
@@ -270,13 +282,11 @@ export default function Footer() {
                         </div>
 
                         {/* Sellers */}
-                        <div className="lg:col-span-2">
-                            <span className="block text-white font-bold text-lg mb-5">Sell With Us</span>
+                        <div className="lg:col-span-1">
+                            <span className="block text-white font-bold text-lg mb-5">Sellers</span>
                             <ul className="space-y-3">
-                                <li><Link href="/seller/register" className="text-white/70 hover:text-[#f1b945] transition-colors">Become a Seller</Link></li>
-                                <li><Link href="/vendor-guide" className="text-white/70 hover:text-[#f1b945] transition-colors">Seller Guide</Link></li>
-                                <li><Link href="/seller" className="text-white/70 hover:text-[#f1b945] transition-colors">Seller Portal</Link></li>
-                                <li><Link href="/contact" className="text-white/70 hover:text-[#f1b945] transition-colors">Seller Support</Link></li>
+                                <li><Link href="/seller/register" className="text-white/70 hover:text-[#f1b945] transition-colors">Sell</Link></li>
+                                <li><Link href="/vendor-guide" className="text-white/70 hover:text-[#f1b945] transition-colors">Guide</Link></li>
                             </ul>
                         </div>
                     </div>
