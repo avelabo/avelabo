@@ -153,6 +153,23 @@ Route::get('/vendor-guide', [PageController::class, 'vendorGuide'])->name('vendo
 Route::get('/privacy-policy', [PageController::class, 'privacyPolicy'])->name('privacy.policy');
 Route::get('/purchase-guide', [PageController::class, 'purchaseGuide'])->name('purchase.guide');
 
+// Policy & Legal Pages
+Route::get('/terms-and-conditions', function () {
+    return Inertia::render('Frontend/TermsConditions');
+})->name('terms.conditions');
+
+Route::get('/refund-policy', function () {
+    return Inertia::render('Frontend/RefundPolicy');
+})->name('refund.policy');
+
+Route::get('/return-policy', function () {
+    return Inertia::render('Frontend/ReturnPolicy');
+})->name('return.policy');
+
+Route::get('/help-and-support', function () {
+    return Inertia::render('Frontend/HelpSupport');
+})->name('help.support');
+
 /*
 |--------------------------------------------------------------------------
 | Location API Routes (for dynamic dropdowns)
