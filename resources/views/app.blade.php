@@ -109,6 +109,10 @@
     @production
     <script defer src="https://cloud.umami.is/script.js" data-website-id="eb75f302-367c-4488-a8c5-a3a4562436d7"></script>
     @endproduction
+
+    <!-- Cloudflare Turnstile -->
+    <link rel="preconnect" href="https://challenges.cloudflare.com">
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 </head>
 <body class="bg-gray-50 antialiased font-lato">
     @inertia
