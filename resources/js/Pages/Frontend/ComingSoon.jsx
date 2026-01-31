@@ -11,7 +11,7 @@ export default function ComingSoon() {
         const getTargetDate = () => {
             const now = new Date();
             const target = new Date();
-            target.setDate(now.getDate() + 1);
+            target.setDate(now.getDate());
             target.setHours(12, 0, 0, 0);
             return target;
         };
