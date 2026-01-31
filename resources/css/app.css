@@ -1200,3 +1200,8 @@ label {
   left: 0;
   width: 100%;
 }
+
+/* Radial Gradient Utility */
+.bg-gradient-radial {
+  background: radial-gradient(circle, var(--tw-gradient-stops));
+}
