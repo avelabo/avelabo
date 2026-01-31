@@ -21,6 +21,8 @@ Features can be moved from one version to the next depending on timelines and cu
 #UI
 - In-App/Browser Notifications 
 
+#cONVENICEN
+- Sign up with phone number only, no email
 #Misc
 - Email logo using Google Profile or BIMI
 - Bulk Message Sender 
@@ -61,7 +63,7 @@ Features can be moved from one version to the next depending on timelines and cu
 - Shop, Cart, Checkout  - Working
 - Payment Flow - Working (clean up and finalization needed)
 - Pages (About, What is the magic, How it works, How to become a seller, Trust and Reliability) -
-- Pages (Privacy Policy, Refund Policy, Return Policy, Terms and Policies, Support) ..under the help -
+- Pages (Privacy Policy, Refund Policy, Return Policy, Terms and Policies, Help & Support) ..under the help -
 
 ## Miscellanous
 - Finalize validation errors esp. in the frontend
